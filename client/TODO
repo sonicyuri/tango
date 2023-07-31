@@ -1,0 +1,11 @@
+- infinite scrolling, make cursor not so page-based
+- combine http basic auth with shimmie account auth. move to oauth so we don't have to store usernames and passwords.
+- better api for the shimmie database - perhaps bypassing shimmie itself (i.e. going off of the mysql)
+    - tango should just implement a new API over the top of the shimmie database
+    - slowly move to postgres & a new database
+    - remove shimmie entirely
+- mark parts of the models as volatile, requiring often reload, and mark parts that can be stored in local storage instead of looked up every time
+- change my style guide!! UpperCamelCase or i walk.
+
+- like/dislike feature for posts. an "algorithm" in teh future but at least the ability to have a likes and dislikes list
+	- favorites options
