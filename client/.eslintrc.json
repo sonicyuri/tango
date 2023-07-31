@@ -1,0 +1,53 @@
+{
+	"env": {
+		"browser": true,
+		"es2021": true
+	},
+	"extends": ["eslint:recommended", "plugin:react/recommended", "plugin:@typescript-eslint/recommended"],
+	"settings": {
+		"react": {
+			"version": "detect"
+		}
+	},
+	"overrides": [],
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaVersion": "latest",
+		"sourceType": "module"
+	},
+	"plugins": ["@typescript-eslint", "brace-rules"],
+	"rules": {
+		"indent": ["error", "tab"],
+		"linebreak-style": ["error", "windows"],
+		"quotes": ["error", "double"],
+		"semi": ["error", "always"],
+		"object-curly-newline": [
+			"error",
+			{
+				"ObjectExpression": { "minProperties": 1, "consistent": true },
+				"ObjectPattern": "never",
+				"ImportDeclaration": { "multiline": true },
+				"ExportDeclaration": { "multiline": true }
+			}
+		],
+		"array-bracket-newline": ["error", "consistent"],
+		"brace-rules/brace-on-same-line": [
+			"error",
+			{
+				"FunctionDeclaration": "never",
+				"FunctionExpression": "never",
+				"ArrowFunctionExpression": "always",
+				"IfStatement": "never",
+				"TryStatement": "never",
+				"DoWhileStatement": "never",
+				"WhileStatement": "never",
+				"WithStatement": "never",
+				"ForStatement": "never",
+				"ForInStatement": "never",
+				"ForOfStatement": "never",
+				"SwitchStatement": "never"
+			},
+			{ "allowSingleLine": true }
+		]
+	}
+}
