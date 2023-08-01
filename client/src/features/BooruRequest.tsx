@@ -27,13 +27,14 @@ class BooruRequest {
 		this.authHeader = "Basic " + base64.encode(`${username}:${password}`);
 	}
 
-	static runQuery(url: string): Promise<Response> 
+	static runQuery(url: string, method: string, body: URLSearchParams | undefined): Promise<Response> 
 	{
 		const headers = new Headers();
 		headers.append("Authorization", this.authHeader || "");
 		return fetch(BASE_URL + url, {
-			method: "GET",
-			headers: headers
+			method: method,
+			headers: headers,
+			body: body
 		}).then(res => {
 			if (res.status == 403) 
 			{
@@ -44,9 +45,14 @@ class BooruRequest {
 		});
 	}
 
+	static runGetQuery(url: string): Promise<Response>
+	{
+		return this.runQuery(url, "GET", undefined);
+	}
+
 	static runQueryJson(url: string): Promise<any> 
 	{
-		return this.runQuery(url).then(res => res.json());
+		return this.runGetQuery(url).then(res => res.json());
 	}
 
 	static searchImages(query: string | null, page = 1): ImageSearchCursor 

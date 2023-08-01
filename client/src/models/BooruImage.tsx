@@ -55,6 +55,20 @@ class BooruImage {
 	{
 		return `https://s3.wasabisys.com/booru/thumbs/${this.hash}`;
 	}
+
+	get aspectRatio()
+	{
+		return this.imageSize[0] / this.imageSize[1];
+	}
+
+	getImageSizeStyles(): React.CSSProperties
+	{
+		return {
+			aspectRatio: this.aspectRatio,
+			//width: (this.imageSize[0] > this.imageSize[1] ? "auto" : "100%"),
+			//height: (this.imageSize[0] > this.imageSize[1] ? "90vh" : "auto")
+		}
+	}
 }
 
 export { BooruImage };

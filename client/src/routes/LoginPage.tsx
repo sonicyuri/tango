@@ -9,6 +9,7 @@ import Spinner from "react-spinkit";
 import { useAppDispatch } from "../features/Hooks";
 import { login } from "../features/auth/AuthSlice";
 import { Button, TextField, Stack, Container, Typography } from "@mui/material";
+import i18n from "../util/Internationalization";
 
 const LoginPage = () => {
 	const [loading, setLoading] = useState(false);
@@ -68,7 +69,7 @@ const LoginPage = () => {
 						sx={{
 							display: "block"
 						}}>
-						Tango
+						{i18n.t("siteTitle")}
 					</Typography>
 					<TextField
 						fullWidth

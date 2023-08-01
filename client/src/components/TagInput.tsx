@@ -9,6 +9,12 @@ import { selectTagState } from "../features/tags/TagSlice";
 
 const logger = LogFactory.create("TagInput");
 
+const UnpaddedFilledInput = styled(TextField)({
+	"& .MuiFilledInput-root": {
+		paddingTop: 0
+	}
+});
+
 export interface TagInputProps {
 	values: string[];
 	onValuesChange: (tags: string[]) => void;
@@ -20,12 +26,6 @@ const TagInput = (props: TagInputProps) => {
 	const navigate = useNavigate();
 
 	const { tags } = useAppSelector(selectTagState);
-
-	const UnpaddedFilledInput = styled(TextField)({
-		"& .MuiFilledInput-root": {
-			paddingTop: 0
-		}
-	});
 
 	return (
 		<div

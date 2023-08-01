@@ -12,7 +12,10 @@ export interface ImagePostProps {
 }
 
 const ImagePost = (props: ImagePostProps) => {
-	return <img src={props.image.videoUrl} alt={"Image " + props.image.hash} />;
+	return (
+		<div className="ImagePost" style={{ backgroundImage: `url(${props.image.videoUrl})` }}>
+		</div>
+	);
 };
 
 export default ImagePost;

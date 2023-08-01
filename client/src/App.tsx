@@ -10,7 +10,7 @@ import RootPage from "./routes/RootPage";
 import ErrorPage from "./routes/ErrorPage";
 import ListPage from "./routes/ListPage";
 import ImagePage from "./routes/ImagePage";
-import { imageGetById } from "./features/images/ImageSlice";
+import { imageDirectLink } from "./features/images/ImageSlice";
 import { ImageGetByIdRequest } from "./features/images/ImageService";
 
 const App = () => {

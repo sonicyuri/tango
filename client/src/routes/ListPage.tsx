@@ -8,14 +8,15 @@ import { LocalSettings } from "../util/LocalSettings";
 import Spinner from "react-spinkit";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { login, selectAuthState } from "../features/auth/AuthSlice";
-import { Modal, Pagination, Box } from "@mui/material";
+import { Link as MuiLink, Pagination, Box, Backdrop, Breadcrumbs, Typography } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { imageGet, imageList, imageSetPage, selectImageState } from "../features/images/ImageSlice";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import { BooruImage } from "../models/BooruImage";
+import i18n from "../util/Internationalization";
 
 const logger: Logger = LogFactory.create("ListPage");
 
@@ -24,11 +25,9 @@ interface ListPageProps {
 }
 
 // the number of pixels wide we're aiming for each grid item to be
-const TargetImageWidth = 200;
+const TargetImageWidth = 210;
 
 const ListPage = (props: ListPageProps) => {
-	const { isLoggedIn } = useAppSelector(selectAuthState);
-
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 	const params = useParams();
@@ -65,11 +64,6 @@ const ListPage = (props: ListPageProps) => {
 		}
 	}, [props.forceIndex]);
 
-	if (!isLoggedIn) 
-	{
-		return <LoginPage />;
-	}
-
 	if (searchState == "initial") 
 	{
 		const currentPage = Number(params.page) || 1;
@@ -86,11 +80,12 @@ const ListPage = (props: ListPageProps) => {
 	} 
 	else if (searchState == "failed") 
 	{
-		return <p>search failed</p>;
+		return Util.logAndDisplayError(logger, "search failed", cursor?.currentQuery, cursor?.cursorPosition);
 	} 
 	else if (cursor == null) 
 	{
-		return <p>cursor is null?</p>;
+		logger.log("cursor is null (expected if just initializing)");
+		return <></>;
 	}
 
 	const onImageClicked = (image: BooruImage, index: number) => {
@@ -101,8 +96,14 @@ const ListPage = (props: ListPageProps) => {
 			})
 		);
 
-		// TODO: include query and page in URL so we know where we are when we refresh
-		navigate("/images/view/" + image.id);
+		// include information on the current list in the url so we can get back to it even with a direct link
+		const page = cursor?.cursorPosition[0] || 1;
+		const newQueryString = Util.formatQueryString([
+			{ key: "q", value: cursor?.currentQuery || "", enabled: cursor?.currentQuery != null },
+			{ key: "page", value: String(page), enabled: page != 1 }
+		])
+
+		navigate(cursor.makeImageLink(image));
 	};
 
 	const onPageChange = (e: React.ChangeEvent<unknown>, page: number) => {
@@ -124,6 +125,7 @@ const ListPage = (props: ListPageProps) => {
 
 		return (
 			<Box
+				className="ListPage-pagination"
 				sx={{
 					display: "flex",
 					justifyContent: "center"
@@ -141,44 +143,51 @@ const ListPage = (props: ListPageProps) => {
 		);
 	};
 
+	const breadcrumbs = (
+		<Breadcrumbs aria-label="breadcrumb" className="ListPage-breadcrumbs">
+			<MuiLink underline="hover" color="inherit" component={RouterLink} to="/">
+				{i18n.t("siteTitle")}
+			</MuiLink>
+			<Typography color="text.primary">
+				Images
+			</Typography>
+		</Breadcrumbs>
+	);
+	
 	return (
-		<>
-			{renderPagination("pg-top")}
+		<div className="ListPage">
+			<div className="PageHeader ListPage-header">
+				{breadcrumbs}
+				{renderPagination("pg-top")}
+			</div>
 			<Grid
 				container
 				spacing={3}
 				sx={{
-					pt: 1,
 					maxWidth: "100%"
 				}}>
 				{images.map((img, idx) => {
 					return (
 						<Grid className="ListPage-grid" key={"image-" + img.hash} xs={12 / numColumns}>
-							<img
+							<div
 								className="ListPage-grid-item"
-								src={img.thumbUrl}
-								alt={"Image " + img.hash + " thumbnail"}
+								style={{ backgroundImage: `url(${img.thumbUrl})` }}
 								onClick={() => onImageClicked(img, idx)}
 							/>
 						</Grid>
 					);
 				})}
 			</Grid>
-			{renderPagination("pg-bottom")}
-			<Modal
-				open={searchState == "loading"}
-				keepMounted
-				aria-label="loading"
-				sx={{
-					alignItems: "center",
-					justifyContent: "center",
-					display: "flex"
-				}}>
+			<div className="ListPage-footer">
+				{renderPagination("pg-bottom")}
+			</div>
+			<Backdrop
+				open={searchState == "loading"}>
 				<div>
 					<Spinner name="wave" fadeIn="none" color="white" />
 				</div>
-			</Modal>
-		</>
+			</Backdrop>
+		</div>
 	);
 };
 
