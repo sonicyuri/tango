@@ -9,9 +9,10 @@ import { RootState } from "../Store";
 import { ImageSearchCursor } from "../../ImageSearchCursor";
 
 import ImageService, {
-	ImageSearchRequest as ImageListRequest,
-	ImageGetByIdRequest,
-	ImageGetRequest
+	ImageListRequest,
+	ImageDirectLinkRequest,
+	ImageGetRequest,
+	ImageSetTagsRequest
 } from "./ImageService";
 
 const logger: Logger = LogFactory.create("ImageSlice");
@@ -99,17 +100,84 @@ export const imageGet = (request: ImageGetRequest): PayloadAction<ImageGetReques
 	payload: request
 });
 
-export const imageGetById = createAsyncThunk("image/view_by_id", async (request: ImageGetByIdRequest, thunkApi) => {
+export const imageDirectLink = createAsyncThunk("image/direct_link", async (request: ImageDirectLinkRequest, thunkApi) => {
 	try 
 	{
 		thunkApi.dispatch(setSearchStateAction("loading"));
+		const cursor = new ImageSearchCursor(request.query);
+		cursor.setCursorPosition(request.page || 1, 0);
 
-		return await ImageService.getImageById(request.imageId);
+		const images = await cursor.getImagesAtCursor();
+
+		// if we have context we've probably already loaded the image info from the above query
+		// if not, do another lookup for it
+		let thisImage: BooruImage | null = null;
+		for (let i = 0; i < images.length; i++)
+		{
+			if (images[i].id == request.imageId)
+			{
+				thisImage = images[i];
+				// make sure we set the correct cursor position for navigation
+				cursor.setCursorPosition(request.page || 1, i);
+				break;
+			}
+		}
+
+		return {
+			images,
+			image: thisImage || await ImageService.getImageById(request.imageId),
+			cursor
+		};
 	} 
 	catch (error: any) 
 	{
 		logger.error("error fetching image", error);
-		thunkApi.dispatch(notify("View image failed - " + error, "error"));
+		thunkApi.dispatch(notify("Direct link lookup failed - " + error, "error"));
+		return thunkApi.rejectWithValue({});
+	}
+});
+
+export const imageNavigate = createAsyncThunk("image/navigate", async (request: ImageNavigateDirection, thunkApi) =>
+{
+	try 
+	{
+		const state: ImageState = (thunkApi.getState() as any).image;
+		if (state.cursor == null) 
+		{
+			return thunkApi.rejectWithValue({});
+		}
+
+		if (!state.cursor.canMove(request))
+		{
+			return thunkApi.fulfillWithValue({ image: state.currentImage });
+		}
+
+		thunkApi.dispatch(setSearchStateAction("loading"));
+
+		let image = await state.cursor.moveCursorAndReturn(request);
+		return { image };
+	} 
+	catch (error: any) 
+	{
+		logger.error("error navigating", error);
+		thunkApi.dispatch(notify("Navigate failed - " + error, "error"));
+		return thunkApi.rejectWithValue({});
+	}
+});
+
+export const imageSetTags = createAsyncThunk("image/set_tags", async (request: ImageSetTagsRequest, thunkApi) =>
+{
+	try 
+	{
+		await ImageService.setImageTags(request.image, request.tags);
+		const image = await ImageService.getImageById(request.image.id);
+
+		return { image };
+	} 
+	catch (error: any) 
+	{
+		logger.error("error setting tags", error);
+		thunkApi.dispatch(notify("Set tags failed - " + error, "error"));
 		return thunkApi.rejectWithValue({});
 	}
 });
@@ -140,12 +208,21 @@ export const ImageSlice = createSlice({
 			state.searchState = "failed";
 		});
 
-		builder.addCase(imageGetById.fulfilled, (state, action) => {
-			state.currentImage = action.payload;
+		builder.addCase(imageDirectLink.fulfilled, (state, action) => {
+			state.currentImage = action.payload.image;
+			state.images = action.payload.images;
+			state.cursor = action.payload.cursor;
 			state.searchState = "ready";
+
+			if (action.payload.image != null)
+			{
+				state.cursor?.storeOrUpdateImage(action.payload.image);
+			}
 		});
-		builder.addCase(imageGetById.rejected, (state, action) => {
+		builder.addCase(imageDirectLink.rejected, (state, action) => {
 			state.currentImage = null;
+			state.images = [];
+			state.cursor = null;
 			state.searchState = "failed";
 		});
 
@@ -157,6 +234,31 @@ export const ImageSlice = createSlice({
 		builder.addCase(imageSetPage.rejected, (state, action) => {
 			state.images = [];
 			state.searchState = "failed";
+		});
+
+		builder.addCase(imageNavigate.fulfilled, (state, action) => {
+			state.currentImage = action.payload.image;
+			state.searchState = "ready";
+		});
+		builder.addCase(imageNavigate.rejected, (state, action) => {
+			state.currentImage = null;
+			state.searchState = "failed";
+		});
+
+		builder.addCase(imageSetTags.fulfilled, (state, action) => {
+			if (state.currentImage?.id == action.payload.image?.id)
+			{
+				state.currentImage = action.payload.image;
+			}
+
+			if (action.payload.image != null)
+			{ 
+				state.cursor?.storeOrUpdateImage(action.payload.image);
+			}
+		});
+		builder.addCase(imageSetTags.rejected, (state, action) =>
+		{
+			
 		});
 	}
 });

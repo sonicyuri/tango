@@ -12,6 +12,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import SearchBox from "./SearchBox";
 import { logout } from "../features/auth/AuthSlice";
+import i18n from "../util/Internationalization";
 
 const logger = LogFactory.create("MenuBar");
 
@@ -87,7 +88,7 @@ const MenuBar = () => {
 								sm: "block"
 							}
 						}}>
-						Tango
+						{i18n.t("siteTitle")}
 					</MuiLink>
 					<Box
 						className="MenuBar-search"

@@ -1,8 +1,10 @@
 /** @format */
 
+@use "./Variables.scss";
 @use "./ListPage.scss";
 @use "./MenuBar.scss";
 @use "./ImagePage.scss";
+@use "./TagsCard.scss";
 
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Palanquin:wght@400;500;700&display=swap");
@@ -15,4 +17,18 @@ h1,
 h2,
 h3 {
 	font-family: "Source Sans 3", sans-serif;
+}
+
+.PageHeader {
+	display: flex;
+	margin-bottom: 1em;
+	justify-content: center;
+	position: relative;
+	height: Variables.$PageHeaderHeight;
+
+	.MuiBreadcrumbs-root {
+		position: absolute;
+		left: 0;
+		line-height: Variables.$PageHeaderHeight;
+	}
 }

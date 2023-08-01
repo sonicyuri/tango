@@ -1,8 +1,44 @@
 /** @format */
 
-.ImagePage-tags {
-	.MuiChip-root {
-		margin-right: 4px;
-		margin-bottom: 4px;
+.ImagePage {
+	padding: 1em;
+}
+
+.ImagePage-header {
+}
+
+.VideoPost {
+	max-width: 100%;
+
+	video {
+		height: 90vh;
+		max-width: 100%;
+	}
+}
+
+.ImagePost {
+	width: 100%;
+	height: 90vh;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
+.ImagePage-content {
+	display: flex;
+	position: relative;
+
+	.ImagePage-listener {
+		width: 100%;
+		// dodge the video controls
+		height: calc(100% - 35px);
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	.VideoPost,
+	.ImagePost,
+	.FlashPost {
+		display: flex;
 	}
 }

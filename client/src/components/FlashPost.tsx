@@ -5,7 +5,7 @@ import React from "react";
 import { LogFactory } from "../util/Logger";
 import { BooruImage } from "../models/BooruImage";
 
-const logger = LogFactory.create("VideoPost");
+const logger = LogFactory.create("FlashPost");
 
 export interface FlashPostProps {
 	image: BooruImage;

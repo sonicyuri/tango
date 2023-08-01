@@ -2,6 +2,7 @@
 
 import { BooruRequest } from "./features/BooruRequest";
 import { BooruImage, ShimmieImage } from "./models/BooruImage";
+import { Util } from "./util/Util";
 
 interface ShimmieFindImagesV2 {
 	images: ShimmieImage[];
@@ -18,7 +19,10 @@ const PagePostPreloadThreshold = 5;
  */
 export class ImageSearchCursor {
 	private query: string | null;
-	private pagesCache: { [page: number]: BooruImage[] };
+	// maps a page to an array of post ids
+	// if a post id is in this array, it should always exist in the posts cache!
+	private pagesCache: { [page: number]: string[] };
+	private postsCache: { [id: string]: BooruImage };
 	private runningPromises: { [page: number]: Promise<void> };
 	// cursor pos in page, index
 	private cursorPos: [number, number];
@@ -31,17 +35,9 @@ export class ImageSearchCursor {
 	{
 		this.query = query;
 		this.pagesCache = {};
+		this.postsCache = {};
 		this.runningPromises = {};
 		this.cursorPos = [1, 0];
-	}
-
-	/**
-	 * Gets the current cursor position.
-	 * @returns [page, index]
-	 */
-	public get cursorPosition(): [number, number] 
-	{
-		return this.cursorPos;
 	}
 
 	public get pageCount(): number 
@@ -52,6 +48,15 @@ export class ImageSearchCursor {
 	public get currentQuery(): string | null 
 	{
 		return this.query;
+	}
+
+	/**
+	 * Gets the current cursor position.
+	 * @returns [page, index]
+	 */
+	public get cursorPosition(): [number, number] 
+	{
+		return this.cursorPos;
 	}
 
 	// for setting the position of the cursor. will preload relevant pages
@@ -101,13 +106,34 @@ export class ImageSearchCursor {
 		return this.getImages(this.cursorPos[0]);
 	}
 
+	/**
+	 * Creates a link to the current images page this cursor is pointing to.
+	 */
+	public makeImagesLink(): string
+	{
+		return Util.makeImagesLink(this.currentQuery || "", this.cursorPos[0]);
+	}
+
+	/**
+	 * Makes a link to a particular image based on the current cursor position.
+	 */
+	public makeImageLink(image: BooruImage): string
+	{
+		const newQueryString = Util.formatQueryString([
+			{ key: "q", value: this.currentQuery || "", enabled: this.currentQuery != null },
+			{ key: "page", value: String(this.cursorPos[0]), enabled: this.cursorPos[0] != 1 }
+		])
+
+		return `/images/view/${image.id}${newQueryString}`;
+	}
+
 	// can the cursor be moved in this direction?
 	public canMove(movement: -1 | 1): boolean 
 	{
 		const [page, index] = this.cursorPos;
 		if (movement == -1) 
 		{
-			return page > 1 || index > 1;
+			return page > 1 || index > 0;
 		} 
 		else 
 		{
@@ -143,6 +169,15 @@ export class ImageSearchCursor {
 		return pageImages[index];
 	}
 
+	/**
+	 * Stores the given post in the internal post cache, updating the existing cache if present.
+	 * This is used to inform the cursor of any posts fetched through getById or other means.
+	 */
+	public storeOrUpdateImage(image: BooruImage): void
+	{
+		this.postsCache[image.id] = image;
+	}
+
 	public async getImages(page: number): Promise<BooruImage[]> 
 	{
 		if (page > this.maxPage) 
@@ -160,7 +195,7 @@ export class ImageSearchCursor {
 			await this.load(page);
 		}
 
-		return this.pagesCache[page];
+		return this.pagesCache[page].map(id => this.postsCache[id]);
 	}
 
 	// start a page loading
@@ -190,8 +225,11 @@ export class ImageSearchCursor {
 				this.maxPage = res.total_pages;
 				return res.images.map(i => new BooruImage(i));
 			})
-			.then(images => {
-				this.pagesCache[page] = images;
+			.then(images =>
+			{
+				// store all the images in the posts cache and store the ids in the page cache
+				images.forEach(img => this.postsCache[img.id] = img);
+				this.pagesCache[page] = images.map(img => img.id);
 				this.maxPageSize = Math.max(images.length, this.maxPageSize);
 			})
 			.finally(() => delete this.runningPromises[page]);

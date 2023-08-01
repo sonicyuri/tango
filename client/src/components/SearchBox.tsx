@@ -1,7 +1,7 @@
 /** @format */
 
 import { useNavigate, useRouteError } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LogFactory } from "../util/Logger";
 import { BooruImage } from "../models/BooruImage";
 import TagInput from "./TagInput";
@@ -26,6 +26,11 @@ const SearchBox = (props: SearchBoxProps) => {
 		.filter(f => f.length > 0);
 
 	const [values, setValues] = useState(defaultValue);
+
+	useEffect(() =>
+	{
+		setValues(defaultValue);
+	}, [props.query]);
 
 	const handleSearch = () => {
 		dispatch(

@@ -1,4 +1,19 @@
 /** @format */
+@use "./Variables.scss";
+
+.ListPage {
+	padding: 1em;
+}
+
+.ListPage-header {
+	.ListPage-pagination {
+		height: Variables.$PageHeaderHeight;
+	}
+}
+
+.ListPage-footer {
+	margin-top: 1em;
+}
 
 .ListPage-grid {
 	.ListPage-grid-item {
@@ -6,8 +21,12 @@
 		justify-content: center;
 		align-items: center;
 
-		max-height: 200px;
-		max-width: 200px;
+		width: 200px;
+		height: 125px;
+
+		background-size: cover;
+		background-repeat: no-repeat;
+		background-position: center;
 
 		cursor: pointer;
 	}
