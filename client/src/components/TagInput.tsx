@@ -3,9 +3,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { LogFactory } from "../util/Logger";
-import { Autocomplete, Chip, TextField, styled } from "@mui/material";
+import { Autocomplete, Box, Chip, TextField, Typography, styled } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
+import { BooruTag } from "../models/BooruTag";
 
 const logger = LogFactory.create("TagInput");
 
@@ -25,20 +26,21 @@ const TagInput = (props: TagInputProps) => {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 
-	const { tags } = useAppSelector(selectTagState);
+	const { tags, tagFrequencies, categories } = useAppSelector(selectTagState);
 
 	return (
 		<div
-			className="tag-input"
+			className="TagInput"
 			style={{
 				flexGrow: 1
 			}}>
 			<Autocomplete
 				multiple
-				options={tags}
+				options={tags.map(t => t.tag)}
 				value={props.values}
 				onChange={(e, values) => props.onValuesChange(values)}
 				freeSolo
+				autoHighlight
 				renderTags={(value: readonly string[], getTagProps) => {
 					return value.map((tag: string, index: number) => (
 						// eslint-disable-next-line react/jsx-key
@@ -52,6 +54,18 @@ const TagInput = (props: TagInputProps) => {
 					));
 				}}
 				renderInput={params => <UnpaddedFilledInput {...params} variant="filled" placeholder="Search" />}
+				renderOption={(props, option) => {
+					const category = BooruTag.getCategory(option, categories);
+
+					return (
+						<Box component="li" {...props}>
+							<Typography variant="subtitle1" color={category?.color}>
+								{option}&nbsp;
+							</Typography>
+							<Typography variant="body2">{tagFrequencies[option]}</Typography>
+						</Box>
+					);
+				}}
 				onSubmit={props.onSubmit}
 			/>
 		</div>

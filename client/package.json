@@ -23,6 +23,7 @@
 		"@typescript-eslint/eslint-plugin": "^5.41.0",
 		"@typescript-eslint/parser": "^5.41.0",
 		"base-64": "^0.1.0",
+		"colorjs.io": "^0.4.5",
 		"filesize": "^10.0.8",
 		"font-awesome": "^4.7.0",
 		"formik": "^2.2.9",
