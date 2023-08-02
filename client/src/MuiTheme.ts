@@ -29,6 +29,7 @@ const baseTheme = createTheme({
 		h4: { fontFamily: HeaderFonts },
 		h5: { fontFamily: HeaderFonts },
 		h6: { fontFamily: HeaderFonts },
+		subtitle1: { fontWeight: 700 },
 		subtitle2: { fontWeight: 700 }
 	}
 });

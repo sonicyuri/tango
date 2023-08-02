@@ -27,19 +27,11 @@ const SearchBox = (props: SearchBoxProps) => {
 
 	const [values, setValues] = useState(defaultValue);
 
-	useEffect(() =>
-	{
+	useEffect(() => {
 		setValues(defaultValue);
 	}, [props.query]);
 
 	const handleSearch = () => {
-		dispatch(
-			imageList({
-				query: values.join(" "),
-				page: 1
-			})
-		);
-
 		navigate(`/images/1?q=${encodeURIComponent(values.join(" "))}`);
 	};
 

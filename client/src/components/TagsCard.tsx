@@ -11,6 +11,8 @@ import { imageList, imageSetTags } from "../features/images/ImageSlice";
 import Spinner from "react-spinkit";
 import { Util } from "../util/Util";
 import { selectTagState, tagList } from "../features/tags/TagSlice";
+import { BooruTag } from "../models/BooruTag";
+import Color from "colorjs.io";
 
 const logger = LogFactory.create("TagsCard");
 
@@ -19,73 +21,94 @@ export interface TagsCardProps {
 	onEditingChanged: (editing: boolean) => void;
 }
 
-const TagsCard = (props: TagsCardProps) =>
-{
+const TagsCard = (props: TagsCardProps) => {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 
 	const [loading, setLoading] = useState(false);
 	const [editing, setEditing] = useState(false);
 	const [tempTags, setTempTags] = useState(props.image.tags);
-	const { tags } = useAppSelector(selectTagState);
+	const { tags, categories } = useAppSelector(selectTagState);
 
-	const onClickTag = (ev: React.MouseEvent, tag: string) =>
-	{
-		ev.stopPropagation();
+	const onClickTag = (ev: React.MouseEvent, tag: string) => {
 		ev.preventDefault();
 
-		dispatch(imageList({
-			query: tag,
-			page: 1
-		}));
-
 		navigate(Util.makeImagesLink(tag, 1));
-	}
+	};
 
 	const showTags = (
 		<div className="TagsCard">
-			{props.image.tags.map(t =>
-			{
-				return <Chip component="a" key={t} label={t} onClick={(e: React.MouseEvent) => onClickTag(e, t)} clickable href={Util.makeImagesLink(t, 1)} />;
+			{props.image.tags.map(t => {
+				const category = BooruTag.getCategory(t, categories);
+				const color = category?.color || "default";
+				const hoverColor: string = new Color(new Color(category?.color || "#000000").lighten(0.15)).toString({
+					format: "hex"
+				});
+				const style =
+					category != null ? { backgroundColor: color, ":hover": { backgroundColor: hoverColor } } : {};
+				return (
+					<Chip
+						component="a"
+						key={t}
+						label={t}
+						sx={style}
+						onClick={(e: React.MouseEvent) => onClickTag(e, t)}
+						clickable
+						href={Util.makeImagesLink(t, 1)}
+					/>
+				);
 			})}
 		</div>
 	);
 
 	const showTagsButtons = (
-		<Button onClick={() => { setEditing(true); props.onEditingChanged(true); setTempTags(props.image.tags); }}>Edit Tags</Button>
+		<Button
+			onClick={() => {
+				setEditing(true);
+				props.onEditingChanged(true);
+				setTempTags(props.image.tags);
+			}}>
+			Edit Tags
+		</Button>
 	);
 
-	const onSubmit = () =>
-	{ 
+	const onSubmit = () => {
 		setLoading(true);
 
-		dispatch(imageSetTags({
-			image: props.image,
-			tags: tempTags.join(" ")
-		}))
+		dispatch(
+			imageSetTags({
+				image: props.image,
+				tags: tempTags.join(" ")
+			})
+		)
 			.unwrap()
-			.then(() =>
-			{
+			.then(() => {
 				// new tags! we gotta re-fetch the tags list
-				if (tempTags.filter(t => tags.indexOf(t) == -1).length > 0)
-				{
+				if (tempTags.filter(t => tags.find(t2 => t2.tag == t) === undefined).length > 0) {
 					dispatch(tagList(null));
 				}
-				
+
 				setLoading(false);
 				setEditing(false);
 				props.onEditingChanged(false);
 			});
 	};
 
-	const editTags = (
-		<TagInput values={tempTags} onValuesChange={(values) => setTempTags(values)} onSubmit={onSubmit} />
-	);
+	const editTags = <TagInput values={tempTags} onValuesChange={values => setTempTags(values)} onSubmit={onSubmit} />;
 
 	const editTagsButtons = (
 		<>
-			<Button onClick={onSubmit} disabled={loading}>Save</Button>
-			<Button onClick={() => { setEditing(false); props.onEditingChanged(false); }} disabled={loading}>Discard</Button>
+			<Button onClick={onSubmit} disabled={loading}>
+				Save
+			</Button>
+			<Button
+				onClick={() => {
+					setEditing(false);
+					props.onEditingChanged(false);
+				}}
+				disabled={loading}>
+				Discard
+			</Button>
 		</>
 	);
 
@@ -98,9 +121,7 @@ const TagsCard = (props: TagsCardProps) =>
 				</div>
 				{editing ? editTags : showTags}
 			</CardContent>
-			<CardActions>
-				{editing ? editTagsButtons : showTagsButtons}
-			</CardActions>
+			<CardActions>{editing ? editTagsButtons : showTagsButtons}</CardActions>
 		</Card>
 	);
 };

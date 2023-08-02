@@ -1,17 +1,20 @@
 /** @format */
 
-import { createSlice, createAsyncThunk, CaseReducer, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, CaseReducer, PayloadAction, Reducer } from "@reduxjs/toolkit";
 import { notify } from "reapop";
 import { CredentialsInvalidError } from "../BooruRequest";
 import { User } from "../../models/BooruUser";
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
 import TagService from "./TagService";
+import { BooruTag, BooruTagCategory } from "../../models/BooruTag";
 
 const logger: Logger = LogFactory.create("TagSlice");
 
 interface TagState {
-	tags: string[];
+	tags: BooruTag[];
+	categories: BooruTagCategory[],
+	tagFrequencies: { [tag: string]: number };
 }
 
 export const tagList = createAsyncThunk("tag/list", async (_: null, thunkApi) => {
@@ -27,7 +30,9 @@ export const tagList = createAsyncThunk("tag/list", async (_: null, thunkApi) =>
 });
 
 const initialState: TagState = {
-	tags: []
+	tags: [],
+	tagFrequencies: {},
+	categories: []
 };
 
 export const TagSlice = createSlice({
@@ -36,13 +41,15 @@ export const TagSlice = createSlice({
 	reducers: {},
 	extraReducers: builder => {
 		builder.addCase(tagList.fulfilled, (state, action) => {
-			state.tags = action.payload;
+			state.tags = action.payload.tags.sort((a, b) => b.frequency - a.frequency);
+			state.categories = action.payload.categories;
+			state.tagFrequencies = {};
+			state.tags.forEach(t => state.tagFrequencies[t.tag] = t.frequency);
 		});
 		builder.addCase(tagList.rejected, (state, action) => {
-			state.tags = [];
 		});
 	}
 });
 
-export default TagSlice.reducer;
+export default TagSlice.reducer as Reducer<TagState>;
 export const selectTagState = (state: RootState) => state.tag;

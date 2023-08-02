@@ -40,8 +40,7 @@ const ListPage = (props: ListPageProps) => {
 
 	// update the column count when resizing
 	useEffect(() => {
-		function onResize() 
-		{
+		function onResize() {
 			setNumColumns(Math.floor(window.innerWidth / TargetImageWidth));
 		}
 
@@ -53,8 +52,7 @@ const ListPage = (props: ListPageProps) => {
 	});
 
 	useEffect(() => {
-		if (props.forceIndex) 
-		{
+		if (props.forceIndex) {
 			dispatch(
 				imageList({
 					query: null,
@@ -64,8 +62,8 @@ const ListPage = (props: ListPageProps) => {
 		}
 	}, [props.forceIndex]);
 
-	if (searchState == "initial") 
-	{
+	// send another query when the params change as well
+	if (searchState == "initial" || searchParams.get("q") != cursor?.currentQuery) {
 		const currentPage = Number(params.page) || 1;
 		const query = searchParams.get("q");
 
@@ -77,13 +75,9 @@ const ListPage = (props: ListPageProps) => {
 		);
 
 		return <></>;
-	} 
-	else if (searchState == "failed") 
-	{
+	} else if (searchState == "failed") {
 		return Util.logAndDisplayError(logger, "search failed", cursor?.currentQuery, cursor?.cursorPosition);
-	} 
-	else if (cursor == null) 
-	{
+	} else if (cursor == null) {
 		logger.log("cursor is null (expected if just initializing)");
 		return <></>;
 	}
@@ -101,7 +95,7 @@ const ListPage = (props: ListPageProps) => {
 		const newQueryString = Util.formatQueryString([
 			{ key: "q", value: cursor?.currentQuery || "", enabled: cursor?.currentQuery != null },
 			{ key: "page", value: String(page), enabled: page != 1 }
-		])
+		]);
 
 		navigate(cursor.makeImageLink(image));
 	};
@@ -109,8 +103,7 @@ const ListPage = (props: ListPageProps) => {
 	const onPageChange = (e: React.ChangeEvent<unknown>, page: number) => {
 		dispatch(imageSetPage(page));
 		let url = `/images/${page}`;
-		if (cursor != null && cursor.currentQuery != null) 
-		{
+		if (cursor != null && cursor.currentQuery != null) {
 			url += "?q=" + encodeURIComponent(cursor.currentQuery);
 		}
 		navigate(url);
@@ -118,8 +111,7 @@ const ListPage = (props: ListPageProps) => {
 
 	// we render the same pagination twice
 	const renderPagination = (key: string) => {
-		if (cursor == null) 
-		{
+		if (cursor == null) {
 			return <></>;
 		}
 
@@ -148,12 +140,10 @@ const ListPage = (props: ListPageProps) => {
 			<MuiLink underline="hover" color="inherit" component={RouterLink} to="/">
 				{i18n.t("siteTitle")}
 			</MuiLink>
-			<Typography color="text.primary">
-				Images
-			</Typography>
+			<Typography color="text.primary">Images</Typography>
 		</Breadcrumbs>
 	);
-	
+
 	return (
 		<div className="ListPage">
 			<div className="PageHeader ListPage-header">
@@ -178,11 +168,8 @@ const ListPage = (props: ListPageProps) => {
 					);
 				})}
 			</Grid>
-			<div className="ListPage-footer">
-				{renderPagination("pg-bottom")}
-			</div>
-			<Backdrop
-				open={searchState == "loading"}>
+			<div className="ListPage-footer">{renderPagination("pg-bottom")}</div>
+			<Backdrop open={searchState == "loading"}>
 				<div>
 					<Spinner name="wave" fadeIn="none" color="white" />
 				</div>
