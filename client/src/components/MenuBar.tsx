@@ -67,7 +67,8 @@ const MenuBar = () => {
 	const handleRandomizeImages = () => {
 		const previousQueryParts = (cursor?.currentQuery || "").split(" ");
 		const randomQuery = "order:random_" + Math.floor(Math.random() * 10000);
-		const query = previousQueryParts.filter(p => !p.startsWith("order:random_")).join(" ") + " " + randomQuery;
+		const filteredParts = previousQueryParts.filter(p => !p.startsWith("order:random_"));
+		const query = filteredParts.concat([randomQuery]).join(" ");
 		navigate(Util.makeImagesLink(query, 1));
 	};
 

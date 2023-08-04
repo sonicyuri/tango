@@ -67,13 +67,11 @@ const ImagePage = () => {
 	};
 
 	useEffect(() => {
-		function handleKeyDown(e: KeyboardEvent)
-		{
-			if (editing)
-			{
+		function handleKeyDown(e: KeyboardEvent) {
+			if (editing) {
 				return;
 			}
-			
+
 			if (e.key == "ArrowLeft" || e.key == "a") {
 				handleNavigate(-1);
 			} else if (e.key == "ArrowRight" || e.key == "d") {
@@ -103,7 +101,7 @@ const ImagePage = () => {
 	});
 
 	// if we're on too small of a screen, we want to arrange it vertically instead of horizontally
-	const useMobileLayout = useMediaQuery(theme.breakpoints.down("md"));
+	const useMobileLayout = useMediaQuery(theme.breakpoints.down("lg"));
 
 	// we've arrived at this page without an image already loaded, meaning we followed a direct link
 	// so we need to launch an imageGetById request to bring us up to speed
