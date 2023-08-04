@@ -6,7 +6,7 @@ import { AppBar, Box, IconButton, Link as MuiLink, Menu, MenuItem, Toolbar } fro
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 
-import { logout } from "../features/auth/AuthSlice";
+import { logout, selectAuthState } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectPostState } from "../features/posts/PostSlice";
 import i18n from "../util/Internationalization";
@@ -21,6 +21,7 @@ const MenuBar = () => {
 	const navigate = useNavigate();
 
 	const { cursor } = useAppSelector(selectPostState);
+	const { user } = useAppSelector(selectAuthState);
 	const [params, setParams] = useSearchParams();
 
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -56,7 +57,9 @@ const MenuBar = () => {
 			open={isMenuOpen}
 			onClose={handleMenuClose}>
 			<MenuItem>Profile</MenuItem>
-			<MenuItem>Favorites</MenuItem>
+			<MenuItem component={RouterLink} to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
+				Favorites
+			</MenuItem>
 			<MenuItem>Settings</MenuItem>
 			<MenuItem onClick={handleLogout}>Log Out</MenuItem>
 		</Menu>
