@@ -26,7 +26,7 @@ import ImagePost from "../components/ImagePost";
 import TagsCard from "../components/TagsCard";
 import VideoPost from "../components/VideoPost";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { postDirectLink, postNavigate, selectPostState } from "../features/posts/PostSlice";
+import { postDirectLink, postNavigate, postViewById, selectPostState } from "../features/posts/PostSlice";
 import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
@@ -52,13 +52,7 @@ const PostPage = () => {
 
 	// handles navigating left-right based on swipe, keys, or buttons
 	const handleNavigate = (direction: 1 | -1) => {
-		dispatch(postNavigate(direction))
-			.unwrap()
-			.then(action => {
-				if (action.post) {
-					navigate(cursor?.makePostLink(action.post) || "/posts/view/" + action.post.id);
-				}
-			});
+		navigate(cursor?.makePostLinkNavigate(direction) || "/posts");
 	};
 
 	useEffect(() => {
@@ -98,24 +92,22 @@ const PostPage = () => {
 	// if we're on too small of a screen, we want to arrange it vertically instead of horizontally
 	const useMobileLayout = useMediaQuery(theme.breakpoints.down("lg"));
 
+	//
+	useEffect(() => {
+		if (cursor != null) {
+			dispatch(postViewById({ postId: params.postId || "1" }));
+		} else {
+			dispatch(
+				postDirectLink({
+					postId: params.postId || "1",
+					query: searchParams.get("q"),
+					page: Number(searchParams.get("page") || "1") || 1
+				})
+			);
+		}
+	}, [params.postId]);
+
 	// NO HOOKS BELOW THIS POINT - early returns start here
-
-	// we've arrived at this page without a post already loaded, meaning we followed a direct link
-	// so we need to launch an postDirectLink request to bring us up to speed
-	if (
-		searchState == "initial" &&
-		((currentPost == null && params.postId) || (currentPost != null && currentPost.id != params.postId))
-	) {
-		dispatch(
-			postDirectLink({
-				postId: params.postId || "1",
-				query: searchParams.get("q"),
-				page: Number(searchParams.get("page") || "1") || 1
-			})
-		);
-
-		return <></>;
-	}
 
 	if (searchState == "loading") {
 		// TODO: nicer loading with blank info instead of simply nothing?

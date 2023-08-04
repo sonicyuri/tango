@@ -58,10 +58,10 @@ export class PostSearchCursor {
 	// for setting the position of the cursor. will preload relevant pages
 	public setCursorPosition(page: number, index: number): void {
 		this.preload(page);
-		if (page < this.maxPage) {
+		if (this.maxPageSize - index + 1 < PagePostPreloadThreshold && this.maxPage > page) {
 			this.preload(page + 1);
 		}
-		if (page > 1) {
+		if (index < PagePostPreloadThreshold && page > 1) {
 			this.preload(page - 1);
 		}
 		this.cursorPos = [page, index];
@@ -69,17 +69,24 @@ export class PostSearchCursor {
 
 	// sets the index component of the cursor directly
 	public setCursorIndex(index: number): void {
-		this.cursorPos[1] = index;
+		this.setCursorPosition(this.cursorPos[0], index);
+	}
 
-		const currentPage = this.cursorPos[0];
-
-		// preload the next page if we need to
-		if (this.maxPageSize - index + 1 < PagePostPreloadThreshold && this.maxPage > currentPage) {
-			this.preload(currentPage + 1);
+	/**
+	 * Finds the given post in the loaded pages and sets it as the current post.
+	 */
+	public setCurrentPostById(postId: string) {
+		if (!this.postsCache[postId]) {
+			return;
 		}
 
-		if (index < PagePostPreloadThreshold && currentPage > 1) {
-			this.preload(currentPage - 1);
+		for (const key in this.pagesCache) {
+			const index = this.pagesCache[key].indexOf(postId);
+			if (index !== -1) {
+				this.cursorPos = [Number(key), index];
+				this.setCursorPosition(Number(key), index);
+				break;
+			}
 		}
 	}
 
@@ -90,6 +97,10 @@ export class PostSearchCursor {
 		const [page, index] = this.cursorPos;
 		const pageImages = await this.getPosts(page);
 		return pageImages[index];
+	}
+
+	private getPostAtPosSync(page: number, index: number): BooruPost {
+		return this.postsCache[this.pagesCache[page][index]];
 	}
 
 	/**
@@ -124,6 +135,26 @@ export class PostSearchCursor {
 		]);
 
 		return `/posts/view/${post.id}${newQueryString}`;
+	}
+
+	public makePostLinkNavigate(movement: -1 | 1): string {
+		let [page, index] = this.cursorPos;
+		if (!this.canMove(movement)) {
+			return this.makePostLink(this.getPostAtPosSync(page, index));
+		}
+
+		index += movement;
+
+		const pageContents = this.pagesCache[page];
+		if (index >= pageContents.length) {
+			page++;
+			index = 0;
+		} else if (index < 0) {
+			page--;
+			index = this.pagesCache[page].length - 1;
+		}
+
+		return this.makePostLink(this.getPostAtPosSync(page, index));
 	}
 
 	// can the cursor be moved in this direction?

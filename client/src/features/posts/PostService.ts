@@ -9,8 +9,7 @@ export interface PostListRequest {
 }
 
 export interface PostGetRequest {
-	post: BooruPost;
-	pageIndex: number;
+	postId: string;
 }
 
 export interface PostGetByIdRequest {
