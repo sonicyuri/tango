@@ -1,7 +1,7 @@
 /** @format */
-
-import { useRouteError } from "react-router-dom";
 import React from "react";
+import { useRouteError } from "react-router-dom";
+
 import { LogFactory } from "../util/Logger";
 
 const logger = LogFactory.create("ErrorPage");

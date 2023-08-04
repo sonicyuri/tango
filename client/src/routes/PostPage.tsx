@@ -1,44 +1,35 @@
 /** @format */
-
-import React, { useEffect, useState } from "react";
-import Spinner from "react-spinkit";
-import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { login, selectAuthState } from "../features/auth/AuthSlice";
-import {
-	Button,
-	TextField,
-	Stack,
-	Container,
-	ImageList,
-	useMediaQuery,
-	useTheme,
-	Box,
-	Chip,
-	Card,
-	Paper,
-	Typography,
-	CardContent,
-	CardHeader,
-	Breadcrumbs,
-	Link as MuiLink,
-	ButtonGroup,
-	CardActions
-} from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
-import { imageDirectLink, imageList, imageNavigate, selectImageState } from "../features/images/ImageSlice";
-import { LogFactory, Logger } from "../util/Logger";
-import { Util } from "../util/Util";
-import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import LoginPage from "./LoginPage";
-import ImagePost from "../components/ImagePost";
-import VideoPost from "../components/VideoPost";
-import FlashPost from "../components/FlashPost";
-import i18n from "../util/Internationalization";
-
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import {
+	Box,
+	Breadcrumbs,
+	Button,
+	ButtonGroup,
+	Card,
+	CardContent,
+	CardHeader,
+	Link as MuiLink,
+	Stack,
+	Typography,
+	useMediaQuery,
+	useTheme
+} from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
+import React, { useEffect, useState } from "react";
+import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import Spinner from "react-spinkit";
 import { useSwipeable } from "react-swipeable";
+
+import FlashPost from "../components/FlashPost";
+import ImagePost from "../components/ImagePost";
 import TagsCard from "../components/TagsCard";
+import VideoPost from "../components/VideoPost";
+import { useAppDispatch, useAppSelector } from "../features/Hooks";
+import { postDirectLink, postNavigate, selectPostState } from "../features/posts/PostSlice";
+import i18n from "../util/Internationalization";
+import { LogFactory, Logger } from "../util/Logger";
+import { Util } from "../util/Util";
 
 const logger: Logger = LogFactory.create("ImagePage");
 
@@ -46,9 +37,12 @@ const ImageExtensions = ["png", "jpg", "jpeg", "gif"];
 const VideoExtensions = ["webm", "mp4", "ogv", "flv"];
 const FlashExtensions = ["swf"];
 
-const ImagePage = () => {
+/**
+ * Page representing a single post, allowing the post to be viewed and edited.
+ */
+const PostPage = () => {
 	const dispatch = useAppDispatch();
-	const { searchState, currentImage, cursor } = useAppSelector(selectImageState);
+	const { searchState, currentPost, cursor } = useAppSelector(selectPostState);
 	const params = useParams();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const theme = useTheme();
@@ -56,12 +50,13 @@ const ImagePage = () => {
 
 	const [editing, setEditing] = useState(false);
 
+	// handles navigating left-right based on swipe, keys, or buttons
 	const handleNavigate = (direction: 1 | -1) => {
-		dispatch(imageNavigate(direction))
+		dispatch(postNavigate(direction))
 			.unwrap()
 			.then(action => {
-				if (action.image) {
-					navigate(cursor?.makeImageLink(action.image) || "/images/view/" + action.image.id);
+				if (action.post) {
+					navigate(cursor?.makePostLink(action.post) || "/posts/view/" + action.post.id);
 				}
 			});
 	};
@@ -103,15 +98,17 @@ const ImagePage = () => {
 	// if we're on too small of a screen, we want to arrange it vertically instead of horizontally
 	const useMobileLayout = useMediaQuery(theme.breakpoints.down("lg"));
 
-	// we've arrived at this page without an image already loaded, meaning we followed a direct link
-	// so we need to launch an imageGetById request to bring us up to speed
+	// NO HOOKS BELOW THIS POINT - early returns start here
+
+	// we've arrived at this page without a post already loaded, meaning we followed a direct link
+	// so we need to launch an postDirectLink request to bring us up to speed
 	if (
 		searchState == "initial" &&
-		((currentImage == null && params.imageId) || (currentImage != null && currentImage.id != params.imageId))
+		((currentPost == null && params.postId) || (currentPost != null && currentPost.id != params.postId))
 	) {
 		dispatch(
-			imageDirectLink({
-				imageId: params.imageId || "1",
+			postDirectLink({
+				postId: params.postId || "1",
 				query: searchParams.get("q"),
 				page: Number(searchParams.get("page") || "1") || 1
 			})
@@ -123,30 +120,30 @@ const ImagePage = () => {
 	if (searchState == "loading") {
 		// TODO: nicer loading with blank info instead of simply nothing?
 		return <Spinner name="wave" fadeIn="none" color="white" />;
-	} else if (searchState == "failed" || currentImage == null) {
-		return Util.logAndDisplayError(logger, "failed to obtain image", currentImage);
+	} else if (searchState == "failed" || currentPost == null) {
+		return Util.logAndDisplayError(logger, "failed to obtain post", currentPost);
 	}
 
 	// choose which component to use based on extension
 	let postContent = <></>;
 	let needsSwipeListener = false;
 
-	if (ImageExtensions.indexOf(currentImage.extension) != -1) {
-		postContent = <ImagePost image={currentImage} />;
-	} else if (VideoExtensions.indexOf(currentImage.extension) != -1) {
-		postContent = <VideoPost image={currentImage} swipe={swipeHandlers} />;
+	if (ImageExtensions.indexOf(currentPost.extension) != -1) {
+		postContent = <ImagePost post={currentPost} />;
+	} else if (VideoExtensions.indexOf(currentPost.extension) != -1) {
+		postContent = <VideoPost post={currentPost} swipe={swipeHandlers} />;
 		// video element steals events needed for detecting swipe
 		needsSwipeListener = true;
-	} else if (FlashExtensions.indexOf(currentImage.extension) != -1) {
-		postContent = <FlashPost image={currentImage} />;
+	} else if (FlashExtensions.indexOf(currentPost.extension) != -1) {
+		postContent = <FlashPost post={currentPost} />;
 	} else {
-		postContent = Util.logAndDisplayError(logger, "unsupported extension {currentImage.extension}", currentImage);
+		postContent = Util.logAndDisplayError(logger, "unsupported extension {currentPost.extension}", currentPost);
 	}
 
 	// the section of the page containing the post itself
 	const post = (
 		<>
-			<div className="ImagePage-content">{postContent}</div>
+			<div className="PostPage-content">{postContent}</div>
 		</>
 	);
 
@@ -155,29 +152,26 @@ const ImagePage = () => {
 
 	// TODO: fix downloads (actually download, don't redirect)
 	const downloadLink = (
-		<MuiLink
-			href={currentImage.videoUrl}
-			download={currentImage.hash + "." + currentImage.extension}
-			underline="none">
+		<MuiLink href={currentPost.videoUrl} download={currentPost.hash + "." + currentPost.extension} underline="none">
 			Download File
 		</MuiLink>
 	);
 
 	let detailsRows: { title?: string; body: JSX.Element }[] = [
-		{ title: "Date posted", body: genericDetailRow(Util.formatDate(currentImage.postedAt)) },
-		{ title: "File size", body: genericDetailRow(Util.formatBytes(currentImage.fileSize)) },
+		{ title: "Date posted", body: genericDetailRow(Util.formatDate(currentPost.postedAt)) },
+		{ title: "File size", body: genericDetailRow(Util.formatBytes(currentPost.fileSize)) },
 		{ body: downloadLink }
 	];
 
 	const details = (
 		<Stack spacing={2}>
-			<TagsCard image={currentImage} onEditingChanged={edit => setEditing(edit)} />
-			<Card raised={true} className="ImagePage-details">
+			<TagsCard post={currentPost} onEditingChanged={edit => setEditing(edit)} />
+			<Card raised={true} className="PostPage-details">
 				<CardHeader title="Details" />
 				<CardContent>
 					<Stack spacing={2}>
 						{detailsRows.map(d => (
-							<div className="ImagePage-details-row" key={"row-" + d.title}>
+							<div className="PostPage-details-row" key={"row-" + d.title}>
 								{d.title ? (
 									<Typography variant="subtitle2" key={"title-" + d.title}>
 										{d.title}
@@ -194,16 +188,16 @@ const ImagePage = () => {
 		</Stack>
 	);
 
-	const imagesUrl = cursor?.makeImagesLink() || "/images";
+	const postsUrl = cursor?.makePostsLink() || "/posts";
 	const breadcrumbs = (
 		<Breadcrumbs aria-label="breadcrumb">
 			<MuiLink underline="hover" color="inherit" component={RouterLink} to="/">
 				{i18n.t("siteTitle")}
 			</MuiLink>
-			<MuiLink underline="hover" color="inherit" component={RouterLink} to={imagesUrl}>
-				Images
+			<MuiLink underline="hover" color="inherit" component={RouterLink} to={postsUrl}>
+				Posts
 			</MuiLink>
-			<Typography color="text.primary">Image {currentImage.id}</Typography>
+			<Typography color="text.primary">Post {currentPost.id}</Typography>
 		</Breadcrumbs>
 	);
 
@@ -222,22 +216,22 @@ const ImagePage = () => {
 	);
 
 	return (
-		<Box className="ImagePage" {...swipeHandlers}>
-			<div className="PageHeader ImagePage-header">
+		<Box className="PostPage" {...swipeHandlers}>
+			<div className="PageHeader PostPage-header">
 				{breadcrumbs}
-				<ButtonGroup variant="contained" aria-label="prev/next image">
+				<ButtonGroup variant="contained" aria-label="prev/next post">
 					<Button onClick={() => handleNavigate(-1)} disabled={!(cursor?.canMove(-1) || false)}>
 						<ArrowBackIcon />
 					</Button>
-					<Button disabled>Image {currentImage.id}</Button>
+					<Button disabled>Post {currentPost.id}</Button>
 					<Button onClick={() => handleNavigate(1)} disabled={!(cursor?.canMove(1) || false)}>
 						<ArrowForwardIcon />
 					</Button>
 				</ButtonGroup>
 			</div>
-			<div className="ImagePage-contents">{useMobileLayout ? mobileLayout : desktopLayout}</div>
+			<div className="PostPage-contents">{useMobileLayout ? mobileLayout : desktopLayout}</div>
 		</Box>
 	);
 };
 
-export default ImagePage;
+export default PostPage;

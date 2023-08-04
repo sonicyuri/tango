@@ -1,23 +1,23 @@
 /** @format */
-
-import { useNavigate, useRouteError } from "react-router-dom";
-import React, { useState } from "react";
-import { LogFactory } from "../util/Logger";
-import { BooruImage } from "../models/BooruImage";
 import { Button, Card, CardActions, CardContent, CardHeader, Chip } from "@mui/material";
-import TagInput from "./TagInput";
-import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { imageList, imageSetTags } from "../features/images/ImageSlice";
-import Spinner from "react-spinkit";
-import { Util } from "../util/Util";
-import { selectTagState, tagList } from "../features/tags/TagSlice";
-import { BooruTag } from "../models/BooruTag";
 import Color from "colorjs.io";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Spinner from "react-spinkit";
+
+import { useAppDispatch, useAppSelector } from "../features/Hooks";
+import { postSetTags } from "../features/posts/PostSlice";
+import { selectTagState, tagList } from "../features/tags/TagSlice";
+import { BooruPost } from "../models/BooruPost";
+import { BooruTag } from "../models/BooruTag";
+import { LogFactory } from "../util/Logger";
+import { Util } from "../util/Util";
+import TagInput from "./TagInput";
 
 const logger = LogFactory.create("TagsCard");
 
 export interface TagsCardProps {
-	image: BooruImage;
+	post: BooruPost;
 	onEditingChanged: (editing: boolean) => void;
 }
 
@@ -27,18 +27,18 @@ const TagsCard = (props: TagsCardProps) => {
 
 	const [loading, setLoading] = useState(false);
 	const [editing, setEditing] = useState(false);
-	const [tempTags, setTempTags] = useState(props.image.tags);
+	const [tempTags, setTempTags] = useState(props.post.tags);
 	const { tags, categories } = useAppSelector(selectTagState);
 
 	const onClickTag = (ev: React.MouseEvent, tag: string) => {
 		ev.preventDefault();
 
-		navigate(Util.makeImagesLink(tag, 1));
+		navigate(Util.makePostsLink(tag, 1));
 	};
 
 	const showTags = (
 		<div className="TagsCard">
-			{props.image.tags.map(t => {
+			{props.post.tags.map(t => {
 				const category = BooruTag.getCategory(t, categories);
 				const color = category?.color || "default";
 				const hoverColor: string = new Color(new Color(category?.color || "#000000").lighten(0.15)).toString({
@@ -54,7 +54,7 @@ const TagsCard = (props: TagsCardProps) => {
 						sx={style}
 						onClick={(e: React.MouseEvent) => onClickTag(e, t)}
 						clickable
-						href={Util.makeImagesLink(t, 1)}
+						href={Util.makePostsLink(t, 1)}
 					/>
 				);
 			})}
@@ -66,7 +66,7 @@ const TagsCard = (props: TagsCardProps) => {
 			onClick={() => {
 				setEditing(true);
 				props.onEditingChanged(true);
-				setTempTags(props.image.tags);
+				setTempTags(props.post.tags);
 			}}>
 			Edit Tags
 		</Button>
@@ -76,8 +76,8 @@ const TagsCard = (props: TagsCardProps) => {
 		setLoading(true);
 
 		dispatch(
-			imageSetTags({
-				image: props.image,
+			postSetTags({
+				post: props.post,
 				tags: tempTags.join(" ")
 			})
 		)

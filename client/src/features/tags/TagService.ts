@@ -1,7 +1,7 @@
 /** @format */
+import { BooruTag, BooruTagCategory, ShimmieTagCategory } from '../../models/BooruTag';
+import { BooruRequest } from '../BooruRequest';
 
-import { BooruTag, BooruTagCategory, ShimmieTagCategory } from "../../models/BooruTag";
-import { BooruRequest } from "../BooruRequest";
 
 interface TagListResponse
 {

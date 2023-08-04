@@ -3,19 +3,16 @@
 import { useRouteError } from "react-router-dom";
 import React from "react";
 import { LogFactory } from "../util/Logger";
-import { BooruImage } from "../models/BooruImage";
+import { BooruPost } from "../models/BooruPost";
 
 const logger = LogFactory.create("ImagePost");
 
 export interface ImagePostProps {
-	image: BooruImage;
+	post: BooruPost;
 }
 
 const ImagePost = (props: ImagePostProps) => {
-	return (
-		<div className="ImagePost" style={{ backgroundImage: `url(${props.image.videoUrl})` }}>
-		</div>
-	);
+	return <div className="ImagePost" style={{ backgroundImage: `url(${props.post.videoUrl})` }}></div>;
 };
 
 export default ImagePost;

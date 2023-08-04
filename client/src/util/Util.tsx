@@ -1,11 +1,10 @@
 /** @format */
-
 import { Alert, Breakpoint, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/system";
-import base64 from "base-64";
-import moment from "moment";
-import { Logger } from "./Logger";
 import { filesize } from "filesize";
+import moment from "moment";
+
+import { Logger } from "./Logger";
 
 export enum LoadingState {
 	Unloaded,
@@ -60,10 +59,10 @@ export class Util {
 	}
 
 	/**
-	 * Creates a link to the images page with the given information.
+	 * Creates a link to the posts page with the given information.
 	 */
-	static makeImagesLink(query: string | null, page: number): string {
+	static makePostsLink(query: string | null, page: number): string {
 		const queryString = Util.formatQueryString([{ key: "q", value: query?.trim() || "", enabled: Boolean(query) }]);
-		return `/images${page != 1 ? "/" + page : ""}${queryString}`;
+		return `/posts${page != 1 ? "/" + page : ""}${queryString}`;
 	}
 }

@@ -1,20 +1,18 @@
 /** @format */
-
-import { Link as RouterLink, useNavigate, useRouteError, useSearchParams } from "react-router-dom";
-import React, { useState } from "react";
-import { LogFactory } from "../util/Logger";
-import { BooruImage } from "../models/BooruImage";
-import TagInput from "./TagInput";
-import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { imageList, selectImageState } from "../features/images/ImageSlice";
-import { AppBar, IconButton, Toolbar, Typography, Link as MuiLink, Box, Menu, MenuItem } from "@mui/material";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import SearchBox from "./SearchBox";
+import { AppBar, Box, IconButton, Link as MuiLink, Menu, MenuItem, Toolbar } from "@mui/material";
+import React, { useState } from "react";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
+
 import { logout } from "../features/auth/AuthSlice";
+import { useAppDispatch, useAppSelector } from "../features/Hooks";
+import { selectPostState } from "../features/posts/PostSlice";
 import i18n from "../util/Internationalization";
+import { LogFactory } from "../util/Logger";
 import { Util } from "../util/Util";
+import SearchBox from "./SearchBox";
 
 const logger = LogFactory.create("MenuBar");
 
@@ -22,7 +20,7 @@ const MenuBar = () => {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 
-	const { cursor } = useAppSelector(selectImageState);
+	const { cursor } = useAppSelector(selectPostState);
 	const [params, setParams] = useSearchParams();
 
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -64,12 +62,12 @@ const MenuBar = () => {
 		</Menu>
 	);
 
-	const handleRandomizeImages = () => {
+	const handleRandomizeQuery = () => {
 		const previousQueryParts = (cursor?.currentQuery || "").split(" ");
 		const randomQuery = "order:random_" + Math.floor(Math.random() * 10000);
 		const filteredParts = previousQueryParts.filter(p => !p.startsWith("order:random_"));
 		const query = filteredParts.concat([randomQuery]).join(" ");
-		navigate(Util.makeImagesLink(query, 1));
+		navigate(Util.makePostsLink(query, 1));
 	};
 
 	return (
@@ -115,7 +113,7 @@ const MenuBar = () => {
 						aria-label="randomize"
 						title="Randomize"
 						sx={{}}
-						onClick={handleRandomizeImages}>
+						onClick={handleRandomizeQuery}>
 						<ShuffleIcon />
 					</IconButton>
 					<IconButton

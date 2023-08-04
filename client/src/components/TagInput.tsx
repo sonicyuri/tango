@@ -1,12 +1,12 @@
 /** @format */
-
+import { Autocomplete, Box, Chip, styled, TextField, Typography } from "@mui/material";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { LogFactory } from "../util/Logger";
-import { Autocomplete, Box, Chip, TextField, Typography, styled } from "@mui/material";
+
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag } from "../models/BooruTag";
+import { LogFactory } from "../util/Logger";
 
 const logger = LogFactory.create("TagInput");
 

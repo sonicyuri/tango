@@ -1,14 +1,12 @@
 /** @format */
-
-import { useNavigate, useRouteError } from "react-router-dom";
-import React, { useEffect, useState } from "react";
-import { LogFactory } from "../util/Logger";
-import { BooruImage } from "../models/BooruImage";
-import TagInput from "./TagInput";
-import { useAppDispatch } from "../features/Hooks";
-import { imageList } from "../features/images/ImageSlice";
-import { Button } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { useAppDispatch } from "../features/Hooks";
+import { LogFactory } from "../util/Logger";
+import TagInput from "./TagInput";
 
 const logger = LogFactory.create("SearchBox");
 
@@ -32,7 +30,7 @@ const SearchBox = (props: SearchBoxProps) => {
 	}, [props.query]);
 
 	const handleSearch = () => {
-		navigate(`/images/1?q=${encodeURIComponent(values.join(" "))}`);
+		navigate(`/posts/1?q=${encodeURIComponent(values.join(" "))}`);
 	};
 
 	return (

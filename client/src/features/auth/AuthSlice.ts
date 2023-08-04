@@ -1,14 +1,14 @@
 /** @format */
+import { CaseReducer, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { notify } from 'reapop';
 
-import { createSlice, createAsyncThunk, CaseReducer, PayloadAction } from "@reduxjs/toolkit";
-import { notify } from "reapop";
-import { CredentialsInvalidError } from "../BooruRequest";
-import { User } from "../../models/BooruUser";
-import { LogFactory, Logger } from "../../util/Logger";
-import { RootState } from "../Store";
+import { User } from '../../models/BooruUser';
+import { LogFactory, Logger } from '../../util/Logger';
+import { CredentialsInvalidError } from '../BooruRequest';
+import { RootState } from '../Store';
+import { tagList } from '../tags/TagSlice';
+import AuthService, { Credentials } from './AuthService';
 
-import AuthService, { Credentials } from "./AuthService";
-import { tagList } from "../tags/TagSlice";
 
 const logger: Logger = LogFactory.create("AuthSlice");
 

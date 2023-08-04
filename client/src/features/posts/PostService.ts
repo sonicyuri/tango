@@ -1,40 +1,38 @@
 /** @format */
 
+import { BooruPost, ShimmiePost } from "../../models/BooruPost";
 import { BooruRequest } from "../BooruRequest";
-import { User } from "../../models/BooruUser";
-import { LocalSettings } from "../../util/LocalSettings";
-import { BooruImage, ShimmieImage } from "../../models/BooruImage";
 
-export interface ImageListRequest {
+export interface PostListRequest {
 	query: string | null;
 	page: number;
 }
 
-export interface ImageGetRequest {
-	image: BooruImage;
+export interface PostGetRequest {
+	post: BooruPost;
 	pageIndex: number;
 }
 
-export interface ImageGetByIdRequest {
-	imageId: string;
+export interface PostGetByIdRequest {
+	postId: string;
 }
 
 // the request that needs to be made by a direct link to an ImagePage to bring it up to speed
-export interface ImageDirectLinkRequest
+export interface PostDirectLinkRequest
 {
-	imageId: string;
+	postId: string;
 	query: string | null;
 	page: number | null;
 }
 
-export interface ImageSetTagsRequest
+export interface PostSetTagsRequest
 {
-	image: BooruImage;
+	post: BooruPost;
 	tags: string
 };
 
-class ImageService {
-	static async getImageById(id: string): Promise<BooruImage | null> 
+class PostService {
+	static async getPostById(id: string): Promise<BooruPost | null> 
 	{
 		return BooruRequest.runQueryJson("/api/shimmie/get_image/" + id).then(v => {
 			if (Object.keys(v).length == 0) 
@@ -42,11 +40,11 @@ class ImageService {
 				return null;
 			}
 
-			return new BooruImage(v as ShimmieImage);
+			return new BooruPost(v as ShimmiePost);
 		});
 	}
 
-	static setImageTags(image: BooruImage, newTags: string): Promise<void>
+	static setPostTags(image: BooruPost, newTags: string): Promise<void>
 	{
 		const data = new URLSearchParams();
 		data.append("postId", image.id);
@@ -66,4 +64,4 @@ class ImageService {
 	}
 }
 
-export default ImageService;
+export default PostService;
