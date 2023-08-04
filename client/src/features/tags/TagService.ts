@@ -1,17 +1,14 @@
 /** @format */
-import { BooruTag, BooruTagCategory, ShimmieTagCategory } from '../../models/BooruTag';
-import { BooruRequest } from '../BooruRequest';
+import { BooruTag, BooruTagCategory, ShimmieTagCategory } from "../../models/BooruTag";
+import { BooruRequest } from "../BooruRequest";
 
-
-interface TagListResponse
-{
-	tags: BooruTag[],
-	categories: BooruTagCategory[]
+interface TagListResponse {
+	tags: BooruTag[];
+	categories: BooruTagCategory[];
 }
 
 class TagService {
-	static async getTags(): Promise<TagListResponse> 
-	{
+	static async getTags(): Promise<TagListResponse> {
 		return BooruRequest.runQueryJson("/api/shimmie/get_tags_v2").then(v => {
 			const tags = v["tags"];
 			return {

@@ -1,8 +1,7 @@
 /** @format */
-import { User } from '../../models/BooruUser';
-import { LocalSettings } from '../../util/LocalSettings';
-import { BooruRequest } from '../BooruRequest';
-
+import { User } from "../../models/BooruUser";
+import { LocalSettings } from "../../util/LocalSettings";
+import { BooruRequest } from "../BooruRequest";
 
 export interface Credentials {
 	username: string;
@@ -10,8 +9,7 @@ export interface Credentials {
 }
 
 class AuthService {
-	static async login(credentials: Credentials): Promise<User> 
-	{
+	static async login(credentials: Credentials): Promise<User> {
 		const { username, password } = credentials;
 		const url = `/api/shimmie/get_user?name=${encodeURIComponent(username)}`;
 		BooruRequest.init(username, password);
@@ -24,8 +22,7 @@ class AuthService {
 			});
 	}
 
-	static logout() 
-	{
+	static logout() {
 		LocalSettings.username.clear();
 		LocalSettings.password.clear();
 	}

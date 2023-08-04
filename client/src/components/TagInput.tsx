@@ -38,7 +38,7 @@ const TagInput = (props: TagInputProps) => {
 				multiple
 				options={tags.map(t => t.tag)}
 				value={props.values}
-				onChange={(e, values) => props.onValuesChange(values)}
+				onChange={(_: any, values: string[]) => props.onValuesChange(values)}
 				freeSolo
 				autoHighlight
 				renderTags={(value: readonly string[], getTagProps) => {

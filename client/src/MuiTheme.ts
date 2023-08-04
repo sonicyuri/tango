@@ -1,15 +1,10 @@
+/** @format */
+
 import { createTheme } from "@mui/material";
 
-export const BodyFonts = [
-	"Palanquin",
-	"sans-serif"
-].join(",");
+export const BodyFonts = ["Palanquin", "sans-serif"].join(",");
 
-export const HeaderFonts = [
-	"'Source Sans 3'",
-	"Palanquin",
-	"sans-serif"
-].join(",");
+export const HeaderFonts = ["'Source Sans 3'", "Palanquin", "sans-serif"].join(",");
 
 const baseTheme = createTheme({
 	palette: {
@@ -47,6 +42,6 @@ const componentsTheme = createTheme(baseTheme, {
 			}
 		}
 	}
-})
+});
 
 export default componentsTheme;

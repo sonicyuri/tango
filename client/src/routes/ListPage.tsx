@@ -99,8 +99,16 @@ const ListPage = (props: ListPageProps) => {
 		// include information on the current list in the url so we can get back to it even with a direct link
 		const page = cursor?.cursorPosition[0] || 1;
 		const newQueryString = Util.formatQueryString([
-			{ key: "q", value: cursor?.currentQuery || "", enabled: cursor?.currentQuery != null },
-			{ key: "page", value: String(page), enabled: page != 1 }
+			{
+				key: "q",
+				value: cursor?.currentQuery || "",
+				enabled: cursor?.currentQuery != null
+			},
+			{
+				key: "page",
+				value: String(page),
+				enabled: page != 1
+			}
 		]);
 
 		navigate(cursor.makePostLink(post));

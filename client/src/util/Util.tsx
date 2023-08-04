@@ -3,6 +3,7 @@ import { Alert, Breakpoint, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/system";
 import { filesize } from "filesize";
 import moment from "moment";
+import React from "react";
 
 import { Logger } from "./Logger";
 
@@ -47,7 +48,7 @@ export class Util {
 	 * @returns The formatted query string, like ?k1=v1&k2=v2&k3=v3
 	 */
 	static formatQueryString(parts: { key: string; value: string; enabled?: boolean }[]): string {
-		let formatted = parts
+		const formatted = parts
 			.filter(p => p.enabled || p.enabled === undefined)
 			.map(p => `${p.key}=${encodeURIComponent(p.value)}`)
 			.join("&");
@@ -62,7 +63,13 @@ export class Util {
 	 * Creates a link to the posts page with the given information.
 	 */
 	static makePostsLink(query: string | null, page: number): string {
-		const queryString = Util.formatQueryString([{ key: "q", value: query?.trim() || "", enabled: Boolean(query) }]);
+		const queryString = Util.formatQueryString([
+			{
+				key: "q",
+				value: query?.trim() || "",
+				enabled: Boolean(query)
+			}
+		]);
 		return `/posts${page != 1 ? "/" + page : ""}${queryString}`;
 	}
 }

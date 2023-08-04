@@ -31,8 +31,7 @@ export class PostSearchCursor {
 	// the max page size seen so far in this query
 	private maxPageSize = 0;
 
-	constructor(query: string | null) 
-	{
+	constructor(query: string | null) {
 		this.query = query;
 		this.pagesCache = {};
 		this.postsCache = {};
@@ -40,13 +39,11 @@ export class PostSearchCursor {
 		this.cursorPos = [1, 0];
 	}
 
-	public get pageCount(): number 
-	{
+	public get pageCount(): number {
 		return this.maxPage;
 	}
 
-	public get currentQuery(): string | null 
-	{
+	public get currentQuery(): string | null {
 		return this.query;
 	}
 
@@ -54,41 +51,34 @@ export class PostSearchCursor {
 	 * Gets the current cursor position.
 	 * @returns [page, index]
 	 */
-	public get cursorPosition(): [number, number] 
-	{
+	public get cursorPosition(): [number, number] {
 		return this.cursorPos;
 	}
 
 	// for setting the position of the cursor. will preload relevant pages
-	public setCursorPosition(page: number, index: number): void 
-	{
+	public setCursorPosition(page: number, index: number): void {
 		this.preload(page);
-		if (page < this.maxPage) 
-		{
+		if (page < this.maxPage) {
 			this.preload(page + 1);
 		}
-		if (page > 1) 
-		{
+		if (page > 1) {
 			this.preload(page - 1);
 		}
 		this.cursorPos = [page, index];
 	}
 
 	// sets the index component of the cursor directly
-	public setCursorIndex(index: number): void 
-	{
+	public setCursorIndex(index: number): void {
 		this.cursorPos[1] = index;
 
 		const currentPage = this.cursorPos[0];
 
 		// preload the next page if we need to
-		if (this.maxPageSize - index + 1 < PagePostPreloadThreshold && this.maxPage > currentPage) 
-		{
+		if (this.maxPageSize - index + 1 < PagePostPreloadThreshold && this.maxPage > currentPage) {
 			this.preload(currentPage + 1);
 		}
 
-		if (index < PagePostPreloadThreshold && currentPage > 1) 
-		{
+		if (index < PagePostPreloadThreshold && currentPage > 1) {
 			this.preload(currentPage - 1);
 		}
 	}
@@ -96,8 +86,7 @@ export class PostSearchCursor {
 	/**
 	 * Returns the post the cursor is pointing at.
 	 */
-	public async getPostAtCursor(): Promise<BooruPost> 
-	{
+	public async getPostAtCursor(): Promise<BooruPost> {
 		const [page, index] = this.cursorPos;
 		const pageImages = await this.getPosts(page);
 		return pageImages[index];
@@ -106,65 +95,61 @@ export class PostSearchCursor {
 	/**
 	 * Returns the posts on the current page the cursor is pointing at.
 	 */
-	public getPostsAtCursor(): Promise<BooruPost[]> 
-	{
+	public getPostsAtCursor(): Promise<BooruPost[]> {
 		return this.getPosts(this.cursorPos[0]);
 	}
 
 	/**
 	 * Creates a link to the current posts page this cursor is pointing to.
 	 */
-	public makePostsLink(): string
-	{
+	public makePostsLink(): string {
 		return Util.makePostsLink(this.currentQuery || "", this.cursorPos[0]);
 	}
 
 	/**
 	 * Makes a link to a particular post based on the current cursor position.
 	 */
-	public makePostLink(post: BooruPost): string
-	{
+	public makePostLink(post: BooruPost): string {
 		const newQueryString = Util.formatQueryString([
-			{ key: "q", value: this.currentQuery || "", enabled: this.currentQuery != null },
-			{ key: "page", value: String(this.cursorPos[0]), enabled: this.cursorPos[0] != 1 }
-		])
+			{
+				key: "q",
+				value: this.currentQuery || "",
+				enabled: this.currentQuery != null
+			},
+			{
+				key: "page",
+				value: String(this.cursorPos[0]),
+				enabled: this.cursorPos[0] != 1
+			}
+		]);
 
 		return `/posts/view/${post.id}${newQueryString}`;
 	}
 
 	// can the cursor be moved in this direction?
-	public canMove(movement: -1 | 1): boolean 
-	{
+	public canMove(movement: -1 | 1): boolean {
 		const [page, index] = this.cursorPos;
-		if (movement == -1) 
-		{
+		if (movement == -1) {
 			return page > 1 || index > 0;
-		} 
-		else 
-		{
+		} else {
 			return page < this.maxPage || index < this.maxPageSize - 1;
 		}
 	}
 
 	// moves cursor forwards or backwards and returns the post at that point
-	public async moveCursorAndReturn(movement: -1 | 1): Promise<BooruPost> 
-	{
-		if (!this.canMove(movement)) 
-		{
+	public async moveCursorAndReturn(movement: -1 | 1): Promise<BooruPost> {
+		if (!this.canMove(movement)) {
 			return Promise.reject(new Error("No more posts!"));
 		}
 
 		let [page, index] = this.cursorPos;
 		let pagePosts = await this.getPosts(page);
 		index += movement;
-		if (index > pagePosts.length - 1) 
-		{
+		if (index > pagePosts.length - 1) {
 			page += 1;
 			index = 0;
 			pagePosts = await this.getPosts(page);
-		} 
-		else if (index < 0) 
-		{
+		} else if (index < 0) {
 			page -= 1;
 			pagePosts = await this.getPosts(page);
 			index = pagePosts.length - 1;
@@ -178,25 +163,20 @@ export class PostSearchCursor {
 	 * Stores the given post in the internal post cache, updating the existing cache if present.
 	 * This is used to inform the cursor of any posts fetched through getById or other means.
 	 */
-	public storeOrUpdatePost(post: BooruPost): void
-	{
+	public storeOrUpdatePost(post: BooruPost): void {
 		this.postsCache[post.id] = post;
 	}
 
-	public async getPosts(page: number): Promise<BooruPost[]> 
-	{
-		if (page > this.maxPage) 
-		{
+	public async getPosts(page: number): Promise<BooruPost[]> {
+		if (page > this.maxPage) {
 			page = this.maxPage;
 		}
 
-		if (this.runningPromises[page] !== undefined) 
-		{
+		if (this.runningPromises[page] !== undefined) {
 			await this.runningPromises[page];
 		}
 
-		if (this.pagesCache[page] === undefined) 
-		{
+		if (this.pagesCache[page] === undefined) {
 			await this.load(page);
 		}
 
@@ -204,18 +184,14 @@ export class PostSearchCursor {
 	}
 
 	// start a page loading
-	public preload(page: number): void 
-	{
-		if (page > 0 && this.pagesCache[page] === undefined) 
-		{
+	public preload(page: number): void {
+		if (page > 0 && this.pagesCache[page] === undefined) {
 			this.load(page);
 		}
 	}
 
-	private load(page: number): Promise<void> 
-	{
-		if (this.runningPromises[page] !== undefined) 
-		{
+	private load(page: number): Promise<void> {
+		if (this.runningPromises[page] !== undefined) {
 			return this.runningPromises[page];
 		}
 
@@ -230,10 +206,9 @@ export class PostSearchCursor {
 				this.maxPage = res.total_pages;
 				return res.images.map(i => new BooruPost(i));
 			})
-			.then(images =>
-			{
+			.then(images => {
 				// store all the images in the posts cache and store the ids in the page cache
-				images.forEach(img => this.postsCache[img.id] = img);
+				images.forEach(img => (this.postsCache[img.id] = img));
 				this.pagesCache[page] = images.map(img => img.id);
 				this.maxPageSize = Math.max(images.length, this.maxPageSize);
 			})
