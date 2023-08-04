@@ -11,13 +11,27 @@ import AuthService, { Credentials } from "./AuthService";
 
 const logger: Logger = LogFactory.create("AuthSlice");
 
+type LoginState = "initial" | "loading" | "failed" | "success";
+
 interface AuthState {
 	isLoggedIn: boolean;
 	user: User | null;
+	loginState: LoginState;
 }
+
+const setLoginState: CaseReducer<AuthState, PayloadAction<LoginState>> = (state, action) => {
+	state.loginState = action.payload;
+};
+
+const setLoginStateAction = (newState: LoginState): PayloadAction<LoginState> => ({
+	type: "auth/setLoginState",
+	payload: newState
+});
 
 export const login = createAsyncThunk("auth/login", async (credentials: Credentials, thunkApi) => {
 	try {
+		thunkApi.dispatch(setLoginStateAction("loading"));
+
 		const user = await AuthService.login(credentials);
 		thunkApi.dispatch(notify("Login successful!", "success"));
 		thunkApi.dispatch(tagList(null));
@@ -37,6 +51,7 @@ export const login = createAsyncThunk("auth/login", async (credentials: Credenti
 const logoutReducer: CaseReducer<AuthState, PayloadAction<void>> = (state, action) => {
 	AuthService.logout();
 	state.isLoggedIn = false;
+	state.loginState = "initial";
 };
 
 export const logout = (): PayloadAction<void> => ({
@@ -46,23 +61,27 @@ export const logout = (): PayloadAction<void> => ({
 
 const initialState: AuthState = {
 	isLoggedIn: false,
-	user: null
+	user: null,
+	loginState: "initial"
 };
 
 export const AuthSlice = createSlice({
 	name: "auth",
 	initialState,
 	reducers: {
-		logout: logoutReducer
+		logout: logoutReducer,
+		setLoginState
 	},
 	extraReducers: builder => {
 		builder.addCase(login.fulfilled, (state, action) => {
 			state.isLoggedIn = true;
 			state.user = action.payload;
+			state.loginState = "success";
 		});
 		builder.addCase(login.rejected, (state, action) => {
 			state.isLoggedIn = false;
 			state.user = null;
+			state.loginState = "failed";
 		});
 	}
 });

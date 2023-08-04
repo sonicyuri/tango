@@ -1,27 +1,26 @@
 /** @format */
-import { Button, Container, Stack, TextField, Typography } from "@mui/material";
+import { Backdrop, Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useFormik } from "formik";
 import React, { useEffect, useState } from "react";
 import Spinner from "react-spinkit";
 import * as Yup from "yup";
 
 import { Credentials } from "../features/auth/AuthService";
-import { login } from "../features/auth/AuthSlice";
-import { useAppDispatch } from "../features/Hooks";
+import { login, selectAuthState } from "../features/auth/AuthSlice";
+import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import i18n from "../util/Internationalization";
 import { LocalSettings } from "../util/LocalSettings";
 
 const LoginPage = () => {
-	const [loading, setLoading] = useState(false);
-
 	const dispatch = useAppDispatch();
+	const { loginState } = useAppSelector(selectAuthState);
+	const [causedLogin, setCausedLogin] = useState(false);
 
 	const handleLogin = (credentials: Credentials) => {
-		setLoading(true);
-
+		setCausedLogin(true);
 		dispatch(login(credentials))
 			.unwrap()
-			.catch(() => setLoading(false));
+			.then(() => setCausedLogin(false));
 	};
 
 	const initialValues: Credentials = {
@@ -42,12 +41,15 @@ const LoginPage = () => {
 
 	useEffect(() => {
 		if (initialValues.username.length > 0 && initialValues.password.length > 0) {
-			setLoading(true);
-			dispatch(login(initialValues))
-				.unwrap()
-				.catch(() => setLoading(false));
+			dispatch(login(initialValues));
 		}
 	}, []);
+
+	const loadingSpinner = <Spinner name="wave" fadeIn="none" color="white" />;
+
+	if (loginState == "loading" && !causedLogin) {
+		return <Backdrop open={true}>{loadingSpinner}</Backdrop>;
+	}
 
 	return (
 		<Container
@@ -92,7 +94,7 @@ const LoginPage = () => {
 						helperText={formik.touched.password && formik.errors.password}
 					/>
 					<Button color="primary" variant="contained" fullWidth type="submit">
-						{loading ? <Spinner name="wave" fadeIn="none" color="white" /> : <span>Login</span>}
+						{loginState == "loading" ? loadingSpinner : <span>Login</span>}
 					</Button>
 				</Stack>
 			</form>
