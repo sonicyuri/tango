@@ -15,7 +15,7 @@ import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "rea
 import Spinner from "react-spinkit";
 
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { postList, postSetPage, selectPostState } from "../features/posts/PostSlice";
+import { postList, selectPostState } from "../features/posts/PostSlice";
 import { BooruPost } from "../models/BooruPost";
 import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";

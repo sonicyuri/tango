@@ -26,7 +26,7 @@ import ImagePost from "../components/ImagePost";
 import TagsCard from "../components/TagsCard";
 import VideoPost from "../components/VideoPost";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { postDirectLink, postNavigate, postViewById, selectPostState } from "../features/posts/PostSlice";
+import { postDirectLink, postViewById, selectPostState } from "../features/posts/PostSlice";
 import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
