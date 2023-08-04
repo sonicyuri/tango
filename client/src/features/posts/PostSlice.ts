@@ -8,11 +8,11 @@ import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
 import PostService, { PostDirectLinkRequest, PostGetRequest, PostListRequest, PostSetTagsRequest } from "./PostService";
 
-const logger: Logger = LogFactory.create("ImageSlice");
+const logger: Logger = LogFactory.create("PostSlice");
 
 type PostSearchState = "initial" | "loading" | "ready" | "failed";
 
-type ImageNavigateDirection = -1 | 1;
+type PostNavigateDirection = -1 | 1;
 
 interface PostState {
 	cursor: PostSearchCursor | null;
@@ -117,7 +117,7 @@ export const postDirectLink = createAsyncThunk("post/direct_link", async (reques
 	}
 });
 
-export const postNavigate = createAsyncThunk("image/navigate", async (request: ImageNavigateDirection, thunkApi) => {
+export const postNavigate = createAsyncThunk("image/navigate", async (request: PostNavigateDirection, thunkApi) => {
 	try {
 		const state: PostState = (thunkApi.getState() as any).post;
 		if (state.cursor == null) {
@@ -125,12 +125,12 @@ export const postNavigate = createAsyncThunk("image/navigate", async (request: I
 		}
 
 		if (!state.cursor.canMove(request)) {
-			return thunkApi.fulfillWithValue({ post: state.currentPost });
+			return { post: state.currentPost };
 		}
 
 		thunkApi.dispatch(setSearchStateAction("loading"));
 
-		const post = await state.cursor.moveCursorAndReturn(request);
+		const post: BooruPost | null = await state.cursor.moveCursorAndReturn(request);
 		return { post };
 	} catch (error: any) {
 		logger.error("error navigating", error);

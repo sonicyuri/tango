@@ -40,9 +40,9 @@ class PostService {
 		});
 	}
 
-	static setPostTags(image: BooruPost, newTags: string): Promise<void> {
+	static setPostTags(post: BooruPost, newTags: string): Promise<void> {
 		const data = new URLSearchParams();
-		data.append("postId", image.id);
+		data.append("postId", post.id);
 		data.append("tags", newTags);
 
 		return BooruRequest.runQuery("/api/shimmie/set_tags", "POST", data)
