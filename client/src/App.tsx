@@ -32,8 +32,7 @@ const App = () => {
 					element: <ListPage />
 				},
 				{
-					// TODO: clicking the "Tango" at the top shouldn't bring you back to the current page - it should be back to the first page
-					element: <ListPage forceIndex={true} />,
+					element: <ListPage />,
 					index: true
 				}
 			]

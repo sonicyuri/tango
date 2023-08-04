@@ -15,7 +15,7 @@ import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "rea
 import Spinner from "react-spinkit";
 
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { postGet, postList, postSetPage, selectPostState } from "../features/posts/PostSlice";
+import { postList, postSetPage, selectPostState } from "../features/posts/PostSlice";
 import { BooruPost } from "../models/BooruPost";
 import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";
@@ -23,14 +23,10 @@ import { Util } from "../util/Util";
 
 const logger: Logger = LogFactory.create("ListPage");
 
-interface ListPageProps {
-	forceIndex?: boolean;
-}
-
 // the number of pixels wide we're aiming for each grid item to be
 const TargetImageWidth = 210;
 
-const ListPage = (props: ListPageProps) => {
+const ListPage = () => {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 	const params = useParams();
@@ -58,18 +54,6 @@ const ListPage = (props: ListPageProps) => {
 	});
 
 	useEffect(() => {
-		if (props.forceIndex) {
-			dispatch(
-				postList({
-					query: null,
-					page: 1
-				})
-			);
-		}
-	}, [props.forceIndex]);
-
-	// send another query when the params change as well
-	if (searchState == "initial" || searchParams.get("q") != cursor?.currentQuery) {
 		const currentPage = Number(params.page) || 1;
 		const query = searchParams.get("q");
 
@@ -79,7 +63,9 @@ const ListPage = (props: ListPageProps) => {
 				page: currentPage
 			})
 		);
+	}, [searchParams.get("q"), params.page]);
 
+	if (searchState == "initial") {
 		return <></>;
 	} else if (searchState == "failed") {
 		return Util.logAndDisplayError(logger, "search failed", cursor?.currentQuery, cursor?.cursorPosition);
@@ -89,38 +75,11 @@ const ListPage = (props: ListPageProps) => {
 	}
 
 	const onPostClicked = (post: BooruPost, index: number) => {
-		dispatch(
-			postGet({
-				post,
-				pageIndex: index
-			})
-		);
-
-		// include information on the current list in the url so we can get back to it even with a direct link
-		const page = cursor?.cursorPosition[0] || 1;
-		const newQueryString = Util.formatQueryString([
-			{
-				key: "q",
-				value: cursor?.currentQuery || "",
-				enabled: cursor?.currentQuery != null
-			},
-			{
-				key: "page",
-				value: String(page),
-				enabled: page != 1
-			}
-		]);
-
 		navigate(cursor.makePostLink(post));
 	};
 
 	const onPageChange = (e: React.ChangeEvent<unknown>, page: number) => {
-		dispatch(postSetPage(page));
-		let url = `/posts/${page}`;
-		if (cursor != null && cursor.currentQuery != null) {
-			url += "?q=" + encodeURIComponent(cursor.currentQuery);
-		}
-		navigate(url);
+		navigate(Util.makePostsLink(cursor?.currentQuery, page));
 	};
 
 	// we render the same pagination twice

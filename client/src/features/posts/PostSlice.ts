@@ -71,18 +71,21 @@ export const postSetPage = createAsyncThunk("post/set_page", async (page: number
 	}
 });
 
-const postGetReducer: CaseReducer<PostState, PayloadAction<PostGetRequest>> = (state, action) => {
-	if (state.cursor != null) {
-		state.cursor.setCursorIndex(action.payload.pageIndex);
+export const postViewById = createAsyncThunk("post/view_by_id", async (request: PostGetRequest, thunkApi) => {
+	try {
+		thunkApi.dispatch(setSearchStateAction("loading"));
+		const state: PostState = (thunkApi.getState() as any).post;
+		if (state.cursor == null) {
+			return thunkApi.rejectWithValue({});
+		}
+
+		state.cursor.setCurrentPostById(request.postId);
+		return { post: await state.cursor.getPostAtCursor() };
+	} catch (error: any) {
+		logger.error("error fetching post", error);
+		thunkApi.dispatch(notify("View by id lookup failed - " + error, "error"));
+		return thunkApi.rejectWithValue({});
 	}
-
-	state.currentPost = action.payload.post;
-	state.searchState = "ready";
-};
-
-export const postGet = (request: PostGetRequest): PayloadAction<PostGetRequest> => ({
-	type: "post/get",
-	payload: request
 });
 
 export const postDirectLink = createAsyncThunk("post/direct_link", async (request: PostDirectLinkRequest, thunkApi) => {
@@ -163,8 +166,7 @@ export const PostSlice = createSlice({
 	name: "post",
 	initialState,
 	reducers: {
-		setSearchState,
-		get: postGetReducer
+		setSearchState
 	},
 	extraReducers: builder => {
 		builder.addCase(postList.fulfilled, (state, action) => {
@@ -224,6 +226,14 @@ export const PostSlice = createSlice({
 			}
 		});
 		builder.addCase(postSetTags.rejected, (state, action) => {});
+
+		builder.addCase(postViewById.fulfilled, (state, action) => {
+			state.currentPost = action.payload.post;
+			state.searchState = "ready";
+		});
+		builder.addCase(postViewById.rejected, (state, action) => {
+			state.searchState = "failed";
+		});
 	}
 });
 
