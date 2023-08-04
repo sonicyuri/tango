@@ -1,14 +1,13 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { notify } from 'reapop';
+import { CaseReducer, createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { notify } from "reapop";
 
-import { User } from '../../models/BooruUser';
-import { LogFactory, Logger } from '../../util/Logger';
-import { CredentialsInvalidError } from '../BooruRequest';
-import { RootState } from '../Store';
-import { tagList } from '../tags/TagSlice';
-import AuthService, { Credentials } from './AuthService';
-
+import { User } from "../../models/BooruUser";
+import { LogFactory, Logger } from "../../util/Logger";
+import { CredentialsInvalidError } from "../BooruRequest";
+import { RootState } from "../Store";
+import { tagList } from "../tags/TagSlice";
+import AuthService, { Credentials } from "./AuthService";
 
 const logger: Logger = LogFactory.create("AuthSlice");
 
@@ -18,22 +17,16 @@ interface AuthState {
 }
 
 export const login = createAsyncThunk("auth/login", async (credentials: Credentials, thunkApi) => {
-	try 
-	{
+	try {
 		const user = await AuthService.login(credentials);
 		thunkApi.dispatch(notify("Login successful!", "success"));
 		thunkApi.dispatch(tagList(null));
 		return user;
-	} 
-	catch (error: any) 
-	{
+	} catch (error: any) {
 		logger.error("error logging in", error);
-		if (error instanceof CredentialsInvalidError) 
-		{
+		if (error instanceof CredentialsInvalidError) {
 			thunkApi.dispatch(notify("Login failed - invalid credentials", "error"));
-		} 
-		else 
-		{
+		} else {
 			thunkApi.dispatch(notify("Login failed - unknown error", "error"));
 		}
 

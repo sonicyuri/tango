@@ -1,13 +1,12 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { notify } from 'reapop';
+import { CaseReducer, createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { notify } from "reapop";
 
-import { BooruPost } from '../../models/BooruPost';
-import { PostSearchCursor } from '../PostSearchCursor';
-import { LogFactory, Logger } from '../../util/Logger';
-import { RootState } from '../Store';
-import PostService, { PostDirectLinkRequest, PostGetRequest, PostListRequest, PostSetTagsRequest } from './PostService';
-
+import { BooruPost } from "../../models/BooruPost";
+import { PostSearchCursor } from "../PostSearchCursor";
+import { LogFactory, Logger } from "../../util/Logger";
+import { RootState } from "../Store";
+import PostService, { PostDirectLinkRequest, PostGetRequest, PostListRequest, PostSetTagsRequest } from "./PostService";
 
 const logger: Logger = LogFactory.create("ImageSlice");
 
@@ -33,8 +32,7 @@ const setSearchStateAction = (newState: PostSearchState): PayloadAction<PostSear
 
 // creates a cursor for the given request
 export const postList = createAsyncThunk("post/list", async (request: PostListRequest, thunkApi) => {
-	try 
-	{
+	try {
 		thunkApi.dispatch(setSearchStateAction("loading"));
 
 		const cursor = new PostSearchCursor(request.query);
@@ -45,9 +43,7 @@ export const postList = createAsyncThunk("post/list", async (request: PostListRe
 			cursor,
 			posts
 		};
-	} 
-	catch (error: any) 
-	{
+	} catch (error: any) {
 		logger.error("error fetching posts", error);
 		thunkApi.dispatch(notify("List posts failed - " + error, "error"));
 		return thunkApi.rejectWithValue({});
@@ -55,11 +51,9 @@ export const postList = createAsyncThunk("post/list", async (request: PostListRe
 });
 
 export const postSetPage = createAsyncThunk("post/set_page", async (page: number, thunkApi) => {
-	try 
-	{
+	try {
 		const state: PostState = (thunkApi.getState() as any).post;
-		if (state.cursor == null) 
-		{
+		if (state.cursor == null) {
 			return thunkApi.rejectWithValue({});
 		}
 
@@ -70,9 +64,7 @@ export const postSetPage = createAsyncThunk("post/set_page", async (page: number
 		return {
 			posts
 		};
-	} 
-	catch (error: any) 
-	{
+	} catch (error: any) {
 		logger.error("error setting page", error);
 		thunkApi.dispatch(notify("Set page failed - " + error, "error"));
 		return thunkApi.rejectWithValue({});
@@ -80,8 +72,7 @@ export const postSetPage = createAsyncThunk("post/set_page", async (page: number
 });
 
 const postGetReducer: CaseReducer<PostState, PayloadAction<PostGetRequest>> = (state, action) => {
-	if (state.cursor != null) 
-	{
+	if (state.cursor != null) {
 		state.cursor.setCursorIndex(action.payload.pageIndex);
 	}
 
@@ -95,8 +86,7 @@ export const postGet = (request: PostGetRequest): PayloadAction<PostGetRequest> 
 });
 
 export const postDirectLink = createAsyncThunk("post/direct_link", async (request: PostDirectLinkRequest, thunkApi) => {
-	try 
-	{
+	try {
 		thunkApi.dispatch(setSearchStateAction("loading"));
 		const cursor = new PostSearchCursor(request.query);
 		cursor.setCursorPosition(request.page || 1, 0);
@@ -106,10 +96,8 @@ export const postDirectLink = createAsyncThunk("post/direct_link", async (reques
 		// if we have context we've probably already loaded the image info from the above query
 		// if not, do another lookup for it
 		let thisImage: BooruPost | null = null;
-		for (let i = 0; i < posts.length; i++)
-		{
-			if (posts[i].id == request.postId)
-			{
+		for (let i = 0; i < posts.length; i++) {
+			if (posts[i].id == request.postId) {
 				thisImage = posts[i];
 				// make sure we set the correct cursor position for navigation
 				cursor.setCursorPosition(request.page || 1, i);
@@ -119,57 +107,45 @@ export const postDirectLink = createAsyncThunk("post/direct_link", async (reques
 
 		return {
 			posts,
-			post: thisImage || await PostService.getPostById(request.postId),
+			post: thisImage || (await PostService.getPostById(request.postId)),
 			cursor
 		};
-	} 
-	catch (error: any) 
-	{
+	} catch (error: any) {
 		logger.error("error fetching post", error);
 		thunkApi.dispatch(notify("Direct link lookup failed - " + error, "error"));
 		return thunkApi.rejectWithValue({});
 	}
 });
 
-export const postNavigate = createAsyncThunk("image/navigate", async (request: ImageNavigateDirection, thunkApi) =>
-{
-	try 
-	{
+export const postNavigate = createAsyncThunk("image/navigate", async (request: ImageNavigateDirection, thunkApi) => {
+	try {
 		const state: PostState = (thunkApi.getState() as any).post;
-		if (state.cursor == null) 
-		{
+		if (state.cursor == null) {
 			return thunkApi.rejectWithValue({});
 		}
 
-		if (!state.cursor.canMove(request))
-		{
+		if (!state.cursor.canMove(request)) {
 			return thunkApi.fulfillWithValue({ post: state.currentPost });
 		}
 
 		thunkApi.dispatch(setSearchStateAction("loading"));
 
-		let post = await state.cursor.moveCursorAndReturn(request);
+		const post = await state.cursor.moveCursorAndReturn(request);
 		return { post };
-	} 
-	catch (error: any) 
-	{
+	} catch (error: any) {
 		logger.error("error navigating", error);
 		thunkApi.dispatch(notify("Navigate failed - " + error, "error"));
 		return thunkApi.rejectWithValue({});
 	}
 });
 
-export const postSetTags = createAsyncThunk("post/set_tags", async (request: PostSetTagsRequest, thunkApi) =>
-{
-	try 
-	{
+export const postSetTags = createAsyncThunk("post/set_tags", async (request: PostSetTagsRequest, thunkApi) => {
+	try {
 		await PostService.setPostTags(request.post, request.tags);
 		const post = await PostService.getPostById(request.post.id);
 
 		return { post };
-	} 
-	catch (error: any) 
-	{
+	} catch (error: any) {
 		logger.error("error setting tags", error);
 		thunkApi.dispatch(notify("Set tags failed - " + error, "error"));
 		return thunkApi.rejectWithValue({});
@@ -208,8 +184,7 @@ export const PostSlice = createSlice({
 			state.cursor = action.payload.cursor;
 			state.searchState = "ready";
 
-			if (action.payload.post != null)
-			{
+			if (action.payload.post != null) {
 				state.cursor?.storeOrUpdatePost(action.payload.post);
 			}
 		});
@@ -240,20 +215,15 @@ export const PostSlice = createSlice({
 		});
 
 		builder.addCase(postSetTags.fulfilled, (state, action) => {
-			if (state.currentPost?.id == action.payload.post?.id)
-			{
+			if (state.currentPost?.id == action.payload.post?.id) {
 				state.currentPost = action.payload.post;
 			}
 
-			if (action.payload.post != null)
-			{ 
+			if (action.payload.post != null) {
 				state.cursor?.storeOrUpdatePost(action.payload.post);
 			}
 		});
-		builder.addCase(postSetTags.rejected, (state, action) =>
-		{
-			
-		});
+		builder.addCase(postSetTags.rejected, (state, action) => {});
 	}
 });
 

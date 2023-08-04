@@ -157,7 +157,7 @@ const PostPage = () => {
 		</MuiLink>
 	);
 
-	let detailsRows: { title?: string; body: JSX.Element }[] = [
+	const detailsRows: { title?: string; body: JSX.Element }[] = [
 		{ title: "Date posted", body: genericDetailRow(Util.formatDate(currentPost.postedAt)) },
 		{ title: "File size", body: genericDetailRow(Util.formatBytes(currentPost.fileSize)) },
 		{ body: downloadLink }
