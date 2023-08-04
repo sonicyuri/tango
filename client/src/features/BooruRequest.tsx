@@ -32,7 +32,7 @@ class BooruRequest {
 			headers: headers,
 			body: body
 		}).then(res => {
-			if (res.status == 403) {
+			if (res.status == 403 || res.status == 401) {
 				return Promise.reject(new CredentialsInvalidError("HTTP Basic credentials rejected!"));
 			}
 
