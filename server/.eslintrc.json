@@ -24,30 +24,15 @@
 		"object-curly-newline": [
 			"error",
 			{
-				"ObjectExpression": { "minProperties": 1, "consistent": true },
+				"ObjectExpression": { "minProperties": 3, "consistent": true },
 				"ObjectPattern": "never",
 				"ImportDeclaration": { "multiline": true },
 				"ExportDeclaration": { "multiline": true }
 			}
 		],
 		"array-bracket-newline": ["error", "consistent"],
-		"brace-rules/brace-on-same-line": [
-			"error",
-			{
-				"FunctionDeclaration": "never",
-				"FunctionExpression": "never",
-				"ArrowFunctionExpression": "always",
-				"IfStatement": "never",
-				"TryStatement": "never",
-				"DoWhileStatement": "never",
-				"WhileStatement": "never",
-				"WithStatement": "never",
-				"ForStatement": "never",
-				"ForInStatement": "never",
-				"ForOfStatement": "never",
-				"SwitchStatement": "never"
-			},
-			{ "allowSingleLine": true }
-		]
+		"brace-style": ["error", "1tbs"],
+		"no-empty-function": "off",
+		"@typescript-eslint/no-empty-function": "off"
 	}
 }

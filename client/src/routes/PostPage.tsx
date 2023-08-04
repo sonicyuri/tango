@@ -31,7 +31,7 @@ import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
 
-const logger: Logger = LogFactory.create("ImagePage");
+const logger: Logger = LogFactory.create("PostPage");
 
 const ImageExtensions = ["png", "jpg", "jpeg", "gif"];
 const VideoExtensions = ["webm", "mp4", "ogv", "flv"];
