@@ -8,7 +8,16 @@ import { LocalSettings } from "../util/LocalSettings";
 import Spinner from "react-spinkit";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { login, selectAuthState } from "../features/auth/AuthSlice";
-import { Link as MuiLink, Pagination, Box, Backdrop, Breadcrumbs, Typography } from "@mui/material";
+import {
+	Link as MuiLink,
+	Pagination,
+	Box,
+	Backdrop,
+	Breadcrumbs,
+	Typography,
+	useMediaQuery,
+	useTheme
+} from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { imageGet, imageList, imageSetPage, selectImageState } from "../features/images/ImageSlice";
 import { LogFactory, Logger } from "../util/Logger";
@@ -32,11 +41,14 @@ const ListPage = (props: ListPageProps) => {
 	const navigate = useNavigate();
 	const params = useParams();
 	const [searchParams, setSearchParams] = useSearchParams();
+	const theme = useTheme();
 
 	const { searchState, images, cursor } = useAppSelector(selectImageState);
 
 	// base the number of columns on the width of the screen
 	const [numColumns, setNumColumns] = useState(Math.floor(window.innerWidth / TargetImageWidth));
+
+	const canDisplayTopPagination = useMediaQuery(theme.breakpoints.up("sm"));
 
 	// update the column count when resizing
 	useEffect(() => {
@@ -148,7 +160,7 @@ const ListPage = (props: ListPageProps) => {
 		<div className="ListPage">
 			<div className="PageHeader ListPage-header">
 				{breadcrumbs}
-				{renderPagination("pg-top")}
+				{canDisplayTopPagination ? renderPagination("pg-top") : <></>}
 			</div>
 			<Grid
 				container
@@ -159,10 +171,14 @@ const ListPage = (props: ListPageProps) => {
 				{images.map((img, idx) => {
 					return (
 						<Grid className="ListPage-grid" key={"image-" + img.hash} xs={12 / numColumns}>
-							<div
+							<a
+								href={cursor.makeImageLink(img)}
 								className="ListPage-grid-item"
 								style={{ backgroundImage: `url(${img.thumbUrl})` }}
-								onClick={() => onImageClicked(img, idx)}
+								onClick={e => {
+									e.preventDefault();
+									onImageClicked(img, idx);
+								}}
 							/>
 						</Grid>
 					);
