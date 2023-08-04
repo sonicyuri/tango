@@ -1,15 +1,15 @@
 /** @format */
-
-import React, { useEffect, useState } from "react";
+import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useFormik } from "formik";
-import * as Yup from "yup";
-import { Credentials } from "../features/auth/AuthService";
-import { LocalSettings } from "../util/LocalSettings";
+import React, { useEffect, useState } from "react";
 import Spinner from "react-spinkit";
-import { useAppDispatch } from "../features/Hooks";
+import * as Yup from "yup";
+
+import { Credentials } from "../features/auth/AuthService";
 import { login } from "../features/auth/AuthSlice";
-import { Button, TextField, Stack, Container, Typography } from "@mui/material";
+import { useAppDispatch } from "../features/Hooks";
 import i18n from "../util/Internationalization";
+import { LocalSettings } from "../util/LocalSettings";
 
 const LoginPage = () => {
 	const [loading, setLoading] = useState(false);
@@ -41,8 +41,7 @@ const LoginPage = () => {
 	});
 
 	useEffect(() => {
-		if (initialValues.username.length > 0 && initialValues.password.length > 0) 
-		{
+		if (initialValues.username.length > 0 && initialValues.password.length > 0) {
 			setLoading(true);
 			dispatch(login(initialValues))
 				.unwrap()

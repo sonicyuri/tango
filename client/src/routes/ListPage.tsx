@@ -1,31 +1,25 @@
 /** @format */
-
-import React, { useEffect, useState } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { Credentials } from "../features/auth/AuthService";
-import { LocalSettings } from "../util/LocalSettings";
-import Spinner from "react-spinkit";
-import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { login, selectAuthState } from "../features/auth/AuthSlice";
 import {
+	Backdrop,
+	Box,
+	Breadcrumbs,
 	Link as MuiLink,
 	Pagination,
-	Box,
-	Backdrop,
-	Breadcrumbs,
 	Typography,
 	useMediaQuery,
 	useTheme
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
-import { imageGet, imageList, imageSetPage, selectImageState } from "../features/images/ImageSlice";
+import React, { useEffect, useState } from "react";
+import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import Spinner from "react-spinkit";
+
+import { useAppDispatch, useAppSelector } from "../features/Hooks";
+import { postGet, postList, postSetPage, selectPostState } from "../features/posts/PostSlice";
+import { BooruPost } from "../models/BooruPost";
+import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
-import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import LoginPage from "./LoginPage";
-import { BooruImage } from "../models/BooruImage";
-import i18n from "../util/Internationalization";
 
 const logger: Logger = LogFactory.create("ListPage");
 
@@ -43,7 +37,7 @@ const ListPage = (props: ListPageProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const theme = useTheme();
 
-	const { searchState, images, cursor } = useAppSelector(selectImageState);
+	const { searchState, posts, cursor } = useAppSelector(selectPostState);
 
 	// base the number of columns on the width of the screen
 	const [numColumns, setNumColumns] = useState(Math.floor(window.innerWidth / TargetImageWidth));
@@ -66,7 +60,7 @@ const ListPage = (props: ListPageProps) => {
 	useEffect(() => {
 		if (props.forceIndex) {
 			dispatch(
-				imageList({
+				postList({
 					query: null,
 					page: 1
 				})
@@ -80,7 +74,7 @@ const ListPage = (props: ListPageProps) => {
 		const query = searchParams.get("q");
 
 		dispatch(
-			imageList({
+			postList({
 				query: query,
 				page: currentPage
 			})
@@ -94,10 +88,10 @@ const ListPage = (props: ListPageProps) => {
 		return <></>;
 	}
 
-	const onImageClicked = (image: BooruImage, index: number) => {
+	const onPostClicked = (post: BooruPost, index: number) => {
 		dispatch(
-			imageGet({
-				image,
+			postGet({
+				post,
 				pageIndex: index
 			})
 		);
@@ -109,12 +103,12 @@ const ListPage = (props: ListPageProps) => {
 			{ key: "page", value: String(page), enabled: page != 1 }
 		]);
 
-		navigate(cursor.makeImageLink(image));
+		navigate(cursor.makePostLink(post));
 	};
 
 	const onPageChange = (e: React.ChangeEvent<unknown>, page: number) => {
-		dispatch(imageSetPage(page));
-		let url = `/images/${page}`;
+		dispatch(postSetPage(page));
+		let url = `/posts/${page}`;
 		if (cursor != null && cursor.currentQuery != null) {
 			url += "?q=" + encodeURIComponent(cursor.currentQuery);
 		}
@@ -152,7 +146,7 @@ const ListPage = (props: ListPageProps) => {
 			<MuiLink underline="hover" color="inherit" component={RouterLink} to="/">
 				{i18n.t("siteTitle")}
 			</MuiLink>
-			<Typography color="text.primary">Images</Typography>
+			<Typography color="text.primary">Posts</Typography>
 		</Breadcrumbs>
 	);
 
@@ -168,16 +162,16 @@ const ListPage = (props: ListPageProps) => {
 				sx={{
 					maxWidth: "100%"
 				}}>
-				{images.map((img, idx) => {
+				{posts.map((post, idx) => {
 					return (
-						<Grid className="ListPage-grid" key={"image-" + img.hash} xs={12 / numColumns}>
+						<Grid className="ListPage-grid" key={"post-" + post.hash} xs={12 / numColumns}>
 							<a
-								href={cursor.makeImageLink(img)}
+								href={cursor.makePostLink(post)}
 								className="ListPage-grid-item"
-								style={{ backgroundImage: `url(${img.thumbUrl})` }}
+								style={{ backgroundImage: `url(${post.thumbUrl})` }}
 								onClick={e => {
 									e.preventDefault();
-									onImageClicked(img, idx);
+									onPostClicked(post, idx);
 								}}
 							/>
 						</Grid>

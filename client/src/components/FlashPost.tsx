@@ -1,14 +1,13 @@
 /** @format */
-
-import { useRouteError } from "react-router-dom";
 import React, { useEffect } from "react";
+
+import { BooruPost } from "../models/BooruPost";
 import { LogFactory } from "../util/Logger";
-import { BooruImage } from "../models/BooruImage";
 
 const logger = LogFactory.create("FlashPost");
 
 export interface FlashPostProps {
-	image: BooruImage;
+	post: BooruPost;
 }
 
 const FlashPost = (props: FlashPostProps) => {
@@ -19,7 +18,7 @@ const FlashPost = (props: FlashPostProps) => {
 		const container = document.getElementById("RuffleContainer");
 		container?.appendChild(player);
 		player.load({
-			url: props.image.videoUrl,
+			url: props.post.videoUrl,
 			config: { wmode: "transparent" }
 		});
 

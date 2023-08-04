@@ -1,13 +1,11 @@
 /** @format */
+import { createAsyncThunk, createSlice, Reducer } from '@reduxjs/toolkit';
 
-import { createSlice, createAsyncThunk, CaseReducer, PayloadAction, Reducer } from "@reduxjs/toolkit";
-import { notify } from "reapop";
-import { CredentialsInvalidError } from "../BooruRequest";
-import { User } from "../../models/BooruUser";
-import { LogFactory, Logger } from "../../util/Logger";
-import { RootState } from "../Store";
-import TagService from "./TagService";
-import { BooruTag, BooruTagCategory } from "../../models/BooruTag";
+import { BooruTag, BooruTagCategory } from '../../models/BooruTag';
+import { LogFactory, Logger } from '../../util/Logger';
+import { RootState } from '../Store';
+import TagService from './TagService';
+
 
 const logger: Logger = LogFactory.create("TagSlice");
 

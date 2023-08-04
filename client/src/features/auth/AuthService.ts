@@ -1,8 +1,8 @@
 /** @format */
+import { User } from '../../models/BooruUser';
+import { LocalSettings } from '../../util/LocalSettings';
+import { BooruRequest } from '../BooruRequest';
 
-import { BooruRequest } from "../BooruRequest";
-import { User } from "../../models/BooruUser";
-import { LocalSettings } from "../../util/LocalSettings";
 
 export interface Credentials {
 	username: string;

@@ -1,17 +1,13 @@
 /** @format */
-
 import React from "react";
-import { Container } from "@mui/material";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import NotificationsSystem, { atalhoTheme, dismissNotification } from "reapop";
 
 import { useAppDispatch, useAppSelector } from "./features/Hooks";
-import RootPage from "./routes/RootPage";
 import ErrorPage from "./routes/ErrorPage";
 import ListPage from "./routes/ListPage";
-import ImagePage from "./routes/ImagePage";
-import { imageDirectLink } from "./features/images/ImageSlice";
-import { ImageGetByIdRequest } from "./features/images/ImageService";
+import PostPage from "./routes/PostPage";
+import RootPage from "./routes/RootPage";
 
 const App = () => {
 	const dispatch = useAppDispatch();
@@ -24,15 +20,15 @@ const App = () => {
 			errorElement: <ErrorPage />,
 			children: [
 				{
-					path: "/images/view/:imageId",
-					element: <ImagePage />
+					path: "/posts/view/:postId",
+					element: <PostPage />
 				},
 				{
-					path: "/images/:page",
+					path: "/posts/:page",
 					element: <ListPage />
 				},
 				{
-					path: "/images",
+					path: "/posts",
 					element: <ListPage />
 				},
 				{

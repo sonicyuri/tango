@@ -1,11 +1,11 @@
 /** @format */
 
-import { BooruRequest } from "./features/BooruRequest";
-import { BooruImage, ShimmieImage } from "./models/BooruImage";
-import { Util } from "./util/Util";
+import { BooruRequest } from "./BooruRequest";
+import { BooruPost, ShimmiePost } from "../models/BooruPost";
+import { Util } from "../util/Util";
 
 interface ShimmieFindImagesV2 {
-	images: ShimmieImage[];
+	images: ShimmiePost[];
 	total_pages: number;
 }
 
@@ -17,12 +17,12 @@ const PagePostPreloadThreshold = 5;
  *
  * TODO: handle new posts being added while browsing. cache miss mode?
  */
-export class ImageSearchCursor {
+export class PostSearchCursor {
 	private query: string | null;
 	// maps a page to an array of post ids
 	// if a post id is in this array, it should always exist in the posts cache!
 	private pagesCache: { [page: number]: string[] };
-	private postsCache: { [id: string]: BooruImage };
+	private postsCache: { [id: string]: BooruPost };
 	private runningPromises: { [page: number]: Promise<void> };
 	// cursor pos in page, index
 	private cursorPos: [number, number];
@@ -93,38 +93,43 @@ export class ImageSearchCursor {
 		}
 	}
 
-	// returns the image the cursor is currently pointing at
-	public async getImageAtCursor(): Promise<BooruImage> 
+	/**
+	 * Returns the post the cursor is pointing at.
+	 */
+	public async getPostAtCursor(): Promise<BooruPost> 
 	{
 		const [page, index] = this.cursorPos;
-		const pageImages = await this.getImages(page);
+		const pageImages = await this.getPosts(page);
 		return pageImages[index];
 	}
 
-	public getImagesAtCursor(): Promise<BooruImage[]> 
+	/**
+	 * Returns the posts on the current page the cursor is pointing at.
+	 */
+	public getPostsAtCursor(): Promise<BooruPost[]> 
 	{
-		return this.getImages(this.cursorPos[0]);
+		return this.getPosts(this.cursorPos[0]);
 	}
 
 	/**
-	 * Creates a link to the current images page this cursor is pointing to.
+	 * Creates a link to the current posts page this cursor is pointing to.
 	 */
-	public makeImagesLink(): string
+	public makePostsLink(): string
 	{
-		return Util.makeImagesLink(this.currentQuery || "", this.cursorPos[0]);
+		return Util.makePostsLink(this.currentQuery || "", this.cursorPos[0]);
 	}
 
 	/**
-	 * Makes a link to a particular image based on the current cursor position.
+	 * Makes a link to a particular post based on the current cursor position.
 	 */
-	public makeImageLink(image: BooruImage): string
+	public makePostLink(post: BooruPost): string
 	{
 		const newQueryString = Util.formatQueryString([
 			{ key: "q", value: this.currentQuery || "", enabled: this.currentQuery != null },
 			{ key: "page", value: String(this.cursorPos[0]), enabled: this.cursorPos[0] != 1 }
 		])
 
-		return `/images/view/${image.id}${newQueryString}`;
+		return `/posts/view/${post.id}${newQueryString}`;
 	}
 
 	// can the cursor be moved in this direction?
@@ -141,44 +146,44 @@ export class ImageSearchCursor {
 		}
 	}
 
-	// moves cursor forwards or backwards and returns the image at that point
-	public async moveCursorAndReturn(movement: -1 | 1): Promise<BooruImage> 
+	// moves cursor forwards or backwards and returns the post at that point
+	public async moveCursorAndReturn(movement: -1 | 1): Promise<BooruPost> 
 	{
 		if (!this.canMove(movement)) 
 		{
-			return Promise.reject(new Error("No more images!"));
+			return Promise.reject(new Error("No more posts!"));
 		}
 
 		let [page, index] = this.cursorPos;
-		let pageImages = await this.getImages(page);
+		let pagePosts = await this.getPosts(page);
 		index += movement;
-		if (index > pageImages.length - 1) 
+		if (index > pagePosts.length - 1) 
 		{
 			page += 1;
 			index = 0;
-			pageImages = await this.getImages(page);
+			pagePosts = await this.getPosts(page);
 		} 
 		else if (index < 0) 
 		{
 			page -= 1;
-			pageImages = await this.getImages(page);
-			index = pageImages.length - 1;
+			pagePosts = await this.getPosts(page);
+			index = pagePosts.length - 1;
 		}
 
 		this.cursorPos = [page, index];
-		return pageImages[index];
+		return pagePosts[index];
 	}
 
 	/**
 	 * Stores the given post in the internal post cache, updating the existing cache if present.
 	 * This is used to inform the cursor of any posts fetched through getById or other means.
 	 */
-	public storeOrUpdateImage(image: BooruImage): void
+	public storeOrUpdatePost(post: BooruPost): void
 	{
-		this.postsCache[image.id] = image;
+		this.postsCache[post.id] = post;
 	}
 
-	public async getImages(page: number): Promise<BooruImage[]> 
+	public async getPosts(page: number): Promise<BooruPost[]> 
 	{
 		if (page > this.maxPage) 
 		{
@@ -223,7 +228,7 @@ export class ImageSearchCursor {
 			.then(j => {
 				const res = j as ShimmieFindImagesV2;
 				this.maxPage = res.total_pages;
-				return res.images.map(i => new BooruImage(i));
+				return res.images.map(i => new BooruPost(i));
 			})
 			.then(images =>
 			{

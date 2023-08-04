@@ -1,6 +1,6 @@
 /** @format */
 
-interface ShimmieImage {
+interface ShimmiePost {
 	id: string;
 	width: number;
 	height: number;
@@ -13,7 +13,7 @@ interface ShimmieImage {
 	tags: string[];
 }
 
-class BooruImage {
+class BooruPost {
 	// id of the image
 	public id: string;
 	// size in pixels, width x height
@@ -33,8 +33,7 @@ class BooruImage {
 	// all the tags added to the image
 	public tags: string[];
 
-	constructor(obj: ShimmieImage) 
-	{
+	constructor(obj: ShimmiePost) {
 		this.id = obj.id;
 		this.imageSize = [obj.width, obj.height];
 		this.hash = obj.hash;
@@ -46,30 +45,26 @@ class BooruImage {
 		this.tags = obj.tags;
 	}
 
-	get videoUrl() 
-	{
+	get videoUrl() {
 		return `https://s3.wasabisys.com/booru/images/${this.hash}`;
 	}
 
-	get thumbUrl() 
-	{
+	get thumbUrl() {
 		return `https://s3.wasabisys.com/booru/thumbs/${this.hash}`;
 	}
 
-	get aspectRatio()
-	{
+	get aspectRatio() {
 		return this.imageSize[0] / this.imageSize[1];
 	}
 
-	getImageSizeStyles(): React.CSSProperties
-	{
+	getImageSizeStyles(): React.CSSProperties {
 		return {
-			aspectRatio: this.aspectRatio,
+			aspectRatio: this.aspectRatio
 			//width: (this.imageSize[0] > this.imageSize[1] ? "auto" : "100%"),
 			//height: (this.imageSize[0] > this.imageSize[1] ? "90vh" : "auto")
-		}
+		};
 	}
 }
 
-export { BooruImage };
-export type { ShimmieImage };
+export { BooruPost };
+export type { ShimmiePost };

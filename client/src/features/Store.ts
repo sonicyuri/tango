@@ -3,14 +3,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { reducer as notificationsReducer } from "reapop";
 import authReducer from "./auth/AuthSlice";
-import imageReducer from "./images/ImageSlice";
+import postReducer from "./posts/PostSlice";
 import tagReducer from "./tags/TagSlice";
 
 export const Store = configureStore({
 	reducer: {
 		notifications: notificationsReducer(),
 		auth: authReducer,
-		image: imageReducer,
+		post: postReducer,
 		tag: tagReducer
 	},
 	middleware: getDefaultMiddleware =>

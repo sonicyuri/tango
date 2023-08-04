@@ -4,7 +4,7 @@
 	padding: 1em;
 }
 
-.ImagePage-header {
+.PostPage-header {
 }
 
 .VideoPost {
@@ -23,11 +23,11 @@
 	background-size: contain;
 }
 
-.ImagePage-content {
+.PostPage-content {
 	display: flex;
 	position: relative;
 
-	.ImagePage-listener {
+	.PostPage-listener {
 		width: 100%;
 		// dodge the video controls
 		height: calc(100% - 35px);
