@@ -50,27 +50,6 @@ export const postList = createAsyncThunk("post/list", async (request: PostListRe
 	}
 });
 
-export const postSetPage = createAsyncThunk("post/set_page", async (page: number, thunkApi) => {
-	try {
-		const state: PostState = (thunkApi.getState() as any).post;
-		if (state.cursor == null) {
-			return thunkApi.rejectWithValue({});
-		}
-
-		state.cursor.setCursorPosition(page, 0);
-
-		thunkApi.dispatch(setSearchStateAction("loading"));
-		const posts = await state.cursor.getPostsAtCursor();
-		return {
-			posts
-		};
-	} catch (error: any) {
-		logger.error("error setting page", error);
-		thunkApi.dispatch(notify("Set page failed - " + error, "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
 export const postViewById = createAsyncThunk("post/view_by_id", async (request: PostGetRequest, thunkApi) => {
 	try {
 		thunkApi.dispatch(setSearchStateAction("loading"));
@@ -116,28 +95,6 @@ export const postDirectLink = createAsyncThunk("post/direct_link", async (reques
 	} catch (error: any) {
 		logger.error("error fetching post", error);
 		thunkApi.dispatch(notify("Direct link lookup failed - " + error, "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const postNavigate = createAsyncThunk("image/navigate", async (request: PostNavigateDirection, thunkApi) => {
-	try {
-		const state: PostState = (thunkApi.getState() as any).post;
-		if (state.cursor == null) {
-			return thunkApi.rejectWithValue({});
-		}
-
-		if (!state.cursor.canMove(request)) {
-			return { post: state.currentPost };
-		}
-
-		thunkApi.dispatch(setSearchStateAction("loading"));
-
-		const post: BooruPost | null = await state.cursor.moveCursorAndReturn(request);
-		return { post };
-	} catch (error: any) {
-		logger.error("error navigating", error);
-		thunkApi.dispatch(notify("Navigate failed - " + error, "error"));
 		return thunkApi.rejectWithValue({});
 	}
 });
@@ -194,25 +151,6 @@ export const PostSlice = createSlice({
 			state.currentPost = null;
 			state.posts = [];
 			state.cursor = null;
-			state.searchState = "failed";
-		});
-
-		builder.addCase(postSetPage.fulfilled, (state, action) => {
-			state.posts = action.payload.posts;
-			state.searchState = "ready";
-		});
-
-		builder.addCase(postSetPage.rejected, (state, action) => {
-			state.posts = [];
-			state.searchState = "failed";
-		});
-
-		builder.addCase(postNavigate.fulfilled, (state, action) => {
-			state.currentPost = action.payload.post;
-			state.searchState = "ready";
-		});
-		builder.addCase(postNavigate.rejected, (state, action) => {
-			state.currentPost = null;
 			state.searchState = "failed";
 		});
 
