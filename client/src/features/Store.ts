@@ -5,13 +5,15 @@ import { reducer as notificationsReducer } from "reapop";
 import authReducer from "./auth/AuthSlice";
 import postReducer from "./posts/PostSlice";
 import tagReducer from "./tags/TagSlice";
+import favoriteReducer from "./favorites/FavoriteSlice";
 
 export const Store = configureStore({
 	reducer: {
 		notifications: notificationsReducer(),
 		auth: authReducer,
 		post: postReducer,
-		tag: tagReducer
+		tag: tagReducer,
+		favorite: favoriteReducer
 	},
 	middleware: getDefaultMiddleware =>
 		getDefaultMiddleware({

@@ -25,6 +25,7 @@ import FlashPost from "../components/FlashPost";
 import ImagePost from "../components/ImagePost";
 import TagsCard from "../components/TagsCard";
 import VideoPost from "../components/VideoPost";
+import { favoriteSet, selectFavoriteState } from "../features/favorites/FavoriteSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { postDirectLink, postViewById, selectPostState } from "../features/posts/PostSlice";
 import i18n from "../util/Internationalization";
@@ -42,12 +43,14 @@ const FlashExtensions = ["swf"];
  */
 const PostPage = () => {
 	const dispatch = useAppDispatch();
-	const { searchState, currentPost, cursor } = useAppSelector(selectPostState);
 	const params = useParams();
-	const [searchParams, setSearchParams] = useSearchParams();
 	const theme = useTheme();
 	const navigate = useNavigate();
 
+	const { favorites, loadingState: favoriteState } = useAppSelector(selectFavoriteState);
+	const { searchState, currentPost, cursor } = useAppSelector(selectPostState);
+
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [editing, setEditing] = useState(false);
 
 	// handles navigating left-right based on swipe, keys, or buttons
@@ -149,7 +152,31 @@ const PostPage = () => {
 		</MuiLink>
 	);
 
+	const isFavorite = favorites.indexOf(currentPost.id) !== -1;
+
+	const handleFavorite = () => {
+		dispatch(favoriteSet({ postId: currentPost.id, favorite: !isFavorite }));
+	};
+
+	const favoriteButton = (
+		<Button
+			variant={isFavorite ? "outlined" : "contained"}
+			onClick={handleFavorite}
+			disabled={favoriteState != "ready"}>
+			{favoriteState == "ready" ? (
+				isFavorite ? (
+					"Unfavorite"
+				) : (
+					"Favorite"
+				)
+			) : (
+				<Spinner name="wave" fadeIn="none" color="white" />
+			)}
+		</Button>
+	);
+
 	const detailsRows: { title?: string; body: JSX.Element }[] = [
+		{ body: favoriteButton },
 		{ title: "Date posted", body: genericDetailRow(Util.formatDate(currentPost.postedAt)) },
 		{ title: "File size", body: genericDetailRow(Util.formatBytes(currentPost.fileSize)) },
 		{ body: downloadLink }

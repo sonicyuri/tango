@@ -5,6 +5,7 @@ import { notify } from "reapop";
 import { User } from "../../models/BooruUser";
 import { LogFactory, Logger } from "../../util/Logger";
 import { CredentialsInvalidError } from "../BooruRequest";
+import { favoriteList } from "../favorites/FavoriteSlice";
 import { RootState } from "../Store";
 import { tagList } from "../tags/TagSlice";
 import AuthService, { Credentials } from "./AuthService";
@@ -34,7 +35,10 @@ export const login = createAsyncThunk("auth/login", async (credentials: Credenti
 
 		const user = await AuthService.login(credentials);
 		thunkApi.dispatch(notify("Login successful!", "success"));
+
 		thunkApi.dispatch(tagList(null));
+		thunkApi.dispatch(favoriteList(null));
+
 		return user;
 	} catch (error: any) {
 		logger.error("error logging in", error);
