@@ -1,0 +1,13 @@
+{
+	"s3AccessKey": "8MKDLLCVL7142Y00BLH9",
+	"s3SecretKey": "RzqPjZQGC9RJSbT2llcsGde0O748kiuUMucN8pr6",
+	"s3Endpoint": "https://s3.wasabisys.com",
+	"s3Region": "us-east-1",
+	"s3Bucket": "booru",
+	"overwrite": false,
+	"mysqlHost": "ftp.anime.lgbt",
+	"mysqlUser": "booru",
+	"mysqlPassword": "Qc5suOubIZMR8w7DHRY0",
+	"mysqlDatabase": "booru",
+	"mysqlPort": 3306
+}

@@ -28,6 +28,9 @@ const TagInput = (props: TagInputProps) => {
 
 	const { tags, tagFrequencies, categories } = useAppSelector(selectTagState);
 
+	const existingTags: { [tag: string]: boolean } = {};
+	props.values.forEach(t => (existingTags[t] = true));
+
 	return (
 		<div
 			className="TagInput"
@@ -36,7 +39,7 @@ const TagInput = (props: TagInputProps) => {
 			}}>
 			<Autocomplete
 				multiple
-				options={tags.map(t => t.tag)}
+				options={tags.filter(t => !existingTags[t.tag]).map(t => t.tag)}
 				value={props.values}
 				onChange={(_: any, values: string[]) => props.onValuesChange(values)}
 				freeSolo
