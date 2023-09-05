@@ -3,10 +3,12 @@
 import { BooruRequest } from "./BooruRequest";
 import { BooruPost, ShimmiePost } from "../models/BooruPost";
 import { Util } from "../util/Util";
+import { current } from "immer";
 
 interface ShimmieFindImagesV2 {
 	images: ShimmiePost[];
 	total_pages: number;
+	page_number: number;
 }
 
 // how many posts from the edges before we preload the next page
@@ -70,6 +72,14 @@ export class PostSearchCursor {
 	// sets the index component of the cursor directly
 	public setCursorIndex(index: number): void {
 		this.setCursorPosition(this.cursorPos[0], index);
+	}
+
+	public async loadAndSetCurrentPostById(postId: string) {
+		if (!this.postsCache[postId]) {
+			await this.load(1, postId);
+		}
+
+		this.setCurrentPostById(postId);
 	}
 
 	/**
@@ -221,27 +231,35 @@ export class PostSearchCursor {
 		}
 	}
 
-	private load(page: number): Promise<void> {
+	private load(page: number, currentId: string | null = null): Promise<void> {
 		if (this.runningPromises[page] !== undefined) {
 			return this.runningPromises[page];
 		}
 
-		const url =
+		let url =
 			this.query !== null
 				? `/api/shimmie/find_images_v2/${encodeURIComponent(this.query)}/${page}`
 				: `/api/shimmie/find_images_v2/${page}`;
+
+		if (currentId != null) {
+			url += "?current_id=" + currentId;
+		}
 
 		this.runningPromises[page] = BooruRequest.runQueryJson(url)
 			.then(j => {
 				const res = j as ShimmieFindImagesV2;
 				this.maxPage = res.total_pages;
-				return res.images.map(i => new BooruPost(i));
+				return { page: res.page_number, images: res.images.map(i => new BooruPost(i)) };
 			})
-			.then(images => {
+			.then(res => {
+				const { images, page: newPage } = res;
 				// store all the images in the posts cache and store the ids in the page cache
 				images.forEach(img => (this.postsCache[img.id] = img));
-				this.pagesCache[page] = images.map(img => img.id);
+				this.pagesCache[newPage] = images.map(img => img.id);
 				this.maxPageSize = Math.max(images.length, this.maxPageSize);
+				if (currentId != null) {
+					this.setCurrentPostById(currentId);
+				}
 			})
 			.finally(() => delete this.runningPromises[page]);
 

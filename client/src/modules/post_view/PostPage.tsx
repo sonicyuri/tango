@@ -21,16 +21,17 @@ import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "rea
 import Spinner from "react-spinkit";
 import { useSwipeable } from "react-swipeable";
 
-import FlashPost from "../components/FlashPost";
-import ImagePost from "../components/ImagePost";
-import TagsCard from "../components/TagsCard";
-import VideoPost from "../components/VideoPost";
-import { favoriteSet, selectFavoriteState } from "../features/favorites/FavoriteSlice";
-import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { postDirectLink, postViewById, selectPostState } from "../features/posts/PostSlice";
-import i18n from "../util/Internationalization";
-import { LogFactory, Logger } from "../util/Logger";
-import { Util } from "../util/Util";
+import FlashPost from "./components/FlashPost";
+import ImagePost from "./components/ImagePost";
+import TagsCard from "./components/TagsCard";
+import VideoPost from "./components/VideoPost";
+import { favoriteSet, selectFavoriteState } from "../../features/favorites/FavoriteSlice";
+import { useAppDispatch, useAppSelector } from "../../features/Hooks";
+import { postDirectLink, postViewById, selectPostState } from "../../features/posts/PostSlice";
+import i18n from "../../util/Internationalization";
+import { LogFactory, Logger } from "../../util/Logger";
+import { Util } from "../../util/Util";
+import DetailsCard from "./components/DetailsCard";
 
 const logger: Logger = LogFactory.create("PostPage");
 
@@ -47,7 +48,6 @@ const PostPage = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
 
-	const { favorites, loadingState: favoriteState } = useAppSelector(selectFavoriteState);
 	const { searchState, currentPost, cursor } = useAppSelector(selectPostState);
 
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -142,68 +142,10 @@ const PostPage = () => {
 		</>
 	);
 
-	// set up detail rows
-	const genericDetailRow = (body: string) => <Typography variant="body1">{body}</Typography>;
-
-	// TODO: fix downloads (actually download, don't redirect)
-	const downloadLink = (
-		<MuiLink href={currentPost.videoUrl} download={currentPost.hash + "." + currentPost.extension} underline="none">
-			Download File
-		</MuiLink>
-	);
-
-	const isFavorite = favorites.indexOf(currentPost.id) !== -1;
-
-	const handleFavorite = () => {
-		dispatch(favoriteSet({ postId: currentPost.id, favorite: !isFavorite }));
-	};
-
-	const favoriteButton = (
-		<Button
-			variant={isFavorite ? "outlined" : "contained"}
-			onClick={handleFavorite}
-			disabled={favoriteState != "ready"}>
-			{favoriteState == "ready" ? (
-				isFavorite ? (
-					"Unfavorite"
-				) : (
-					"Favorite"
-				)
-			) : (
-				<Spinner name="wave" fadeIn="none" color="white" />
-			)}
-		</Button>
-	);
-
-	const detailsRows: { title?: string; body: JSX.Element }[] = [
-		{ body: favoriteButton },
-		{ title: "Date posted", body: genericDetailRow(Util.formatDate(currentPost.postedAt)) },
-		{ title: "File size", body: genericDetailRow(Util.formatBytes(currentPost.fileSize)) },
-		{ body: downloadLink }
-	];
-
 	const details = (
 		<Stack spacing={2}>
 			<TagsCard post={currentPost} onEditingChanged={edit => setEditing(edit)} />
-			<Card raised={true} className="PostPage-details">
-				<CardHeader title="Details" />
-				<CardContent>
-					<Stack spacing={2}>
-						{detailsRows.map(d => (
-							<div className="PostPage-details-row" key={"row-" + d.title}>
-								{d.title ? (
-									<Typography variant="subtitle2" key={"title-" + d.title}>
-										{d.title}
-									</Typography>
-								) : (
-									<></>
-								)}
-								{d.body}
-							</div>
-						))}
-					</Stack>
-				</CardContent>
-			</Card>
+			<DetailsCard post={currentPost} />
 		</Stack>
 	);
 

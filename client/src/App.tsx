@@ -6,7 +6,7 @@ import NotificationsSystem, { atalhoTheme, dismissNotification } from "reapop";
 import { useAppDispatch, useAppSelector } from "./features/Hooks";
 import ErrorPage from "./routes/ErrorPage";
 import ListPage from "./routes/ListPage";
-import PostPage from "./routes/PostPage";
+import PostPage from "./modules/post_view/PostPage";
 import RootPage from "./routes/RootPage";
 
 const App = () => {

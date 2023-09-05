@@ -5,14 +5,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "react-spinkit";
 
-import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { postSetTags } from "../features/posts/PostSlice";
-import { selectTagState, tagList } from "../features/tags/TagSlice";
-import { BooruPost } from "../models/BooruPost";
-import { BooruTag, BooruTagCategory } from "../models/BooruTag";
-import { LogFactory } from "../util/Logger";
-import { Util } from "../util/Util";
-import TagInput from "./TagInput";
+import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
+import { postSetTags } from "../../../features/posts/PostSlice";
+import { selectTagState, tagList } from "../../../features/tags/TagSlice";
+import { BooruPost } from "../../../models/BooruPost";
+import { BooruTag, BooruTagCategory } from "../../../models/BooruTag";
+import { LogFactory } from "../../../util/Logger";
+import { Util } from "../../../util/Util";
+import TagInput from "../../../components/TagInput";
 
 const logger = LogFactory.create("TagsCard");
 
@@ -53,6 +53,10 @@ const TagsCard = (props: TagsCardProps) => {
 	});
 
 	const renderTagsList = function (tags: string[], cat: BooruTagCategory | null) {
+		if (tags.length == 0) {
+			return <></>;
+		}
+
 		const color = cat?.color || "default";
 		const hoverColor: string = new Color(new Color(cat?.color || "#000000").lighten(0.15)).toString({
 			format: "hex"
@@ -60,7 +64,7 @@ const TagsCard = (props: TagsCardProps) => {
 		const style = cat != null ? { backgroundColor: color, ":hover": { backgroundColor: hoverColor } } : {};
 
 		return (
-			<div className="TagsCard-cat">
+			<div className="TagsCard-cat" key={"cat-tags-" + (cat?.id || "default")}>
 				{<Typography variant="subtitle1">{cat?.displayMultiple || "Other"}</Typography>}
 				{tags.map(t => {
 					const tagParts = t.split(":");

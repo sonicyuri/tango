@@ -2,9 +2,9 @@
 import React, { useRef } from "react";
 import { SwipeableHandlers } from "react-swipeable";
 
-import { BooruPost } from "../models/BooruPost";
-import { LogFactory } from "../util/Logger";
-import { Util } from "../util/Util";
+import { BooruPost } from "../../../models/BooruPost";
+import { LogFactory } from "../../../util/Logger";
+import { Util } from "../../../util/Util";
 
 const logger = LogFactory.create("VideoPost");
 
