@@ -1,8 +1,8 @@
 /** @format */
 import React, { useEffect } from "react";
 
-import { BooruPost } from "../models/BooruPost";
-import { LogFactory } from "../util/Logger";
+import { BooruPost } from "../../../models/BooruPost";
+import { LogFactory } from "../../../util/Logger";
 
 const logger = LogFactory.create("FlashPost");
 

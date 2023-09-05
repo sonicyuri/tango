@@ -73,19 +73,13 @@ export const postDirectLink = createAsyncThunk("post/direct_link", async (reques
 		const cursor = new PostSearchCursor(request.query);
 		cursor.setCursorPosition(request.page || 1, 0);
 
+		await cursor.loadAndSetCurrentPostById(request.postId);
+
 		const posts = await cursor.getPostsAtCursor();
 
 		// if we have context we've probably already loaded the image info from the above query
 		// if not, do another lookup for it
-		let thisImage: BooruPost | null = null;
-		for (let i = 0; i < posts.length; i++) {
-			if (posts[i].id == request.postId) {
-				thisImage = posts[i];
-				// make sure we set the correct cursor position for navigation
-				cursor.setCursorPosition(request.page || 1, i);
-				break;
-			}
-		}
+		let thisImage: BooruPost = await cursor.getPostAtCursor();
 
 		return {
 			posts,
