@@ -4,10 +4,11 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import NotificationsSystem, { atalhoTheme, dismissNotification } from "reapop";
 
 import { useAppDispatch, useAppSelector } from "./features/Hooks";
-import ErrorPage from "./routes/ErrorPage";
-import ListPage from "./routes/ListPage";
-import PostPage from "./modules/post_view/PostPage";
-import RootPage from "./routes/RootPage";
+import ErrorPage from "./pages/ErrorPage";
+import ListPage from "./pages/ListPage";
+import PostPage from "./pages/post_view/PostPage";
+import RootPage from "./pages/RootPage";
+import TagsListPage from "./pages/tags_list/TagsListPage";
 
 const App = () => {
 	const dispatch = useAppDispatch();
@@ -19,6 +20,18 @@ const App = () => {
 			element: <RootPage />,
 			errorElement: <ErrorPage />,
 			children: [
+				{
+					path: "/tags/list",
+					element: <TagsListPage tab={"list"} />
+				},
+				{
+					path: "/tags/cloud",
+					element: <TagsListPage tab={"cloud"} />
+				},
+				{
+					path: "/tags",
+					element: <TagsListPage tab={"none"} />
+				},
 				{
 					path: "/posts/view/:postId",
 					element: <PostPage />

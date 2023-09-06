@@ -7,6 +7,7 @@ import { PostSearchCursor } from "../PostSearchCursor";
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
 import PostService, { PostDirectLinkRequest, PostGetRequest, PostListRequest, PostSetTagsRequest } from "./PostService";
+import { tagUpdateEdit } from "../tags/TagSlice";
 
 const logger: Logger = LogFactory.create("PostSlice");
 
@@ -95,7 +96,15 @@ export const postDirectLink = createAsyncThunk("post/direct_link", async (reques
 
 export const postSetTags = createAsyncThunk("post/set_tags", async (request: PostSetTagsRequest, thunkApi) => {
 	try {
+		const state: PostState = (thunkApi.getState() as any).post;
+		if (state.cursor == null) {
+			return thunkApi.rejectWithValue({});
+		}
+
 		await PostService.setPostTags(request.post, request.tags);
+
+		thunkApi.dispatch(tagUpdateEdit({ prevTags: request.post.tags, newTags: request.tags.split(" ") }));
+
 		const post = await PostService.getPostById(request.post.id);
 
 		return { post };

@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Alias {
+  oldtag String @id @db.VarChar(255)
+  newtag String @db.VarChar(255)
+
+  @@index([newtag])
+  @@map("aliases")
+}
+
+model ArtistAlias {
+  id        Int       @id @default(autoincrement())
+  artist_id Int
+  user_id   Int
+  created   DateTime? @db.DateTime(0)
+  updated   DateTime? @db.DateTime(0)
+  alias     String?   @db.VarChar(255)
+  users     User      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "artist_alias_ibfk_1")
+  artists   Artist    @relation(fields: [artist_id], references: [id], onDelete: Cascade, map: "artist_alias_ibfk_2")
+
+  @@index([artist_id], map: "artist_id")
+  @@index([user_id], map: "user_id")
+  @@map("artist_alias")
+}
+
+model ArtistMember {
+  id        Int      @id @default(autoincrement())
+  artist_id Int
+  user_id   Int
+  name      String   @db.VarChar(255)
+  created   DateTime @db.DateTime(0)
+  updated   DateTime @db.DateTime(0)
+  users     User     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "artist_members_ibfk_1")
+  artists   Artist   @relation(fields: [artist_id], references: [id], onDelete: Cascade, map: "artist_members_ibfk_2")
+
+  @@index([artist_id], map: "artist_id")
+  @@index([user_id], map: "user_id")
+  @@map("artist_members")
+}
+
+model ArtistUrl {
+  id        Int      @id @default(autoincrement())
+  artist_id Int
+  user_id   Int
+  created   DateTime @db.DateTime(0)
+  updated   DateTime @db.DateTime(0)
+  url       String   @db.VarChar(1000)
+  users     User     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "artist_urls_ibfk_1")
+  artists   Artist   @relation(fields: [artist_id], references: [id], onDelete: Cascade, map: "artist_urls_ibfk_2")
+
+  @@index([artist_id], map: "artist_id")
+  @@index([user_id], map: "user_id")
+  @@map("artist_urls")
+}
+
+model Artist {
+  id             Int            @id @default(autoincrement())
+  user_id        Int
+  name           String         @db.VarChar(255)
+  created        DateTime       @db.DateTime(0)
+  updated        DateTime       @db.DateTime(0)
+  notes          String?        @db.Text
+  artist_alias   ArtistAlias[]
+  artist_members ArtistMember[]
+  artist_urls    ArtistUrl[]
+  users          User           @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "artists_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+  @@map("artists")
+}
+
+model Block {
+  id       Int    @id @default(autoincrement())
+  pages    String @db.VarChar(128)
+  title    String @db.VarChar(128)
+  area     String @db.VarChar(16)
+  priority Int
+  content  String @db.Text
+
+  @@index([pages])
+  @@map("blocks")
+}
+
+model Comment {
+  id       Int       @id @default(autoincrement())
+  image_id Int
+  owner_id Int
+  owner_ip String    @db.VarChar(45)
+  posted   DateTime? @db.DateTime(0)
+  comment  String    @db.Text
+  images   Post      @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "comments_ibfk_1")
+  users    User      @relation(fields: [owner_id], references: [id], onUpdate: Restrict, map: "comments_ibfk_2")
+
+  @@index([image_id])
+  @@index([owner_id])
+  @@index([posted])
+  @@map("comments")
+}
+
+model Config {
+  name  String  @id @db.VarChar(128)
+  value String? @db.Text
+
+  @@map("config")
+}
+
+model ImageTagCategory {
+  category         String  @id @db.VarChar(60)
+  display_singular String? @db.VarChar(60)
+  display_multiple String? @db.VarChar(60)
+  color            String? @db.VarChar(7)
+
+  @@map("image_tag_categories")
+}
+
+model ImageTag {
+  image_id Int
+  tag_id   Int
+  images   Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_1")
+  tags     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_2")
+
+  @@unique([image_id, tag_id], map: "image_id")
+  @@index([image_id], map: "images_tags_image_id_idx")
+  @@index([tag_id], map: "images_tags_tag_id_idx")
+  @@map("image_tags")
+}
+
+model ImageView {
+  id        Int    @id @default(autoincrement())
+  image_id  Int
+  user_id   Int
+  timestamp Int
+  ipaddress String @db.VarChar(45)
+
+  @@map("image_views")
+}
+
+model Post {
+  id                  Int                @id @default(autoincrement())
+  owner_id            Int
+  owner_ip            String             @db.VarChar(45)
+  filename            String             @db.VarChar(64)
+  filesize            Int
+  hash                String             @unique(map: "hash") @db.Char(32)
+  ext                 String             @db.Char(4)
+  source              String?            @db.VarChar(255)
+  width               Int
+  height              Int
+  posted              DateTime           @default(dbgenerated("('1970-01-01 00:00:00')")) @db.DateTime(0)
+  locked              PostLocked         @default(N)
+  author              String?            @db.VarChar(255)
+  rating              String             @default("u") @db.Char(1)
+  favorites           Int                @default(0)
+  parent_id           Int?
+  has_children        PostHasChildren    @default(N)
+  numeric_score       Int                @default(0)
+  comments            Comment[]
+  image_tags          ImageTag[]
+  users               User               @relation(fields: [owner_id], references: [id], onUpdate: Restrict, map: "images_ibfk_1")
+  numeric_score_votes NumericScoreVote[]
+  pool_images         PoolPost[]		 @ignore
+  user_favorites      UserFavorite[]
+
+  @@index([favorites], map: "images__favorites")
+  @@index([numeric_score], map: "images__numeric_score")
+  @@index([parent_id], map: "images__parent_id")
+  @@index([rating], map: "images__rating")
+  @@index([hash])
+  @@index([height])
+  @@index([owner_id])
+  @@index([width])
+  @@map("images")
+}
+
+model NumericScoreVote {
+  image_id Int
+  user_id  Int
+  score    Int
+  images   Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_1")
+  users    User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_2")
+
+  @@unique([image_id, user_id], map: "image_id")
+  @@index([user_id, score], map: "numeric_score_votes__user_votes")
+  @@index([image_id])
+  @@map("numeric_score_votes")
+}
+
+model PoolHistory {
+  id      Int      @id @default(autoincrement())
+  pool_id Int
+  user_id Int
+  action  Int
+  images  String?  @db.Text
+  count   Int      @default(0)
+  date    DateTime @db.DateTime(0)
+  pools   Pool     @relation(fields: [pool_id], references: [id], onDelete: Cascade, map: "pool_history_ibfk_1")
+  users   User     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "pool_history_ibfk_2")
+
+  @@index([pool_id], map: "pool_id")
+  @@index([user_id], map: "user_id")
+  @@map("pool_history")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model PoolPost {
+  pool_id     Int
+  image_id    Int
+  image_order Int  @default(0)
+  pools       Pool @relation(fields: [pool_id], references: [id], onDelete: Cascade, map: "pool_images_ibfk_1")
+  images      Post @relation(fields: [image_id], references: [id], onDelete: Cascade, map: "pool_images_ibfk_2")
+
+  @@index([image_id], map: "image_id")
+  @@index([pool_id], map: "pool_id")
+  @@map("pool_images")
+  @@ignore
+}
+
+model Pool {
+  id           Int           @id @default(autoincrement())
+  user_id      Int
+  public       PoolPublic    @default(N)
+  title        String        @db.VarChar(255)
+  description  String?       @db.Text
+  date         DateTime      @db.DateTime(0)
+  posts        Int           @default(0)
+  pool_history PoolHistory[]
+  pool_images  PoolPost[]	 @ignore
+  users        User          @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "pools_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+  @@map("pools")
+}
+
+model Tag {
+  id         Int        @id @default(autoincrement())
+  tag        String     @unique(map: "tag") @db.VarChar(255)
+  count      Int        @default(0)
+  image_tags ImageTag[]
+
+  @@index([tag])
+  @@map("tags")
+}
+
+model UserFavorite {
+  image_id   Int
+  user_id    Int
+  created_at DateTime @db.DateTime(0)
+  users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_1")
+  images     Post     @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_2")
+
+  @@unique([image_id, user_id], map: "image_id")
+  @@index([image_id])
+  @@index([user_id], map: "user_id")
+  @@map("user_favorites")
+}
+
+model User {
+  id                  Int                @id @default(autoincrement())
+  name                String             @unique(map: "name") @db.VarChar(32)
+  pass                String?            @db.VarChar(250)
+  joindate            DateTime           @default(dbgenerated("('1970-01-01 00:00:00')")) @db.DateTime(0)
+  class               String             @default("user") @db.VarChar(32)
+  email               String?            @db.VarChar(128)
+  artist_alias        ArtistAlias[]
+  artist_members      ArtistMember[]
+  artist_urls         ArtistUrl[]
+  artists             Artist[]
+  comments            Comment[]
+  images              Post[]
+  numeric_score_votes NumericScoreVote[]
+  pool_history        PoolHistory[]
+  pools               Pool[]
+  user_favorites      UserFavorite[]
+
+  @@index([name])
+  @@map("users")
+}
+
+enum PoolPublic {
+  Y
+  N
+
+  @@map("pools_public")
+}
+
+enum PostLocked {
+  Y
+  N
+
+  @@map("images_locked")
+}
+
+enum PostHasChildren {
+  Y
+  N
+
+  @@map("images_has_children")
+}

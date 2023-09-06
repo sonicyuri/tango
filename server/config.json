@@ -1,12 +1,6 @@
 {
-	"database": {
-		"host": "localhost",
-		"port": "3306",
-		"username": "root",
-		"password": "",
-		"database": "booru"
-	},
 	"server": {
-		"port": 3033
+		"port": 3033,
+		"endpoint": "/api"
 	}
 }

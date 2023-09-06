@@ -64,8 +64,8 @@ const DetailsCard = (props: DetailsCardProps) => {
 			<CardHeader title="Details" />
 			<CardContent>
 				<Stack spacing={2}>
-					{detailsRows.map(d => (
-						<div className="PostPage-details-row" key={"row-" + d.title}>
+					{detailsRows.map((d, k) => (
+						<div className="PostPage-details-row" key={"row-" + k}>
 							{d.title ? (
 								<Typography variant="subtitle2" key={"title-" + d.title}>
 									{d.title}
