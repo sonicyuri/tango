@@ -57,6 +57,9 @@ const ListPage = () => {
 		const currentPage = Number(params.page) || 1;
 		const query = searchParams.get("q");
 
+		document.title =
+			(query?.trim() || "").length > 0 ? Util.formatTitle(query?.trim() || "") : Util.formatTitle("Index");
+
 		dispatch(
 			postList({
 				query: query,

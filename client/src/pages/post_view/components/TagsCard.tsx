@@ -1,7 +1,7 @@
 /** @format */
 import { Button, Card, CardActions, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import Color from "colorjs.io";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "react-spinkit";
 
@@ -13,6 +13,8 @@ import { BooruTag, BooruTagCategory } from "../../../models/BooruTag";
 import { LogFactory } from "../../../util/Logger";
 import { Util } from "../../../util/Util";
 import TagInput from "../../../components/TagInput";
+import TagChip from "../../../components/TagChip";
+import TagChipList from "../../../components/TagChipList";
 
 const logger = LogFactory.create("TagsCard");
 
@@ -28,67 +30,17 @@ const TagsCard = (props: TagsCardProps) => {
 	const [loading, setLoading] = useState(false);
 	const [editing, setEditing] = useState(false);
 	const [tempTags, setTempTags] = useState(props.post.tags);
-	const { tags, categories } = useAppSelector(selectTagState);
 
-	const onClickTag = (ev: React.MouseEvent, tag: string) => {
-		ev.preventDefault();
+	const { tags } = useAppSelector(selectTagState);
 
-		navigate(Util.makePostsLink(tag, 1));
-	};
-
-	// which categories are used by this post?
-	const postCategories: { [name: string]: BooruTagCategory } = {};
-	const categoryTags: { [name: string]: string[] } = {};
-	const categorylessTags: string[] = [];
-
-	props.post.tags.forEach(t => {
-		const cat = BooruTag.getCategory(t, categories);
-		if (cat != null) {
-			postCategories[cat.id] = cat;
-			categoryTags[cat.id] = categoryTags[cat.id] || [];
-			categoryTags[cat.id].push(t);
-		} else {
-			categorylessTags.push(t);
-		}
-	});
-
-	const renderTagsList = function (tags: string[], cat: BooruTagCategory | null) {
-		if (tags.length == 0) {
-			return <></>;
-		}
-
-		const color = cat?.color || "default";
-		const hoverColor: string = new Color(new Color(cat?.color || "#000000").lighten(0.15)).toString({
-			format: "hex"
-		});
-		const style = cat != null ? { backgroundColor: color, ":hover": { backgroundColor: hoverColor } } : {};
-
-		return (
-			<div className="TagsCard-cat" key={"cat-tags-" + (cat?.id || "default")}>
-				{<Typography variant="subtitle1">{cat?.displayMultiple || "Other"}</Typography>}
-				{tags.map(t => {
-					const tagParts = t.split(":");
-					const tagWithoutCategory = tagParts.length > 1 ? tagParts[1] : t;
-					return (
-						<Chip
-							component="a"
-							key={t}
-							label={tagWithoutCategory}
-							sx={style}
-							onClick={(e: React.MouseEvent) => onClickTag(e, t)}
-							clickable
-							href={Util.makePostsLink(t, 1)}
-						/>
-					);
-				})}
-			</div>
-		);
-	};
+	useEffect(() => {
+		setEditing(false);
+		props.onEditingChanged(false);
+	}, [props.post]);
 
 	const showTags = (
 		<div className="TagsCard">
-			{Object.keys(categoryTags).map(cat => renderTagsList(categoryTags[cat], postCategories[cat]))}
-			{renderTagsList(categorylessTags, null)}
+			<TagChipList tags={props.post.tags} orderBy="alphabetical" />
 		</div>
 	);
 

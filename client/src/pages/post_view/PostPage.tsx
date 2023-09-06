@@ -32,6 +32,7 @@ import i18n from "../../util/Internationalization";
 import { LogFactory, Logger } from "../../util/Logger";
 import { Util } from "../../util/Util";
 import DetailsCard from "./components/DetailsCard";
+import VrPost from "./components/VrPost";
 
 const logger: Logger = LogFactory.create("PostPage");
 
@@ -97,6 +98,8 @@ const PostPage = () => {
 
 	//
 	useEffect(() => {
+		document.title = Util.formatTitle("Post " + params.postId);
+
 		if (cursor != null) {
 			dispatch(postViewById({ postId: params.postId || "1" }));
 		} else {
@@ -126,7 +129,12 @@ const PostPage = () => {
 	if (ImageExtensions.indexOf(currentPost.extension) != -1) {
 		postContent = <ImagePost post={currentPost} />;
 	} else if (VideoExtensions.indexOf(currentPost.extension) != -1) {
-		postContent = <VideoPost post={currentPost} swipe={swipeHandlers} />;
+		postContent =
+			currentPost.tags.indexOf("vr") != -1 ? (
+				<VrPost post={currentPost} />
+			) : (
+				<VideoPost post={currentPost} swipe={swipeHandlers} />
+			);
 		// video element steals events needed for detecting swipe
 		needsSwipeListener = true;
 	} else if (FlashExtensions.indexOf(currentPost.extension) != -1) {

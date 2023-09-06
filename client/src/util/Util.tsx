@@ -4,6 +4,7 @@ import { Theme } from "@mui/system";
 import { filesize } from "filesize";
 import moment from "moment";
 import React from "react";
+import i18n from "./Internationalization";
 
 import { Logger } from "./Logger";
 
@@ -71,5 +72,20 @@ export class Util {
 			}
 		]);
 		return `/posts${page != 1 ? "/" + page : ""}${queryString}`;
+	}
+
+	static samePageLinkNavigation(event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+		return !(
+			event.defaultPrevented ||
+			event.button !== 0 || // ignore everything but left-click
+			event.metaKey ||
+			event.ctrlKey ||
+			event.altKey ||
+			event.shiftKey
+		);
+	}
+
+	static formatTitle(str: string) {
+		return i18n.t("siteTitle") + " | " + str;
 	}
 }
