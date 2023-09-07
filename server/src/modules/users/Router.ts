@@ -104,7 +104,7 @@ export class UserRouter implements IRouter {
 
 		const rememberMe = !!req.body.rememberMe || false;
 
-		const userResult = await this.getUserByNameAndPass(credentials.username, credentials.password);
+		const userResult = await UserRouter.getUserByNameAndPass(credentials.username, credentials.password);
 		if (!userResult.user) {
 			return { type: "error", message: userResult.message ?? "unknown error" };
 		}
