@@ -38,7 +38,10 @@ export class UserRouter implements IRouter {
 				// for now, support http basic auth in this endpoint
 				const credentials = AuthUtil.decodeBasicHeader(req.headers.authorization ?? "");
 				if (!user && credentials.username.length > 0 && credentials.password.length > 0) {
-					const userResult = await this.getUserByNameAndPass(credentials.username, credentials.password);
+					const userResult = await UserRouter.getUserByNameAndPass(
+						credentials.username,
+						credentials.password
+					);
 					user = userResult.user;
 				}
 
@@ -119,7 +122,7 @@ export class UserRouter implements IRouter {
 		return { type: "success", result: response };
 	}
 
-	private async getUserByNameAndPass(name: string, pass: string): Promise<{ user?: User; message?: string }> {
+	private static async getUserByNameAndPass(name: string, pass: string): Promise<{ user?: User; message?: string }> {
 		const prisma = usePrisma();
 
 		// check DB
