@@ -30,7 +30,7 @@ const TagChip = (props: TagChipProps) => {
 	const tagParts = t.split(":");
 	const tagWithoutCategory = (
 		<div style={{ display: "flex", alignItems: "center" }}>
-			<Typography variant="body2">{tagParts.length > 1 ? tagParts[1] : t}</Typography>
+			<Typography variant="body2">{cat && tagParts.length > 1 ? tagParts[1] : t}</Typography>
 			<Typography variant="subtitle2" style={{ paddingLeft: "5px" }}>
 				{tagFrequencies[t]}
 			</Typography>

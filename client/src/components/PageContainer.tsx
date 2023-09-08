@@ -22,7 +22,7 @@ const PageContainer = (props: PageContainerProps) => {
 		<Container>
 			<Paper elevation={24} style={{ padding: "20px" }}>
 				{props.title || props.header ? (
-					<Box style={{ display: "flex", alignItems: "center" }}>
+					<Box style={{ display: "flex", alignItems: "center", paddingBottom: "10px" }}>
 						{props.title ? (
 							<Typography variant="h3" style={{ flexGrow: 1 }}>
 								{props.title}
