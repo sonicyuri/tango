@@ -4,6 +4,7 @@ import { Navigate, useRouteError } from "react-router-dom";
 import PageContainer from "../../components/PageContainer";
 import { selectAuthState } from "../../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
+import { UserClass } from "../../../../shared";
 
 import { LogFactory } from "../../util/Logger";
 import { notify } from "reapop";

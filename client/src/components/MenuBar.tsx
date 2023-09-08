@@ -6,6 +6,7 @@ import { AppBar, Box, IconButton, Link as MuiLink, Menu, MenuItem, Toolbar } fro
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 
+import { UserClass } from "../../../shared/src";
 import { logout, selectAuthState } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectPostState } from "../features/posts/PostSlice";
@@ -66,7 +67,7 @@ const MenuBar = () => {
 				Favorites
 			</MenuItem>
 			<MenuItem>Settings</MenuItem>
-			{user && user.class == "admin" ? (
+			{user && UserClass.canClass(user.class, "manage_admintools") ? (
 				<MenuItem component={RouterLink} to="/admin">
 					Admin
 				</MenuItem>
