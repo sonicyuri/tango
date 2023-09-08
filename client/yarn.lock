@@ -2316,6 +2316,11 @@ jsesc@^2.5.1:
   resolved "https://registry.npmjs.org/jsesc/-/jsesc-2.5.2.tgz"
   integrity sha512-OYu7XEzjkCQ3C5Ps3QIZsQfNpqoJyZZA99wd9aWd05NCtC5pWOkShK2mkL6HXQR6/Cy2lbNdPlZBpuQHXE63gA==
 
+json-object-mapper@^1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/json-object-mapper/-/json-object-mapper-1.7.1.tgz#424a6dedb12e7d9b0d09f8f9ef9d1d8343f4346a"
+  integrity sha512-3OCBJWrTGkr1KduV2AvaAJtiHaoWPUWU1sWRYvVvAKSNvciI8KH39pvYw184TWEAN1O1Ymre4B5By+RAVq1Fdw==
+
 json-parse-even-better-errors@^2.3.0:
   version "2.3.1"
   resolved "https://registry.npmjs.org/json-parse-even-better-errors/-/json-parse-even-better-errors-2.3.1.tgz"
@@ -3083,6 +3088,12 @@ svg-parser@^2.0.4:
   version "2.0.4"
   resolved "https://registry.npmjs.org/svg-parser/-/svg-parser-2.0.4.tgz"
   integrity sha512-e4hG1hRwoOdRb37cIMSgzNsxyzKfayW6VOflrwvR+/bzrkyxY/31WkbgnQpgtrNp1SdpJvpUAGTa/ZoiPNDuRQ==
+
+tango-shared@../shared:
+  version "1.0.0"
+  dependencies:
+    json-object-mapper "^1.7.1"
+    moment "^2.29.4"
 
 text-table@^0.2.0:
   version "0.2.0"

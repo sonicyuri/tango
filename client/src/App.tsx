@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import NotificationsSystem, { atalhoTheme, dismissNotification } from "reapop";
 
 import { useAppDispatch, useAppSelector } from "./features/Hooks";
+import AdminPage from "./pages/admin/AdminPage";
 import ErrorPage from "./pages/ErrorPage";
 import ListPage from "./pages/ListPage";
 import PostPage from "./pages/post_view/PostPage";
@@ -20,6 +21,10 @@ const App = () => {
 			element: <RootPage />,
 			errorElement: <ErrorPage />,
 			children: [
+				{
+					path: "/admin",
+					element: <AdminPage />
+				},
 				{
 					path: "/tags/list",
 					element: <TagsListPage tab={"list"} />
