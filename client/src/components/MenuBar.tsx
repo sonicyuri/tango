@@ -13,6 +13,7 @@ import i18n from "../util/Internationalization";
 import { LogFactory } from "../util/Logger";
 import { Util } from "../util/Util";
 import SearchBox from "./SearchBox";
+import SideBar from "./SideBar";
 
 const logger = LogFactory.create("MenuBar");
 
@@ -23,6 +24,8 @@ const MenuBar = () => {
 	const { cursor } = useAppSelector(selectPostState);
 	const { user } = useAppSelector(selectAuthState);
 	const [params, setParams] = useSearchParams();
+
+	const [showingSidebar, setShowingSidebar] = useState(false);
 
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const isMenuOpen = Boolean(anchorEl);
@@ -75,6 +78,7 @@ const MenuBar = () => {
 
 	return (
 		<>
+			<SideBar open={showingSidebar} onClose={() => setShowingSidebar(false)} />
 			<AppBar position="static" className="MenuBar">
 				<Toolbar>
 					<IconButton
@@ -82,6 +86,7 @@ const MenuBar = () => {
 						edge="start"
 						color="inherit"
 						aria-label="open menu"
+						onClick={() => setShowingSidebar(true)}
 						sx={{
 							mr: 2
 						}}>

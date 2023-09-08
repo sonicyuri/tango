@@ -1,13 +1,12 @@
 /** @format */
-
 import { Container, FormControlLabel, FormGroup, Paper, Switch, Tab, Tabs, Typography } from "@mui/material";
+import { Box } from "@mui/system";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+
+import TagChipList from "../../components/TagChipList";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
 import { selectTagState } from "../../features/tags/TagSlice";
-import { Util } from "../../util/Util";
-import TagChipList from "../../components/TagChipList";
-import { Box } from "@mui/system";
 import TagCloud from "./components/TagCloud";
 
 interface TagsListProps {
@@ -21,8 +20,8 @@ const TagsListPage = (props: TagsListProps) => {
 
 	const [showAll, setShowAll] = useState(false);
 
-	const tagsToShow = Object.keys(tagFrequencies).filter(t => showAll || tagFrequencies[t] > 2);
-	const tagList = <TagChipList tags={tagsToShow} orderBy="popularity" />;
+	const tagsToShow = Object.keys(tagFrequencies);
+	const tagList = <TagChipList tags={tagsToShow} orderBy="popularity" limitTags={!showAll} />;
 	const tagCloud = <TagCloud tags={tagsToShow} />;
 
 	return (

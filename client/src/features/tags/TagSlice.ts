@@ -1,6 +1,7 @@
 /** @format */
 import { createAsyncThunk, createSlice, Reducer } from "@reduxjs/toolkit";
 import moment from "moment";
+import { notify } from "reapop";
 
 import { BooruTag, BooruTagCategory } from "../../models/BooruTag";
 import { LogFactory, Logger } from "../../util/Logger";
@@ -20,9 +21,17 @@ interface TagState {
 
 export const tagList = createAsyncThunk("tag/list", async (_: null, thunkApi) => {
 	try {
-		return await TagService.getTags();
+		const result = await TagService.getTags();
+		if (result.type == "error") {
+			logger.error("error listing tags", result.message);
+			thunkApi.dispatch(notify("failed to obtain tags", "error"));
+			return thunkApi.rejectWithValue({});
+		}
+
+		return result.result;
 	} catch (error: any) {
 		logger.error("error listing tags", error);
+		thunkApi.dispatch(notify("failed to obtain tags", "error"));
 		return thunkApi.rejectWithValue({});
 	}
 });
