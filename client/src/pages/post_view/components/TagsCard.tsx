@@ -1,20 +1,16 @@
 /** @format */
-import { Button, Card, CardActions, CardContent, CardHeader, Chip, Typography } from "@mui/material";
-import Color from "colorjs.io";
+import { Button, Card, CardActions, CardContent, CardHeader } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Spinner from "react-spinkit";
 
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import TagChipList from "../../../components/TagChipList";
+import TagInput from "../../../components/TagInput";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
 import { postSetTags } from "../../../features/posts/PostSlice";
 import { selectTagState, tagList } from "../../../features/tags/TagSlice";
 import { BooruPost } from "../../../models/BooruPost";
-import { BooruTag, BooruTagCategory } from "../../../models/BooruTag";
 import { LogFactory } from "../../../util/Logger";
-import { Util } from "../../../util/Util";
-import TagInput from "../../../components/TagInput";
-import TagChip from "../../../components/TagChip";
-import TagChipList from "../../../components/TagChipList";
 
 const logger = LogFactory.create("TagsCard");
 
@@ -78,7 +74,13 @@ const TagsCard = (props: TagsCardProps) => {
 			});
 	};
 
-	const editTags = <TagInput values={tempTags} onValuesChange={values => setTempTags(values)} onSubmit={onSubmit} />;
+	const editTags = (
+		<TagInput
+			values={tempTags}
+			onValuesChange={values => setTempTags(values.map(v => v.toString()))}
+			onSubmit={onSubmit}
+		/>
+	);
 
 	const editTagsButtons = (
 		<>
@@ -102,7 +104,7 @@ const TagsCard = (props: TagsCardProps) => {
 			<CardHeader title="Tags" style={{ paddingBottom: 0 }} />
 			<CardContent style={{ position: "relative", paddingTop: 0, paddingBottom: 0 }}>
 				<div className="Tags-loading" style={{ visibility: loading ? "visible" : "hidden" }}>
-					<Spinner name="wave" fadeIn="none" color="white" />
+					<LoadingSpinner />
 				</div>
 				{editing ? editTags : showTags}
 			</CardContent>

@@ -1,12 +1,12 @@
 /** @format */
 import { Button, Card, CardContent, CardHeader, Link as MuiLink, Stack, Typography } from "@mui/material";
-import Spinner from "react-spinkit";
 
+import LoadingSpinner from "../../../components/LoadingSpinner";
 import { favoriteSet, selectFavoriteState } from "../../../features/favorites/FavoriteSlice";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
+import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory, Logger } from "../../../util/Logger";
 import { Util } from "../../../util/Util";
-import { BooruPost } from "../../../models/BooruPost";
 
 const logger: Logger = LogFactory.create("DetailsCard");
 
@@ -35,20 +35,14 @@ const DetailsCard = (props: DetailsCardProps) => {
 		dispatch(favoriteSet({ postId: props.post.id, favorite: !isFavorite }));
 	};
 
+	const favoriteText = isFavorite ? "Unfavorite" : "Favorite";
+
 	const favoriteButton = (
 		<Button
 			variant={isFavorite ? "outlined" : "contained"}
 			onClick={handleFavorite}
 			disabled={favoriteState != "ready"}>
-			{favoriteState == "ready" ? (
-				isFavorite ? (
-					"Unfavorite"
-				) : (
-					"Favorite"
-				)
-			) : (
-				<Spinner name="wave" fadeIn="none" color="white" />
-			)}
+			{favoriteState == "ready" ? favoriteText : <LoadingSpinner />}
 		</Button>
 	);
 

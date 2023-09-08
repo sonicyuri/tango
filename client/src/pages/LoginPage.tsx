@@ -12,15 +12,14 @@ import {
 } from "@mui/material";
 import { useFormik } from "formik";
 import React, { useEffect, useState } from "react";
-import Spinner from "react-spinkit";
 import * as Yup from "yup";
 
+import LoadingSpinner from "../components/LoadingSpinner";
 import { Credentials } from "../features/auth/AuthService";
-import { login, loginToken, refresh, selectAuthState } from "../features/auth/AuthSlice";
+import { login, selectAuthState } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import i18n from "../util/Internationalization";
 import { LocalSettings } from "../util/LocalSettings";
-import { Util } from "../util/Util";
 
 const LoginPage = () => {
 	const dispatch = useAppDispatch();
@@ -51,10 +50,12 @@ const LoginPage = () => {
 		onSubmit: handleLogin
 	});
 
-	const loadingSpinner = <Spinner name="wave" fadeIn="none" color="white" />;
-
 	if (loginState == "loading" && !causedLogin) {
-		return <Backdrop open={true}>{loadingSpinner}</Backdrop>;
+		return (
+			<Backdrop open={true}>
+				<LoadingSpinner />
+			</Backdrop>
+		);
 	}
 
 	return (
@@ -113,7 +114,7 @@ const LoginPage = () => {
 						/>
 					</FormGroup>
 					<Button color="primary" variant="contained" fullWidth type="submit">
-						{loginState == "loading" ? loadingSpinner : <span>Login</span>}
+						{loginState == "loading" ? <LoadingSpinner /> : <span>Login</span>}
 					</Button>
 				</Stack>
 			</form>

@@ -1,6 +1,6 @@
 /** @format */
 import React from "react";
-import { Navigate, useRouteError } from "react-router-dom";
+import { Link, Navigate, useRouteError } from "react-router-dom";
 import PageContainer from "../../components/PageContainer";
 import { selectAuthState } from "../../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
@@ -8,6 +8,9 @@ import { UserClass } from "../../../../shared";
 
 import { LogFactory } from "../../util/Logger";
 import { notify } from "reapop";
+import { Button, List } from "@mui/material";
+import OptionsList, { OptionsListItem } from "../../components/OptionsList";
+import { ListAlt } from "@mui/icons-material";
 
 const logger = LogFactory.create("AdminPage");
 
@@ -20,7 +23,21 @@ const AdminPage = () => {
 		return <Navigate to="/" />;
 	}
 
-	return <PageContainer title="Admin"></PageContainer>;
+	const menuItems: OptionsListItem[] = [];
+
+	if (UserClass.canClass(user.class, "manage_alias_list")) {
+		menuItems.push({
+			text: "Edit Aliases",
+			url: "/tags/aliases",
+			icon: <ListAlt />
+		});
+	}
+
+	return (
+		<PageContainer title="Admin">
+			<OptionsList menuItems={menuItems} />
+		</PageContainer>
+	);
 };
 
 export default AdminPage;

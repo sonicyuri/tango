@@ -1,8 +1,8 @@
 /** @format */
-
 import { Chip, Typography } from "@mui/material";
 import Color from "colorjs.io";
 import { Link } from "react-router-dom";
+
 import { useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag } from "../models/BooruTag";

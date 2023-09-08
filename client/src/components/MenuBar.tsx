@@ -6,6 +6,7 @@ import { AppBar, Box, IconButton, Link as MuiLink, Menu, MenuItem, Toolbar } fro
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 
+import { UserClass } from "../../../shared/src";
 import { logout, selectAuthState } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectPostState } from "../features/posts/PostSlice";
@@ -59,11 +60,20 @@ const MenuBar = () => {
 			}}
 			open={isMenuOpen}
 			onClose={handleMenuClose}>
-			<MenuItem>Profile</MenuItem>
+			<MenuItem component={RouterLink} to="/user/profile">
+				Profile
+			</MenuItem>
 			<MenuItem component={RouterLink} to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
 				Favorites
 			</MenuItem>
 			<MenuItem>Settings</MenuItem>
+			{user && UserClass.canClass(user.class, "manage_admintools") ? (
+				<MenuItem component={RouterLink} to="/admin">
+					Admin
+				</MenuItem>
+			) : (
+				<></>
+			)}
 			<MenuItem onClick={handleLogout}>Log Out</MenuItem>
 		</Menu>
 	);

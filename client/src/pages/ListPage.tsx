@@ -1,19 +1,11 @@
 /** @format */
-import {
-	Backdrop,
-	Box,
-	Breadcrumbs,
-	Link as MuiLink,
-	Pagination,
-	Typography,
-	useMediaQuery,
-	useTheme
-} from "@mui/material";
+import { Backdrop, Box, Breadcrumbs, Link as MuiLink, Pagination, Typography, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/system";
 import Grid from "@mui/material/Unstable_Grid2";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import Spinner from "react-spinkit";
 
+import LoadingSpinner from "../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { postList, selectPostState } from "../features/posts/PostSlice";
 import { BooruPost } from "../models/BooruPost";
@@ -151,7 +143,7 @@ const ListPage = () => {
 			<div className="ListPage-footer">{renderPagination("pg-bottom")}</div>
 			<Backdrop open={searchState == "loading"}>
 				<div>
-					<Spinner name="wave" fadeIn="none" color="white" />
+					<LoadingSpinner />
 				</div>
 			</Backdrop>
 		</div>

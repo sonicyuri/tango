@@ -1,5 +1,6 @@
 /** @format */
-import { Autocomplete, Box, Chip, styled, TextField, Typography } from "@mui/material";
+import styled from "@emotion/styled";
+import { Autocomplete, Box, Chip, TextField, Typography } from "@mui/material";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,7 +19,7 @@ const UnpaddedFilledInput = styled(TextField)({
 
 export interface TagInputProps {
 	values: string[];
-	onValuesChange: (tags: string[]) => void;
+	onValuesChange: (tags: readonly string[]) => void;
 	onSubmit: () => void;
 }
 
@@ -41,7 +42,7 @@ const TagInput = (props: TagInputProps) => {
 				multiple
 				options={tags.filter(t => !existingTags[t.tag]).map(t => t.tag)}
 				value={props.values}
-				onChange={(_: any, values: string[]) => props.onValuesChange(values)}
+				onChange={(_: any, values: readonly string[]) => props.onValuesChange(values)}
 				freeSolo
 				autoHighlight
 				renderTags={(value: readonly string[], getTagProps) => {
