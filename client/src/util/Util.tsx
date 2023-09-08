@@ -2,7 +2,7 @@
 import { Alert, Breakpoint, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/system";
 import { filesize } from "filesize";
-import moment from "moment";
+import moment, { ISO_8601 } from "moment";
 import React from "react";
 import i18n from "./Internationalization";
 
@@ -87,5 +87,13 @@ export class Util {
 
 	static formatTitle(str: string) {
 		return i18n.t("siteTitle") + " | " + str;
+	}
+
+	static checkIfTokenValid(expiration: string): boolean {
+		if (expiration.length == 0) {
+			return false;
+		}
+
+		return moment(expiration).isAfter(moment());
 	}
 }

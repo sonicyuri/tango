@@ -60,4 +60,15 @@ export default class AuthUtil {
 			return {};
 		}
 	}
+
+	public static createAnonymousUser(): User {
+		return {
+			id: 0,
+			name: "anonymous",
+			pass: null,
+			joindate: new Date(),
+			class: "anonymous",
+			email: null
+		};
+	}
 }

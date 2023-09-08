@@ -1,37 +1,35 @@
 /** @format */
 
-import { PrismaClient, User } from ".prisma/client";
-import express, { NextFunction, Request, Response, Router } from "express";
-import { injectable } from "tsyringe";
-import { IRouter } from "../../IRouter";
-import AsyncHandler from "express-async-handler";
-import Util from "../../util/Util";
+import { User } from ".prisma/client";
 import bcrypt from "bcrypt";
-import jwt, { verify } from "jsonwebtoken";
-import moment from "moment";
-import ApiAsyncHandler, { ApiResponse } from "../../util/ApiAsyncHandler";
-import AuthUtil from "./AuthUtil";
-import { AuthenticatedRequest, validateUserToken } from "./Middleware";
-import readConfig, { Config } from "../../Config";
+import express, { Request, Response, Router } from "express";
+import AsyncHandler from "express-async-handler";
+import { injectable } from "tsyringe";
+import readConfig from "../../Config";
+import { IRouter } from "../../IRouter";
 import usePrisma from "../../Prisma";
+import ApiAsyncHandler, { ApiResponse } from "../../util/ApiAsyncHandler";
+import Util from "../../util/Util";
+import AuthUtil from "./AuthUtil";
+import { AuthenticatedRequest, getUserFromToken } from "./Middleware";
 
 @injectable()
 export class UserRouter implements IRouter {
 	createRouter(): Router {
 		const router = express.Router();
 
-		router.use((req, res, next) => {
-			res.type("application/json");
-			next();
-		});
-
-		router.get("/info", validateUserToken(true), (req: AuthenticatedRequest, res) => {
-			res.send(JSON.stringify({ user: req.user == undefined ? null : Util.exclude(req.user, ["pass"]) }));
+		router.get("/info", getUserFromToken(true), (req: AuthenticatedRequest, res) => {
+			res.send(
+				JSON.stringify({
+					type: "success",
+					result: req.user == undefined ? null : Util.exclude(req.user, ["pass"])
+				})
+			);
 		});
 
 		router.get(
 			"/nginx_callback",
-			validateUserToken(false),
+			getUserFromToken(false),
 			AsyncHandler(async (req: AuthenticatedRequest, res) => {
 				let user = req.user;
 

@@ -7,6 +7,7 @@ import AuthUtil from "./AuthUtil";
 import { container } from "tsyringe";
 import readConfig, { Config } from "../../Config";
 import usePrisma from "../../Prisma";
+import { Permissions, UserClass } from "../../../../shared/src";
 
 const logger = Util.getLogger("modules/users/Middleware");
 
@@ -14,7 +15,7 @@ export interface AuthenticatedRequest extends Request {
 	user?: User;
 }
 
-export function validateUserToken(
+export function getUserFromToken(
 	shouldFailIfNotAuthed: boolean = true
 ): (req: AuthenticatedRequest, res: Response, next: NextFunction) => void {
 	const config = readConfig();
@@ -70,7 +71,7 @@ export function validateUserToken(
 						.send(Util.formatApiResponse({ type: "error", message: "user not found" }))
 						.end();
 				} else {
-					req.user = user || undefined;
+					req.user = user || AuthUtil.createAnonymousUser();
 					next();
 				}
 			})
@@ -80,5 +81,28 @@ export function validateUserToken(
 					.send(Util.formatApiResponse({ type: "error", message: "unknown database error" }))
 					.end();
 			});
+	};
+}
+
+export function requirePermissions(
+	...abilities: (keyof Permissions)[]
+): (req: AuthenticatedRequest, res: Response, next: NextFunction) => void {
+	return (req, res, next) => {
+		if (
+			req.user == null ||
+			abilities.filter(a => UserClass.canClass(req.user?.class ?? "anonymous", a)).length != abilities.length
+		) {
+			logger.warn(
+				`user ${req.user?.name ?? "anonymous"} tried to access ${
+					req.url
+				} but can't satisfy permissions [${abilities.join(", ")}]`
+			);
+			res.status(401)
+				.send(Util.formatApiResponse({ type: "error", message: "missing permissions" }))
+				.end();
+			return;
+		}
+
+		next();
 	};
 }

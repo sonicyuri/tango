@@ -6,7 +6,13 @@ import Util from "./util/Util";
 
 const logger = Util.getLogger("Prisma");
 
+let globalPrisma: PrismaClient | null = null;
+
 export default function usePrisma() {
+	if (globalPrisma != null) {
+		return globalPrisma;
+	}
+
 	const config = readConfig();
 
 	if (config.environment == "production") {
@@ -29,5 +35,5 @@ export default function usePrisma() {
 		logger.info(`query ${e.query}, params ${e.params}, duration ${e.duration}`);
 	});
 
-	return prisma;
+	return (globalPrisma = prisma);
 }
