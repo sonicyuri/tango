@@ -51,22 +51,6 @@ const LoginPage = () => {
 		onSubmit: handleLogin
 	});
 
-	useEffect(() => {
-		if (LocalSettings.accessToken.value && Util.checkIfTokenValid(LocalSettings.accessTokenExpire.value ?? "")) {
-			dispatch(
-				loginToken({
-					accessToken: LocalSettings.accessToken.value,
-					refreshToken: LocalSettings.refreshToken.value
-				})
-			);
-		} else if (
-			LocalSettings.refreshToken.value &&
-			Util.checkIfTokenValid(LocalSettings.refreshTokenExpire.value ?? "")
-		) {
-			dispatch(refresh(LocalSettings.refreshToken.value));
-		}
-	}, []);
-
 	const loadingSpinner = <Spinner name="wave" fadeIn="none" color="white" />;
 
 	if (loginState == "loading" && !causedLogin) {
