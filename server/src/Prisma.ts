@@ -6,13 +6,7 @@ import Util from "./util/Util";
 
 const logger = Util.getLogger("Prisma");
 
-let globalPrisma: PrismaClient | null = null;
-
-export default function usePrisma() {
-	if (globalPrisma != null) {
-		return globalPrisma;
-	}
-
+const prismaClientSingleton = () => {
 	const config = readConfig();
 
 	if (config.environment == "production") {
@@ -35,5 +29,19 @@ export default function usePrisma() {
 		logger.info(`query ${e.query}, params ${e.params}, duration ${e.duration}`);
 	});
 
-	return (globalPrisma = prisma);
+	return prisma;
+};
+
+type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;
+
+const globalForPrisma = globalThis as unknown as {
+	prisma: PrismaClientSingleton | undefined;
+};
+
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+export default function usePrisma() {
+	return prisma;
 }

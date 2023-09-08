@@ -3,6 +3,7 @@ import { Container, FormControlLabel, FormGroup, Paper, Switch, Tab, Tabs, Typog
 import { Box } from "@mui/system";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 
 import TagChipList from "../../components/TagChipList";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
@@ -25,26 +26,22 @@ const TagsListPage = (props: TagsListProps) => {
 	const tagCloud = <TagCloud tags={tagsToShow} />;
 
 	return (
-		<Container>
-			<Paper elevation={24} style={{ padding: "20px" }}>
-				<Box style={{ display: "flex", alignItems: "center" }}>
-					<Typography variant="h3" style={{ flexGrow: 1 }}>
-						Tags
-					</Typography>
-					<FormGroup>
-						<FormControlLabel
-							control={<Switch checked={showAll} onChange={(ev, checked) => setShowAll(checked)} />}
-							label="Show all"
-						/>
-					</FormGroup>
-				</Box>
-				<Tabs value={props.tab == "cloud" ? 1 : 0} aria-label="tabs list visualization mode">
-					<Tab component={Link} label="List" to="/tags/list" />
-					<Tab component={Link} label="Cloud" to="/tags/cloud" />
-				</Tabs>
-				{props.tab == "list" ? tagList : tagCloud}
-			</Paper>
-		</Container>
+		<PageContainer
+			title="Tags List"
+			header={
+				<FormGroup>
+					<FormControlLabel
+						control={<Switch checked={showAll} onChange={(ev, checked) => setShowAll(checked)} />}
+						label="Show all"
+					/>
+				</FormGroup>
+			}>
+			<Tabs value={props.tab == "cloud" ? 1 : 0} aria-label="tabs list visualization mode">
+				<Tab component={Link} label="List" to="/tags/list" />
+				<Tab component={Link} label="Cloud" to="/tags/cloud" />
+			</Tabs>
+			{props.tab == "list" ? tagList : tagCloud}
+		</PageContainer>
 	);
 };
 

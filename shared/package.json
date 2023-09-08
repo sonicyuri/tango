@@ -2,6 +2,7 @@
 	"name": "tango-shared",
 	"version": "1.0.0",
 	"private": "true",
+	"main": "./src/index.ts",
 	"dependencies": {
 		"json-object-mapper": "^1.7.1",
 		"moment": "^2.29.4"
