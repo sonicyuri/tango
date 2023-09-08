@@ -10,6 +10,10 @@ import { PrismaClient } from ".prisma/client";
 import { UserRouter } from "./modules/users/Router";
 import { IRouter } from "./IRouter";
 import readConfig, { Config } from "./Config";
+import { TagRouter } from "./modules/tags/Router";
+import { TagAliasRouter } from "./modules/tags/AliasRouter";
+import jsonResponse from "./util/JsonResponseMiddleware";
+import { notFound } from "./util/NotFoundMiddleware";
 
 export class Server {
 	private app: express.Express;
@@ -36,16 +40,21 @@ export class Server {
 	async run() {
 		this.app.use(BodyParser.json());
 		this.app.use(expressPino());
+		this.app.use(jsonResponse);
 
 		const rootRouter = express.Router();
 
 		const routes: { [endpoint: string]: IRouter } = {
-			"/user": container.resolve(UserRouter)
+			"/user": container.resolve(UserRouter),
+			"/tag/alias": container.resolve(TagAliasRouter),
+			"/tag": container.resolve(TagRouter)
 		};
 
 		Object.keys(routes).forEach(endpoint => rootRouter.use(endpoint, routes[endpoint].createRouter()));
 
 		this.app.use(this.config.server?.endpoint ?? "/api", rootRouter);
+
+		this.app.use(notFound);
 
 		let port = this.config.server?.port ?? 3001;
 		this.app.listen(port, () => {

@@ -1518,6 +1518,13 @@ supports-color@^5.5.0:
   dependencies:
     has-flag "^3.0.0"
 
+tango-shared@../shared:
+  version "1.0.0"
+  resolved "file:../shared"
+  dependencies:
+    json-object-mapper "^1.7.1"
+    moment "^2.29.4"
+
 tar@^6.1.11:
   version "6.2.0"
   resolved "https://registry.npmjs.org/tar/-/tar-6.2.0.tgz"

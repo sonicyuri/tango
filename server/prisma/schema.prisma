@@ -111,7 +111,7 @@ model Config {
   @@map("config")
 }
 
-model ImageTagCategory {
+model PostTagCategory {
   category         String  @id @db.VarChar(60)
   display_singular String? @db.VarChar(60)
   display_multiple String? @db.VarChar(60)
@@ -120,11 +120,11 @@ model ImageTagCategory {
   @@map("image_tag_categories")
 }
 
-model ImageTag {
+model PostTag {
   image_id Int
   tag_id   Int
-  images   Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_1")
-  tags     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_2")
+  post    Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_1")
+  tag     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_2")
 
   @@unique([image_id, tag_id], map: "image_id")
   @@index([image_id], map: "images_tags_image_id_idx")
@@ -132,7 +132,7 @@ model ImageTag {
   @@map("image_tags")
 }
 
-model ImageView {
+model PostView {
   id        Int    @id @default(autoincrement())
   image_id  Int
   user_id   Int
@@ -162,7 +162,7 @@ model Post {
   has_children        PostHasChildren    @default(N)
   numeric_score       Int                @default(0)
   comments            Comment[]
-  image_tags          ImageTag[]
+  post_tags           PostTag[]
   users               User               @relation(fields: [owner_id], references: [id], onUpdate: Restrict, map: "images_ibfk_1")
   numeric_score_votes NumericScoreVote[]
   pool_images         PoolPost[]		 @ignore
@@ -183,7 +183,7 @@ model NumericScoreVote {
   image_id Int
   user_id  Int
   score    Int
-  images   Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_1")
+  posts   Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_1")
   users    User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_2")
 
   @@unique([image_id, user_id], map: "image_id")
@@ -197,7 +197,7 @@ model PoolHistory {
   pool_id Int
   user_id Int
   action  Int
-  images  String?  @db.Text
+  posts  String?  @db.Text
   count   Int      @default(0)
   date    DateTime @db.DateTime(0)
   pools   Pool     @relation(fields: [pool_id], references: [id], onDelete: Cascade, map: "pool_history_ibfk_1")
@@ -242,7 +242,7 @@ model Tag {
   id         Int        @id @default(autoincrement())
   tag        String     @unique(map: "tag") @db.VarChar(255)
   count      Int        @default(0)
-  image_tags ImageTag[]
+  post_tags PostTag[]
 
   @@index([tag])
   @@map("tags")
@@ -253,7 +253,7 @@ model UserFavorite {
   user_id    Int
   created_at DateTime @db.DateTime(0)
   users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_1")
-  images     Post     @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_2")
+  posts     Post     @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_2")
 
   @@unique([image_id, user_id], map: "image_id")
   @@index([image_id])
@@ -273,7 +273,7 @@ model User {
   artist_urls         ArtistUrl[]
   artists             Artist[]
   comments            Comment[]
-  images              Post[]
+  posts               Post[]
   numeric_score_votes NumericScoreVote[]
   pool_history        PoolHistory[]
   pools               Pool[]
