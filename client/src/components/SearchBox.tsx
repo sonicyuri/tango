@@ -39,7 +39,11 @@ const SearchBox = (props: SearchBoxProps) => {
 			style={{
 				display: "flex"
 			}}>
-			<TagInput values={values} onValuesChange={v => setValues(v)} onSubmit={handleSearch} />
+			<TagInput
+				values={values}
+				onValuesChange={v => setValues(v.map(v => v.toString()))}
+				onSubmit={handleSearch}
+			/>
 			<Button variant="contained" onClick={handleSearch}>
 				<SearchIcon />
 			</Button>
