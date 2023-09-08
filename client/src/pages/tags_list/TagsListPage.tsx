@@ -1,10 +1,9 @@
 /** @format */
-import { Container, FormControlLabel, FormGroup, Paper, Switch, Tab, Tabs, Typography } from "@mui/material";
-import { Box } from "@mui/system";
+import { FormControlLabel, FormGroup, Switch, Tab, Tabs } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import PageContainer from "../../components/PageContainer";
 
+import PageContainer from "../../components/PageContainer";
 import TagChipList from "../../components/TagChipList";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
 import { selectTagState } from "../../features/tags/TagSlice";
@@ -31,7 +30,12 @@ const TagsListPage = (props: TagsListProps) => {
 			header={
 				<FormGroup>
 					<FormControlLabel
-						control={<Switch checked={showAll} onChange={(ev, checked) => setShowAll(checked)} />}
+						control={
+							<Switch
+								checked={showAll}
+								onChange={(ev: React.ChangeEvent) => setShowAll(ev.target.checked)}
+							/>
+						}
 						label="Show all"
 					/>
 				</FormGroup>

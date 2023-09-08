@@ -5,11 +5,13 @@ import NotificationsSystem, { atalhoTheme, dismissNotification } from "reapop";
 
 import { useAppDispatch, useAppSelector } from "./features/Hooks";
 import AdminPage from "./pages/admin/AdminPage";
+import TagAliasPage from "./pages/admin/TagAliasPage";
 import ErrorPage from "./pages/ErrorPage";
 import ListPage from "./pages/ListPage";
 import PostPage from "./pages/post_view/PostPage";
 import RootPage from "./pages/RootPage";
 import TagsListPage from "./pages/tags_list/TagsListPage";
+import ProfilePage from "./pages/user/ProfilePage";
 
 const App = () => {
 	const dispatch = useAppDispatch();
@@ -22,8 +24,16 @@ const App = () => {
 			errorElement: <ErrorPage />,
 			children: [
 				{
+					path: "/user/profile",
+					element: <ProfilePage />
+				},
+				{
 					path: "/admin",
 					element: <AdminPage />
+				},
+				{
+					path: "/tags/aliases",
+					element: <TagAliasPage />
 				},
 				{
 					path: "/tags/list",

@@ -6,32 +6,28 @@ import {
 	Breadcrumbs,
 	Button,
 	ButtonGroup,
-	Card,
-	CardContent,
-	CardHeader,
 	Link as MuiLink,
 	Stack,
 	Typography,
-	useMediaQuery,
-	useTheme
+	useMediaQuery
 } from "@mui/material";
+import { useTheme } from "@mui/system";
 import Grid from "@mui/material/Unstable_Grid2";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import Spinner from "react-spinkit";
 import { useSwipeable } from "react-swipeable";
 
-import FlashPost from "./components/FlashPost";
-import ImagePost from "./components/ImagePost";
-import TagsCard from "./components/TagsCard";
-import VideoPost from "./components/VideoPost";
-import { favoriteSet, selectFavoriteState } from "../../features/favorites/FavoriteSlice";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
 import { postDirectLink, postViewById, selectPostState } from "../../features/posts/PostSlice";
 import i18n from "../../util/Internationalization";
 import { LogFactory, Logger } from "../../util/Logger";
 import { Util } from "../../util/Util";
 import DetailsCard from "./components/DetailsCard";
+import FlashPost from "./components/FlashPost";
+import ImagePost from "./components/ImagePost";
+import TagsCard from "./components/TagsCard";
+import VideoPost from "./components/VideoPost";
 import VrPost from "./components/VrPost";
 
 const logger: Logger = LogFactory.create("PostPage");
@@ -117,7 +113,7 @@ const PostPage = () => {
 
 	if (searchState == "loading") {
 		// TODO: nicer loading with blank info instead of simply nothing?
-		return <Spinner name="wave" fadeIn="none" color="white" />;
+		return <LoadingSpinner />;
 	} else if (searchState == "failed" || currentPost == null) {
 		return Util.logAndDisplayError(logger, "failed to obtain post", currentPost);
 	}

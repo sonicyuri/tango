@@ -1,10 +1,10 @@
 /** @format */
+import { Typography } from "@mui/material";
 
-import TagChip from "./TagChip";
 import { useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag, BooruTagCategory } from "../models/BooruTag";
-import { Typography } from "@mui/material";
+import TagChip from "./TagChip";
 
 const LimitTagsCount = 200;
 

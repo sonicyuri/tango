@@ -24,7 +24,7 @@ export class UserRouter implements IRouter {
 					type: "success",
 					result: req.user == undefined ? null : Util.exclude(req.user, ["pass"])
 				})
-			);
+			).end();
 		});
 
 		router.get(
