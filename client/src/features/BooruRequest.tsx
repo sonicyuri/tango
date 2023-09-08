@@ -68,6 +68,10 @@ class BooruRequest {
 		return this.runGetQuery(url).then(res => res.json());
 	}
 
+	static runQueryJsonV2(url: string): Promise<any> {
+		return this.runQueryVersioned("v2", url, "GET", undefined).then(res => res.json());
+	}
+
 	static searchPosts(query: string | null, page = 1): PostSearchCursor {
 		const cursor = new PostSearchCursor(query);
 		cursor.setCursorPosition(Math.max(page, 1), 0);

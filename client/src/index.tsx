@@ -2,6 +2,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import "./index.scss";
 import App from "./App";
 import { Provider } from "react-redux";
@@ -9,6 +10,10 @@ import { Store } from "./features/Store";
 import { setUpNotifications } from "reapop";
 import { ThemeProvider } from "@mui/material";
 import theme, { BodyFonts } from "./MuiTheme";
+import { Util } from "./util/Util";
+import { LogFactory } from "./util/Logger";
+
+const logger = LogFactory.create("index");
 
 setUpNotifications({
 	defaultProps: {
@@ -18,15 +23,20 @@ setUpNotifications({
 	}
 });
 
-ReactDOM.render(
-	<React.StrictMode>
-		<Provider store={Store}>
-			<ThemeProvider theme={theme}>
-				<div style={{ fontFamily: BodyFonts }}>
-					<App />
-				</div>
-			</ThemeProvider>
-		</Provider>
-	</React.StrictMode>,
-	document.getElementById("root")
-);
+const container = document.getElementById("root");
+if (container) {
+	const root = createRoot(container);
+	root.render(
+		<React.StrictMode>
+			<Provider store={Store}>
+				<ThemeProvider theme={theme}>
+					<div style={{ fontFamily: BodyFonts }}>
+						<App />
+					</div>
+				</ThemeProvider>
+			</Provider>
+		</React.StrictMode>
+	);
+} else {
+	logger.error("no container to put react app in?");
+}
