@@ -4,6 +4,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { notify } from "reapop";
 
+import { UserClass } from "../../../../shared";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import PageContainer from "../../components/PageContainer";
 import { selectAuthState } from "../../features/auth/AuthSlice";
@@ -19,7 +20,7 @@ const TagAliasPage = () => {
 
 	const { tagAliases, loadingState: tagAliasState } = useAppSelector(selectTagAliasState);
 
-	if (!user || user.class != "admin") {
+	if (!user || !UserClass.canClass(user.class, "manage_alias_list")) {
 		dispatch(notify("Missing permissions!", "error"));
 		return <Navigate to="/" />;
 	}
