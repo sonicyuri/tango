@@ -74,13 +74,7 @@ const TagsCard = (props: TagsCardProps) => {
 			});
 	};
 
-	const editTags = (
-		<TagInput
-			values={tempTags}
-			onValuesChange={values => setTempTags(values.map(v => v.toString()))}
-			onSubmit={onSubmit}
-		/>
-	);
+	const editTags = <TagInput values={tempTags} onValuesChange={values => setTempTags(values)} onSubmit={onSubmit} />;
 
 	const editTagsButtons = (
 		<>

@@ -8,10 +8,10 @@ import App from "./App";
 import { Provider } from "react-redux";
 import { Store } from "./features/Store";
 import { setUpNotifications } from "reapop";
-import { ThemeProvider } from "@mui/material/styles";
 import theme, { BodyFonts } from "./MuiTheme";
 import { Util } from "./util/Util";
 import { LogFactory } from "./util/Logger";
+import { ThemeProvider } from "@emotion/react";
 
 const logger = LogFactory.create("index");
 

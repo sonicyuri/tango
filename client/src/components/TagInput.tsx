@@ -19,7 +19,7 @@ const UnpaddedFilledInput = styled(TextField)({
 
 export interface TagInputProps {
 	values: string[];
-	onValuesChange: (tags: readonly string[]) => void;
+	onValuesChange: (tags: string[]) => void;
 	onSubmit: () => void;
 }
 
@@ -42,7 +42,7 @@ const TagInput = (props: TagInputProps) => {
 				multiple
 				options={tags.filter(t => !existingTags[t.tag]).map(t => t.tag)}
 				value={props.values}
-				onChange={(_: any, values: readonly string[]) => props.onValuesChange(values)}
+				onChange={(_: any, values: readonly string[]) => props.onValuesChange(values.map(v => v))}
 				freeSolo
 				autoHighlight
 				renderTags={(value: readonly string[], getTagProps) => {

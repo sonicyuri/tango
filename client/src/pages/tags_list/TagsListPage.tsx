@@ -33,7 +33,9 @@ const TagsListPage = (props: TagsListProps) => {
 						control={
 							<Switch
 								checked={showAll}
-								onChange={(ev: React.ChangeEvent) => setShowAll(ev.target.checked)}
+								onChange={(ev: React.ChangeEvent<HTMLInputElement>, checked: boolean) =>
+									setShowAll(checked)
+								}
 							/>
 						}
 						label="Show all"
