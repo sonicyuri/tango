@@ -4,7 +4,6 @@ import { Link, Navigate, useRouteError } from "react-router-dom";
 import PageContainer from "../../components/PageContainer";
 import { selectAuthState } from "../../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
-import { UserClass } from "../../../../shared";
 
 import { LogFactory } from "../../util/Logger";
 import { notify } from "reapop";
@@ -18,20 +17,18 @@ const AdminPage = () => {
 	const { user } = useAppSelector(selectAuthState);
 	const dispatch = useAppDispatch();
 
-	if (!user || !UserClass.canClass(user.class, "manage_admintools")) {
+	if (!user || user.class != "admin") {
 		dispatch(notify("Missing permissions!", "error"));
 		return <Navigate to="/" />;
 	}
 
-	const menuItems: OptionsListItem[] = [];
-
-	if (UserClass.canClass(user.class, "manage_alias_list")) {
-		menuItems.push({
+	const menuItems: OptionsListItem[] = [
+		{
 			text: "Edit Aliases",
 			url: "/tags/aliases",
 			icon: <ListAlt />
-		});
-	}
+		}
+	];
 
 	return (
 		<PageContainer title="Admin">

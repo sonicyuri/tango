@@ -13,7 +13,6 @@ import ApiAsyncHandler, { ApiResponse } from "../../util/ApiAsyncHandler";
 import readConfig, { Config } from "../../Config";
 import usePrisma from "../../Prisma";
 import { AuthenticatedRequest, getUserFromToken, requirePermissions } from "../users/Middleware";
-import { UserClass } from "../../../../shared/src";
 
 interface EditAliasRequest {
 	add?: { [oldTag: string]: string };
