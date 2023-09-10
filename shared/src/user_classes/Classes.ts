@@ -44,7 +44,8 @@ const base: UserClass = new UserClass("base", null, {
 	"view_sysinfo": false,
 	"hellbanned": false,
 	"view_hellbanned": false,
-	"protected": false
+	"protected": false,
+	"edit_tag_info": false
 });
 
 const anonymous = new UserClass("anonymous", "base", {});
@@ -99,7 +100,8 @@ const admin = new UserClass("admin", "base", [
 	"edit_other_vote",
 	"view_sysinfo",
 	"view_hellbanned",
-	"protected"
+	"protected",
+	"edit_tag_info"
 ]);
 
 const hellbanned = new UserClass("hellbanned", "user", ["hellbanned"]);

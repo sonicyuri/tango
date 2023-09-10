@@ -43,4 +43,5 @@ export default interface Permissions {
 	"hellbanned": boolean;
 	"view_hellbanned": boolean;
 	"protected": boolean;
+	"edit_tag_info": boolean;
 }

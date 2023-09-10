@@ -30,6 +30,10 @@ class Util {
 	static fixBcryptHash(hash: string): string {
 		return hash.replace(/^\$2y/, "$2a");
 	}
+
+	static makePhpBcryptHash(hash: string): string {
+		return hash.replace(/^\$2a/, "$2y");
+	}
 }
 
 export default Util;
