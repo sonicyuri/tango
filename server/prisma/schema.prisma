@@ -197,7 +197,7 @@ model PoolHistory {
   pool_id Int
   user_id Int
   action  Int
-  posts  String?  @db.Text
+  images  String?  @db.Text
   count   Int      @default(0)
   date    DateTime @db.DateTime(0)
   pools   Pool     @relation(fields: [pool_id], references: [id], onDelete: Cascade, map: "pool_history_ibfk_1")
@@ -242,7 +242,8 @@ model Tag {
   id         Int        @id @default(autoincrement())
   tag        String     @unique(map: "tag") @db.VarChar(255)
   count      Int        @default(0)
-  post_tags PostTag[]
+  post_tags  PostTag[]
+  info 		 TagInfo?
 
   @@index([tag])
   @@map("tags")
@@ -302,4 +303,16 @@ enum PostHasChildren {
   N
 
   @@map("images_has_children")
+}
+
+// New stuff
+
+model TagInfo {
+	id			String		@id @default(cuid())
+	tag_id 		Int 		@unique
+	description String		@db.Text
+
+	tag 		Tag 		@relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict)
+
+	@@index([id])
 }

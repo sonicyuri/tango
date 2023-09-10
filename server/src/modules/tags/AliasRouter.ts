@@ -1,19 +1,12 @@
 /** @format */
-
-import { PrismaClient, User } from ".prisma/client";
-import express, { NextFunction, Request, Response, Router } from "express";
+import express, { Request, Response, Router } from "express";
 import { injectable } from "tsyringe";
+
 import { IRouter } from "../../IRouter";
-import AsyncHandler from "express-async-handler";
-import Util from "../../util/Util";
-import bcrypt from "bcrypt";
-import jwt, { verify } from "jsonwebtoken";
-import moment from "moment";
+import { prisma } from "../../Prisma";
 import ApiAsyncHandler, { ApiResponse } from "../../util/ApiAsyncHandler";
-import readConfig, { Config } from "../../Config";
-import usePrisma from "../../Prisma";
-import { AuthenticatedRequest, getUserFromToken, requirePermissions } from "../users/Middleware";
-import { UserClass } from "../../../../shared/src";
+import { getUserFromToken, requirePermissions } from "../users/Middleware";
+import { PrismaClient } from ".prisma/client";
 
 interface EditAliasRequest {
 	add?: { [oldTag: string]: string };
@@ -37,8 +30,6 @@ export class TagAliasRouter implements IRouter {
 	}
 
 	private async handleEditAliases(req: Request, res: Response): Promise<ApiResponse> {
-		const prisma = new PrismaClient();
-
 		const params = req.body as EditAliasRequest;
 		if (!params || (!params.add && !params.remove)) {
 			return { type: "error", message: "no edits given" };
@@ -59,7 +50,7 @@ export class TagAliasRouter implements IRouter {
 	}
 
 	private async handleListAliases(req: Request, res: Response): Promise<ApiResponse> {
-		return { type: "success", result: await this.getAliasesMap(usePrisma()) };
+		return { type: "success", result: await this.getAliasesMap(prisma) };
 	}
 
 	private async getAliasesMap(prisma: PrismaClient): Promise<{ [oldTag: string]: string }> {

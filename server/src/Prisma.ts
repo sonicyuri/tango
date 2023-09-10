@@ -9,8 +9,10 @@ const logger = Util.getLogger("Prisma");
 const prismaClientSingleton = () => {
 	const config = readConfig();
 
-	if (config.environment == "production") {
-		return new PrismaClient();
+	const datasourceUrl = process.env.NODE_ENV == "test" ? process.env.TEST_DATABASE_URL : undefined;
+
+	if (config.environment == "production" || process.env.NODE_ENV == "test") {
+		return new PrismaClient({ datasourceUrl });
 	}
 
 	const prisma = new PrismaClient({
@@ -22,7 +24,8 @@ const prismaClientSingleton = () => {
 			"info",
 			"warn",
 			"error"
-		]
+		],
+		datasourceUrl
 	});
 
 	prisma.$on("query", e => {
@@ -38,10 +41,10 @@ const globalForPrisma = globalThis as unknown as {
 	prisma: PrismaClientSingleton | undefined;
 };
 
-const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+export let prisma = globalForPrisma.prisma ?? prismaClientSingleton();
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const recreatePrisma = () => {
+	globalForPrisma.prisma = prisma = prismaClientSingleton();
+};
 
-export default function usePrisma() {
-	return prisma;
-}
+if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") globalForPrisma.prisma = prisma;

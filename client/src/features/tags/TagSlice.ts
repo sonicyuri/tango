@@ -1,23 +1,38 @@
 /** @format */
-import { createAsyncThunk, createSlice, Reducer } from "@reduxjs/toolkit";
+import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, PayloadAction, Reducer } from "@reduxjs/toolkit";
 import moment from "moment";
 import { notify } from "reapop";
 
 import { BooruTag, BooruTagCategory } from "../../models/BooruTag";
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
-import TagService from "./TagService";
+import TagService, { TagInfoResult } from "./TagService";
 
 const logger: Logger = LogFactory.create("TagSlice");
 
 const getNextRequestTime = () => moment().add(2, "minutes");
+
+type TagInfoState = "initial" | "loading" | "failed" | "ready";
+
+type TagInfoRequest = { state: TagInfoState; tag: string };
 
 interface TagState {
 	tags: BooruTag[];
 	categories: BooruTagCategory[];
 	tagFrequencies: { [tag: string]: number };
 	nextTagRequest: moment.Moment;
+	tagInfos: { [tag: string]: TagInfoResult };
+	tagInfoLoadingStates: { [tag: string]: TagInfoState };
 }
+
+const setTagInfoStateReducer: CaseReducer<TagState, PayloadAction<TagInfoRequest>> = (state, action) => {
+	state.tagInfoLoadingStates[action.payload.tag] = action.payload.state;
+};
+
+const setTagInfoState = (newState: TagInfoRequest): PayloadAction<TagInfoRequest> => ({
+	type: "tag/setTagInfoState",
+	payload: newState
+});
 
 export const tagList = createAsyncThunk("tag/list", async (_: null, thunkApi) => {
 	try {
@@ -52,17 +67,40 @@ export const tagUpdateEdit = createAsyncThunk("tag/update_edit", async (req: Tag
 	return req;
 });
 
+export const tagInfoGet = createAsyncThunk("tag/get_info", async (tag: string, thunkApi) => {
+	try {
+		thunkApi.dispatch(setTagInfoState({ tag, state: "loading" }));
+
+		const result = await TagService.getTagInfo(tag);
+		if (result.type == "error") {
+			logger.error("error getting tag info", result.message);
+			thunkApi.dispatch(notify("failed to obtain tag info", "error"));
+			return thunkApi.rejectWithValue({ tag });
+		}
+
+		return { tag, info: result.result };
+	} catch (error: any) {
+		logger.error("error getting tag info", error);
+		thunkApi.dispatch(notify("failed to obtain tag info", "error"));
+		return thunkApi.rejectWithValue({ tag });
+	}
+});
+
 const initialState: TagState = {
 	tags: [],
 	tagFrequencies: {},
 	categories: [],
-	nextTagRequest: getNextRequestTime()
+	nextTagRequest: getNextRequestTime(),
+	tagInfos: {},
+	tagInfoLoadingStates: {}
 };
 
 export const TagSlice = createSlice({
 	name: "tag",
 	initialState,
-	reducers: {},
+	reducers: {
+		setTagInfoState: setTagInfoStateReducer
+	},
 	extraReducers: builder => {
 		builder.addCase(tagList.fulfilled, (state, action) => {
 			state.tags = action.payload.tags.sort((a, b) => b.frequency - a.frequency);
@@ -77,6 +115,13 @@ export const TagSlice = createSlice({
 			action.payload.newTags.forEach(t => state.tagFrequencies[t]++);
 		});
 		builder.addCase(tagUpdateEdit.rejected, (state, action) => {});
+		builder.addCase(tagInfoGet.fulfilled, (state, action) => {
+			state.tagInfos[action.payload.tag] = action.payload.info;
+			state.tagInfoLoadingStates[action.payload.tag] = "ready";
+		});
+		builder.addCase(tagInfoGet.rejected, (state, action) => {
+			state.tagInfoLoadingStates[(action.payload as any).tag] = "failed";
+		});
 	}
 });
 

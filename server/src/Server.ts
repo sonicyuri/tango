@@ -14,9 +14,11 @@ import { TagRouter } from "./modules/tags/Router";
 import { TagAliasRouter } from "./modules/tags/AliasRouter";
 import jsonResponse from "./util/JsonResponseMiddleware";
 import { notFound } from "./util/NotFoundMiddleware";
+import * as http from "http";
 
 export class Server {
 	private app: express.Express;
+	private server: http.Server | null = null;
 	private prisma: PrismaClient;
 	private config: Config;
 	private logger: Logger;
@@ -39,7 +41,9 @@ export class Server {
 
 	async run() {
 		this.app.use(BodyParser.json());
-		this.app.use(expressPino());
+		if (process.env.NODE_ENV !== "test") {
+			this.app.use(expressPino());
+		}
 		this.app.use(jsonResponse);
 
 		const rootRouter = express.Router();
@@ -57,16 +61,27 @@ export class Server {
 		this.app.use(notFound);
 
 		let port = this.config.server?.port ?? 3001;
-		this.app.listen(port, () => {
+		this.server = this.app.listen(port, () => {
 			this.logger.info(`server running on port ${port}`);
 		});
 	}
 
-	destroy(): void {
+	async destroy(): Promise<void> {
 		if (this.isDestroyed) {
 			return;
 		}
 
+		await new Promise<void>((resolve, reject) => {
+			if (this.server != null) {
+				this.server.close(err => {
+					if (err) {
+						reject(err);
+					} else {
+						resolve();
+					}
+				});
+			}
+		});
 		this.isDestroyed = true;
 	}
 }

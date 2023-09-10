@@ -7,7 +7,7 @@ import AsyncHandler from "express-async-handler";
 import { injectable } from "tsyringe";
 import readConfig from "../../Config";
 import { IRouter } from "../../IRouter";
-import usePrisma from "../../Prisma";
+import { prisma } from "../../Prisma";
 import ApiAsyncHandler, { ApiResponse } from "../../util/ApiAsyncHandler";
 import Util from "../../util/Util";
 import AuthUtil from "./AuthUtil";
@@ -44,7 +44,7 @@ export class UserRouter implements IRouter {
 				}
 
 				res.status(user == null ? 401 : 200)
-					.send(JSON.stringify({ result: user != null ? "success" : "needs_auth" }))
+					.send(JSON.stringify({ type: user != null ? "success" : "needs_auth" }))
 					.end();
 			})
 		);
@@ -76,8 +76,6 @@ export class UserRouter implements IRouter {
 		if (decoded.type != "refresh") {
 			return { type: "error", message: "not a refresh token" };
 		}
-
-		const prisma = usePrisma();
 
 		const user = await prisma.user.findUnique({ where: { id: decoded.id } });
 		if (user == null) {
@@ -121,8 +119,6 @@ export class UserRouter implements IRouter {
 	}
 
 	private static async getUserByNameAndPass(name: string, pass: string): Promise<{ user?: User; message?: string }> {
-		const prisma = usePrisma();
-
 		// check DB
 		const user = await prisma.user.findUnique({ where: { name: name } });
 		if (user == null) {
@@ -140,6 +136,6 @@ export class UserRouter implements IRouter {
 			});
 		});
 
-		return result ? { user } : { user, message: "incorrect password" };
+		return result ? { user } : { message: "incorrect password" };
 	}
 }

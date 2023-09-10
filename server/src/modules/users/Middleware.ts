@@ -6,7 +6,7 @@ import Util from "../../util/Util";
 import AuthUtil from "./AuthUtil";
 import { container } from "tsyringe";
 import readConfig, { Config } from "../../Config";
-import usePrisma from "../../Prisma";
+import { prisma } from "../../Prisma";
 import { Permissions, UserClass } from "../../../../shared/src";
 
 const logger = Util.getLogger("modules/users/Middleware");
@@ -26,7 +26,7 @@ export function getUserFromToken(
 		const authHeader = req.headers.authorization;
 		if (authHeader == null || authHeader.length == 0) {
 			if (shouldFailIfNotAuthed) {
-				res.status(400)
+				res.status(401)
 					.send(Util.formatApiResponse({ type: "error", message: "needs authentication token" }))
 					.end();
 			} else {
@@ -39,7 +39,7 @@ export function getUserFromToken(
 		const parts = authHeader.split(" ");
 		if (parts.length < 2 || parts[0] != "Bearer") {
 			if (shouldFailIfNotAuthed) {
-				res.status(400)
+				res.status(401)
 					.send(Util.formatApiResponse({ type: "error", message: "invalid auth token" }))
 					.end();
 			} else {
@@ -52,7 +52,7 @@ export function getUserFromToken(
 		const decoded = AuthUtil.verifyAuthToken(config, parts[1]);
 		if (decoded == null || decoded.type != "access" || decoded.id == null || decoded.name == null) {
 			if (shouldFailIfNotAuthed) {
-				res.status(400)
+				res.status(401)
 					.send(Util.formatApiResponse({ type: "needs_auth" }))
 					.end();
 			} else {
@@ -61,13 +61,11 @@ export function getUserFromToken(
 			return;
 		}
 
-		const prisma = usePrisma();
-
 		prisma.user
 			.findUnique({ where: { id: decoded.id } })
 			.then(user => {
 				if (user == null && shouldFailIfNotAuthed) {
-					res.status(400)
+					res.status(401)
 						.send(Util.formatApiResponse({ type: "error", message: "user not found" }))
 						.end();
 				} else {
@@ -97,7 +95,7 @@ export function requirePermissions(
 					req.url
 				} but can't satisfy permissions [${abilities.join(", ")}]`
 			);
-			res.status(401)
+			res.status(403)
 				.send(Util.formatApiResponse({ type: "error", message: "missing permissions" }))
 				.end();
 			return;

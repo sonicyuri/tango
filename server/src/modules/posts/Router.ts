@@ -11,7 +11,7 @@ import jwt, { verify } from "jsonwebtoken";
 import moment from "moment";
 import ApiAsyncHandler, { ApiResponse } from "../../util/ApiAsyncHandler";
 import readConfig, { Config } from "../../Config";
-import usePrisma from "../../Prisma";
+import { prisma } from "../../Prisma";
 import { getUserFromToken, requirePermissions } from "../users/Middleware";
 
 @injectable()
@@ -36,8 +36,6 @@ export class PostRouter implements IRouter {
 	}
 
 	private async handleFind(req: Request, res: Response): Promise<ApiResponse> {
-		const prisma = new PrismaClient();
-
 		/*const id = req.params.postId || req.query.postId || req.body.postId;
 
 		if (!id) {
