@@ -1,6 +1,6 @@
 /** @format */
 import { prisma } from "../../src/Prisma";
-import { Post, PostTag, PostTagCategory, Tag, TagInfo, User } from ".prisma/client";
+import { Alias, Post, PostTag, PostTagCategory, Tag, TagInfo, User } from ".prisma/client";
 import bcrypt from "bcrypt";
 import Util from "../../src/util/Util";
 
@@ -11,9 +11,11 @@ export async function createTestData() {
 	await prisma.tag.createMany({ data: tagData });
 	await prisma.postTag.createMany({ data: postTagData });
 	await prisma.tagInfo.createMany({ data: tagInfoData });
+	await prisma.alias.createMany({ data: tagAliasData });
 }
 
 export async function clearTestData() {
+	await prisma.$queryRaw`DELETE FROM aliases;`;
 	await prisma.$queryRaw`DELETE FROM taginfo;`;
 	await prisma.$queryRaw`DELETE FROM image_tags;`;
 	await prisma.$queryRaw`DELETE FROM image_tag_categories;`;
@@ -145,3 +147,10 @@ export const postTagCategoryData: PostTagCategory[] = [
 ];
 
 export const tagInfoData: Omit<TagInfo, "id">[] = [{ tag_id: 1, description: "test" }];
+
+export const tagAliasData: Alias[] = [
+	{
+		oldtag: "test1",
+		newtag: "test1_b"
+	}
+];
