@@ -9,5 +9,6 @@
 	"mysqlUser": "booru",
 	"mysqlPassword": "Qc5suOubIZMR8w7DHRY0",
 	"mysqlDatabase": "booru",
-	"mysqlPort": 3306
+	"mysqlPort": 3306,
+	"dryRun": true
 }
