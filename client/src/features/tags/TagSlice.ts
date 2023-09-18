@@ -1,5 +1,5 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, PayloadAction, Reducer } from "@reduxjs/toolkit";
+import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
 import moment from "moment";
 import { notify } from "reapop";
 

@@ -96,7 +96,7 @@ const PostPage = () => {
 	useEffect(() => {
 		document.title = Util.formatTitle("Post " + params.postId);
 
-		if (cursor != null) {
+		if (cursor != null && cursor.hasPost(params.postId || "")) {
 			dispatch(postViewById({ postId: params.postId || "1" }));
 		} else {
 			dispatch(

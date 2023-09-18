@@ -100,6 +100,10 @@ export class PostSearchCursor {
 		}
 	}
 
+	public hasPost(postId: string): boolean {
+		return this.postsCache[postId] !== undefined;
+	}
+
 	/**
 	 * Returns the post the cursor is pointing at.
 	 */

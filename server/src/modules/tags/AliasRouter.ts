@@ -37,14 +37,16 @@ export class TagAliasRouter implements IRouter {
 
 		await prisma.alias.deleteMany({ where: { oldtag: { in: params.remove } } });
 
-		await Object.keys(params.add || {}).forEach(async k => {
-			const newTag = (params.add || {})[k];
-			await prisma.alias.upsert({
-				where: { oldtag: k },
-				update: { newtag: newTag },
-				create: { oldtag: k, newtag: newTag }
-			});
-		});
+		await Promise.all(
+			Object.keys(params.add || {}).map(async k => {
+				const newTag = (params.add || {})[k];
+				await prisma.alias.upsert({
+					where: { oldtag: k },
+					update: { newtag: newTag },
+					create: { oldtag: k, newtag: newTag }
+				});
+			})
+		);
 
 		return { type: "success", result: await this.getAliasesMap(prisma) };
 	}
