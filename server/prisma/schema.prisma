@@ -124,8 +124,8 @@ model PostTagCategory {
 model PostTag {
   image_id Int
   tag_id   Int
-  post    Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_1")
-  tag     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_2")
+  post     Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_1")
+  tag      Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "image_tags_ibfk_2")
 
   @@unique([image_id, tag_id], map: "image_id")
   @@index([image_id], map: "images_tags_image_id_idx")
@@ -184,7 +184,7 @@ model NumericScoreVote {
   image_id Int
   user_id  Int
   score    Int
-  posts   Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_1")
+  posts    Post @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_1")
   users    User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "numeric_score_votes_ibfk_2")
 
   @@unique([image_id, user_id], map: "image_id")
@@ -198,9 +198,9 @@ model PoolHistory {
   pool_id Int
   user_id Int
   action  Int
-  images  String?  @db.Text
   count   Int      @default(0)
   date    DateTime @db.DateTime(0)
+  images  String?  @db.Text
   pools   Pool     @relation(fields: [pool_id], references: [id], onDelete: Cascade, map: "pool_history_ibfk_1")
   users   User     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "pool_history_ibfk_2")
 
@@ -240,11 +240,11 @@ model Pool {
 }
 
 model Tag {
-  id         Int        @id @default(autoincrement())
-  tag        String     @unique(map: "tag") @db.VarChar(255)
-  count      Int        @default(0)
-  post_tags  PostTag[]
-  info 		 TagInfo?
+  id        Int       @id @default(autoincrement())
+  tag       String    @unique(map: "tag") @db.VarChar(255)
+  count     Int       @default(0)
+  post_tags PostTag[]
+  tag_info   TagInfo?
 
   @@index([tag])
   @@map("tags")
@@ -255,7 +255,7 @@ model UserFavorite {
   user_id    Int
   created_at DateTime @db.DateTime(0)
   users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_1")
-  posts     Post     @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_2")
+  posts      Post     @relation(fields: [image_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_favorites_ibfk_2")
 
   @@unique([image_id, user_id], map: "image_id")
   @@index([image_id])
