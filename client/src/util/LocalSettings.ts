@@ -1,5 +1,7 @@
 /** @format */
 
+import { SearchFilterOptions } from "../features/SearchFilterOptions";
+
 class Setting<Type> {
 	private id: string;
 
@@ -39,6 +41,9 @@ class LocalSettings {
 	public static accessTokenExpire: Setting<string> = new Setting<string>("token:access:expire");
 	public static refreshToken: Setting<string> = new Setting<string>("token:refresh");
 	public static refreshTokenExpire: Setting<string> = new Setting<string>("token:refresh:expire");
+	public static searchFilterOptions: Setting<SearchFilterOptions> = new Setting<SearchFilterOptions>(
+		"settings:search_filter"
+	);
 }
 
 export { Setting, LocalSettings };

@@ -50,6 +50,24 @@ export const postList = createAsyncThunk("post/list", async (request: PostListRe
 	}
 });
 
+export const postListRefresh = createAsyncThunk("post/list_refresh", async (request: null, thunkApi) => {
+	try {
+		thunkApi.dispatch(setSearchStateAction("loading"));
+		const state: PostState = (thunkApi.getState() as any).post;
+		if (state.cursor == null) {
+			return thunkApi.rejectWithValue({});
+		}
+
+		state.cursor.preload;
+		const posts = await state.cursor.getPostsAtCursor();
+		return { posts };
+	} catch (error: any) {
+		logger.error("error fetching posts", error);
+		thunkApi.dispatch(notify("List posts failed - " + error, "error"));
+		return thunkApi.rejectWithValue({});
+	}
+});
+
 export const postViewById = createAsyncThunk("post/view_by_id", async (request: PostGetRequest, thunkApi) => {
 	try {
 		thunkApi.dispatch(setSearchStateAction("loading"));
@@ -135,6 +153,14 @@ export const PostSlice = createSlice({
 		builder.addCase(postList.rejected, (state, action) => {
 			state.cursor = null;
 			state.posts = [];
+			state.searchState = "failed";
+		});
+
+		builder.addCase(postListRefresh.fulfilled, (state, action) => {
+			state.posts = action.payload.posts;
+			state.searchState = "ready";
+		});
+		builder.addCase(postListRefresh.rejected, (state, action) => {
 			state.searchState = "failed";
 		});
 

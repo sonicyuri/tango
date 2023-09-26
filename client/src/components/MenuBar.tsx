@@ -2,6 +2,7 @@
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
+import VideoSettingsIcon from "@mui/icons-material/VideoSettings";
 import { AppBar, Box, IconButton, Link as MuiLink, Menu, MenuItem, Toolbar } from "@mui/material";
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
@@ -10,10 +11,12 @@ import { UserClass } from "../../../shared/src";
 import { logout, selectAuthState } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectPostState } from "../features/posts/PostSlice";
+import { SearchFilterOptions } from "../features/SearchFilterOptions";
 import i18n from "../util/Internationalization";
 import { LogFactory } from "../util/Logger";
 import { Util } from "../util/Util";
 import SearchBox from "./SearchBox";
+import { SearchFilters } from "./SearchFilters";
 import SideBar from "./SideBar";
 
 const logger = LogFactory.create("MenuBar");
@@ -29,7 +32,9 @@ const MenuBar = () => {
 	const [showingSidebar, setShowingSidebar] = useState(false);
 
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+	const [filterMenuEl, setFilterMenuEl] = useState<null | HTMLElement>(null);
 	const isMenuOpen = Boolean(anchorEl);
+	const isFilterMenuOpen = Boolean(filterMenuEl);
 
 	const accountMenuId = "account-menu";
 
@@ -43,6 +48,10 @@ const MenuBar = () => {
 
 	const handleLogout = () => {
 		dispatch(logout());
+	};
+
+	const handleShowFilters = (event: React.MouseEvent<HTMLElement>) => {
+		setFilterMenuEl(event.currentTarget);
 	};
 
 	const accountMenu = (
@@ -136,6 +145,15 @@ const MenuBar = () => {
 					</IconButton>
 					<IconButton
 						size="large"
+						color="inherit"
+						aria-label="search filters"
+						title="Search Filters"
+						sx={{}}
+						onClick={handleShowFilters}>
+						<VideoSettingsIcon />
+					</IconButton>
+					<IconButton
+						size="large"
 						edge="end"
 						aria-label="current user account"
 						aria-controls={accountMenuId}
@@ -147,6 +165,12 @@ const MenuBar = () => {
 				</Toolbar>
 			</AppBar>
 			{accountMenu}
+			<SearchFilters
+				activeFilters={SearchFilterOptions.instance}
+				anchorEl={filterMenuEl}
+				open={isFilterMenuOpen}
+				onClose={() => setFilterMenuEl(null)}
+			/>
 		</>
 	);
 };
