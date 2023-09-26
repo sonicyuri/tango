@@ -4,6 +4,7 @@ import { BooruRequest } from "./BooruRequest";
 import { BooruPost, ShimmiePost } from "../models/BooruPost";
 import { Util } from "../util/Util";
 import { current } from "immer";
+import { SearchFilterOptions } from "./SearchFilterOptions";
 
 interface ShimmieFindImagesV2 {
 	images: ShimmiePost[];
@@ -214,7 +215,7 @@ export class PostSearchCursor {
 		this.postsCache[post.id] = post;
 	}
 
-	public async getPosts(page: number): Promise<BooruPost[]> {
+	public async getPosts(page: number, forceReload: boolean = false): Promise<BooruPost[]> {
 		if (page > this.maxPage) {
 			page = this.maxPage;
 		}
@@ -223,7 +224,7 @@ export class PostSearchCursor {
 			await this.runningPagePromises[page];
 		}
 
-		if (this.pagesCache[page] === undefined) {
+		if (this.pagesCache[page] === undefined || forceReload) {
 			await this.load(page);
 		}
 
@@ -237,6 +238,11 @@ export class PostSearchCursor {
 		}
 	}
 
+	// includes search filter options in your query
+	private processQuery(query: string): string {
+		return query.split(" ").concat(SearchFilterOptions.instance.createQuery(query)).join(" ");
+	}
+
 	private load(page: number, currentId: string | null = null): Promise<void> {
 		if (currentId != null && this.runningPostPromises[currentId] !== undefined) {
 			return this.runningPostPromises[currentId];
@@ -244,9 +250,11 @@ export class PostSearchCursor {
 			return this.runningPagePromises[page];
 		}
 
+		const q = currentId == null ? this.processQuery(this.query || "").trim() : "";
+
 		let url =
-			this.query !== null
-				? `/api/shimmie/find_images_v2/${encodeURIComponent(this.query)}/${page}`
+			q.length > 0
+				? `/api/shimmie/find_images_v2/${encodeURIComponent(q)}/${page}`
 				: `/api/shimmie/find_images_v2/${page}`;
 
 		if (currentId != null) {
