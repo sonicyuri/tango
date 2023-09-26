@@ -36,8 +36,7 @@ export const postList = createAsyncThunk("post/list", async (request: PostListRe
 	try {
 		thunkApi.dispatch(setSearchStateAction("loading"));
 
-		const cursor = new PostSearchCursor(request.query);
-		cursor.setCursorPosition(request.page, 0);
+		const cursor = new PostSearchCursor(request.query, request.page, 0);
 		const posts = await cursor.getPostsAtCursor();
 
 		return {
@@ -71,8 +70,7 @@ export const postViewById = createAsyncThunk("post/view_by_id", async (request: 
 export const postDirectLink = createAsyncThunk("post/direct_link", async (request: PostDirectLinkRequest, thunkApi) => {
 	try {
 		thunkApi.dispatch(setSearchStateAction("loading"));
-		const cursor = new PostSearchCursor(request.query);
-		cursor.setCursorPosition(request.page || 1, 0);
+		const cursor = new PostSearchCursor(request.query, request.page || 1);
 
 		await cursor.loadAndSetCurrentPostById(request.postId);
 
