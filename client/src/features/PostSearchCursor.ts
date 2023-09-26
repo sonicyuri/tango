@@ -25,7 +25,8 @@ export class PostSearchCursor {
 	// if a post id is in this array, it should always exist in the posts cache!
 	private pagesCache: { [page: number]: string[] };
 	private postsCache: { [id: string]: BooruPost };
-	private runningPromises: { [page: number]: Promise<void> };
+	private runningPagePromises: { [page: number]: Promise<void> };
+	private runningPostPromises: { [post: string]: Promise<void> };
 	// cursor pos in page, index
 	private cursorPos: [number, number];
 	// no pages after this
@@ -33,12 +34,13 @@ export class PostSearchCursor {
 	// the max page size seen so far in this query
 	private maxPageSize = 0;
 
-	constructor(query: string | null) {
+	constructor(query: string | null, initialCursorPage: number = 1, initialCursorIndex: number = 0) {
 		this.query = query;
 		this.pagesCache = {};
 		this.postsCache = {};
-		this.runningPromises = {};
-		this.cursorPos = [1, 0];
+		this.runningPagePromises = {};
+		this.runningPostPromises = {};
+		this.cursorPos = [initialCursorPage, initialCursorIndex];
 	}
 
 	public get pageCount(): number {
@@ -217,8 +219,8 @@ export class PostSearchCursor {
 			page = this.maxPage;
 		}
 
-		if (this.runningPromises[page] !== undefined) {
-			await this.runningPromises[page];
+		if (this.runningPagePromises[page] !== undefined) {
+			await this.runningPagePromises[page];
 		}
 
 		if (this.pagesCache[page] === undefined) {
@@ -236,8 +238,10 @@ export class PostSearchCursor {
 	}
 
 	private load(page: number, currentId: string | null = null): Promise<void> {
-		if (this.runningPromises[page] !== undefined) {
-			return this.runningPromises[page];
+		if (currentId != null && this.runningPostPromises[currentId] !== undefined) {
+			return this.runningPostPromises[currentId];
+		} else if (currentId == null && this.runningPagePromises[page] !== undefined) {
+			return this.runningPagePromises[page];
 		}
 
 		let url =
@@ -249,7 +253,7 @@ export class PostSearchCursor {
 			url += "?current_id=" + currentId;
 		}
 
-		this.runningPromises[page] = BooruRequest.runQueryJson(url)
+		const newPromise = BooruRequest.runQueryJson(url)
 			.then(j => {
 				const res = j as ShimmieFindImagesV2;
 				this.maxPage = res.total_pages;
@@ -258,15 +262,28 @@ export class PostSearchCursor {
 			.then(res => {
 				const { images, page: newPage } = res;
 				// store all the images in the posts cache and store the ids in the page cache
-				images.forEach(img => (this.postsCache[img.id] = img));
-				this.pagesCache[newPage] = images.map(img => img.id);
+				// make sure we cast the id to string because that's what the rest of the program expects
+				images.forEach(img => (this.postsCache[String(img.id)] = img));
+				this.pagesCache[newPage] = images.map(img => String(img.id));
 				this.maxPageSize = Math.max(images.length, this.maxPageSize);
 				if (currentId != null) {
 					this.setCurrentPostById(currentId);
 				}
 			})
-			.finally(() => delete this.runningPromises[page]);
+			.finally(() => {
+				if (currentId != null) {
+					delete this.runningPostPromises[currentId];
+				} else {
+					delete this.runningPagePromises[page];
+				}
+			});
 
-		return this.runningPromises[page];
+		if (currentId != null) {
+			this.runningPostPromises[currentId] = newPromise;
+		} else if (this.runningPagePromises[page] === undefined) {
+			this.runningPagePromises[page] = newPromise;
+		}
+
+		return newPromise;
 	}
 }
