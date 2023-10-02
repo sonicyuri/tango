@@ -4,10 +4,10 @@ import { BooruRequest } from "../BooruRequest";
 
 interface TagListResult {
 	tags: {
-		images: BooruTag[];
-		videos: BooruTag[];
-		vr: BooruTag[];
-		all: BooruTag[];
+		images: { [tag: string]: number };
+		videos: { [tag: string]: number };
+		vr: { [tag: string]: number };
+		all: { [tag: string]: number };
 	};
 	categories: BooruTagCategory[];
 }
@@ -22,22 +22,17 @@ type TagInfoResponse = { type: "success"; result: TagInfoResult } | { type: "err
 
 class TagService {
 	static async getTags(): Promise<TagListResponse> {
-		return BooruRequest.runQueryJsonV2("/tag/list").then(v => {
+		return BooruRequest.runQueryJson("/api/shimmie/get_tags_v2").then(v => {
 			if (v.type == "error") {
 				return v;
 			}
 
-			const tags = v.result.tags;
+			const tags = v.tags;
 			return {
 				type: "success",
 				result: {
-					tags: {
-						images: Object.keys(tags["images"]).map(t => new BooruTag(t, tags[t])),
-						videos: Object.keys(tags["videos"]).map(t => new BooruTag(t, tags[t])),
-						vr: Object.keys(tags["vr"]).map(t => new BooruTag(t, tags[t])),
-						all: Object.keys(tags["all"]).map(t => new BooruTag(t, tags[t]))
-					},
-					categories: v.result.categories.map((c: ShimmieTagCategory) => new BooruTagCategory(c))
+					tags,
+					categories: v.categories.map((c: ShimmieTagCategory) => new BooruTagCategory(c))
 				}
 			};
 		});

@@ -99,8 +99,12 @@ export class Util {
 		return moment(expiration).isAfter(moment());
 	}
 
-	static formatTag(tag: string, removeCategory: boolean = false): string {
-		return (!removeCategory || tag.indexOf(":") === -1 ? tag : tag.split(":")[1]).replace(/_/g, " ");
+	static formatTag(tag: string): string {
+		return tag.replace(/_/g, " ");
+	}
+
+	static stripTagCategory(tag: string): string {
+		return tag.indexOf(":") != -1 ? tag.split(":")[1] : tag;
 	}
 
 	static arrayToObject<T, U, V>(array: T[], func: (val: T) => [string, U]): { [k: string]: U } {
