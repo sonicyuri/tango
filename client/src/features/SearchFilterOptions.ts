@@ -54,7 +54,7 @@ export class SearchFilterOptions {
 		let parts: string[] = [];
 
 		if (!shouldShowVideo) {
-			parts.push("-content=video");
+			parts.push(shouldShowVr ? "vr" : "-content=video");
 		}
 
 		if (!shouldShowImages) {

@@ -5,7 +5,6 @@ import ReactWordcloud from "react-wordcloud";
 import { useAppSelector } from "../../../features/Hooks";
 import { selectTagState } from "../../../features/tags/TagSlice";
 import { BooruTag } from "../../../models/BooruTag";
-import { HeaderFonts } from "../../../MuiTheme";
 import { Util } from "../../../util/Util";
 
 import "tippy.js/dist/tippy.css";
@@ -19,7 +18,9 @@ const TagCloud = (props: TagCloudProps) => {
 	const { categories, tagFrequencies } = useAppSelector(selectTagState);
 	const navigate = useNavigate();
 
-	const words = props.tags.map(t => ({ text: t, value: tagFrequencies[t] })).sort((a, b) => b.value - a.value);
+	const words = props.tags
+		.map(t => ({ text: Util.formatTag(t, true), value: tagFrequencies.all[t] }))
+		.sort((a, b) => b.value - a.value);
 
 	return (
 		<div style={{ aspectRatio: 1, textShadow: "#000000 1px 1px 2px" }}>

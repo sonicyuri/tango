@@ -14,6 +14,8 @@ export enum LoadingState {
 	Loaded
 }
 
+type AddableObject = { [k: string]: number };
+
 export class Util {
 	static chooseBreakpoint<T>(defaultVal: T, obj: { [k in Breakpoint]?: T }): T {
 		const theme: Theme = useTheme();
@@ -95,5 +97,28 @@ export class Util {
 		}
 
 		return moment(expiration).isAfter(moment());
+	}
+
+	static formatTag(tag: string, removeCategory: boolean = false): string {
+		return (!removeCategory || tag.indexOf(":") === -1 ? tag : tag.split(":")[1]).replace(/_/g, " ");
+	}
+
+	static arrayToObject<T, U, V>(array: T[], func: (val: T) => [string, U]): { [k: string]: U } {
+		const obj: { [k: string]: U } = {};
+		array.forEach(v => {
+			const t = func(v);
+			obj[t[0]] = t[1];
+		});
+
+		return obj;
+	}
+
+	static addObjects(...objects: AddableObject[]): AddableObject {
+		const accum: AddableObject = {};
+		objects.forEach(obj => {
+			Object.keys(obj).forEach(k => (accum[k] = (accum[k] || 0) + obj[k]));
+		});
+
+		return accum;
 	}
 }

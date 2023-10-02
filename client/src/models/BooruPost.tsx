@@ -7,6 +7,7 @@ interface ShimmiePost {
 	hash: string;
 	filesize: number;
 	ext: string;
+	mime: string;
 	posted: number;
 	source: string | null;
 	owner_id: string;
@@ -24,6 +25,8 @@ class BooruPost {
 	public fileSize: number;
 	// file extension
 	public extension: string;
+	// mime type
+	public mimeType: string;
 	// date posted
 	public postedAt: Date;
 	// the source of the image
@@ -34,11 +37,12 @@ class BooruPost {
 	public tags: string[];
 
 	constructor(obj: ShimmiePost) {
-		this.id = obj.id;
+		this.id = String(obj.id);
 		this.imageSize = [obj.width, obj.height];
 		this.hash = obj.hash;
 		this.fileSize = obj.filesize;
 		this.extension = obj.ext;
+		this.mimeType = obj.mime;
 		this.postedAt = new Date(obj.posted * 1000);
 		this.source = obj.source;
 		this.ownerId = obj.owner_id;

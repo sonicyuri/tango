@@ -2,9 +2,12 @@
 import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
 import moment from "moment";
 import { notify } from "reapop";
+import { BooruPost } from "../../models/BooruPost";
 
 import { BooruTag, BooruTagCategory } from "../../models/BooruTag";
 import { LogFactory, Logger } from "../../util/Logger";
+import { Util } from "../../util/Util";
+import { SearchFilterOptions } from "../SearchFilterOptions";
 import { RootState } from "../Store";
 import TagService, { TagInfoResult } from "./TagService";
 
@@ -19,7 +22,12 @@ type TagInfoRequest = { state: TagInfoState; tag: string };
 interface TagState {
 	tags: BooruTag[];
 	categories: BooruTagCategory[];
-	tagFrequencies: { [tag: string]: number };
+	tagFrequencies: {
+		images: { [tag: string]: number };
+		videos: { [tag: string]: number };
+		vr: { [tag: string]: number };
+		all: { [tag: string]: number };
+	};
 	nextTagRequest: moment.Moment;
 	tagInfos: { [tag: string]: TagInfoResult };
 	tagInfoLoadingStates: { [tag: string]: TagInfoState };
@@ -54,17 +62,24 @@ export const tagList = createAsyncThunk("tag/list", async (_: null, thunkApi) =>
 interface TagUpdateEditRequest {
 	prevTags: string[];
 	newTags: string[];
+	post: BooruPost;
 }
 
 export const tagUpdateEdit = createAsyncThunk("tag/update_edit", async (req: TagUpdateEditRequest, thunkApi) => {
 	const state: TagState = (thunkApi.getState() as any).tag;
 
+	const realm = req.post.tags.indexOf("vr") != -1 ? "vr" : req.post.mimeType.startsWith("image") ? "image" : "video";
+
 	if (moment().isAfter(state.nextTagRequest)) {
 		thunkApi.dispatch(tagList(null));
-		return { prevTags: [], newTags: [] };
+		return { prevTags: [], newTags: [], realm };
 	}
 
-	return req;
+	return {
+		prevTags: req.prevTags,
+		newTags: req.newTags,
+		realm
+	};
 });
 
 export const tagInfoGet = createAsyncThunk("tag/get_info", async (tag: string, thunkApi) => {
@@ -88,7 +103,7 @@ export const tagInfoGet = createAsyncThunk("tag/get_info", async (tag: string, t
 
 const initialState: TagState = {
 	tags: [],
-	tagFrequencies: {},
+	tagFrequencies: { images: {}, videos: {}, vr: {}, all: {} },
 	categories: [],
 	nextTagRequest: getNextRequestTime(),
 	tagInfos: {},
@@ -103,16 +118,42 @@ export const TagSlice = createSlice({
 	},
 	extraReducers: builder => {
 		builder.addCase(tagList.fulfilled, (state, action) => {
-			state.tags = action.payload.tags.sort((a, b) => b.frequency - a.frequency);
+			state.tags = action.payload.tags.all.sort((a, b) => b.frequency - a.frequency);
 			state.categories = action.payload.categories;
-			state.tagFrequencies = {};
+			state.tagFrequencies = {
+				images: Util.arrayToObject(action.payload.tags.images, v => [v.tag, v.frequency]),
+				videos: Util.arrayToObject(action.payload.tags.videos, v => [v.tag, v.frequency]),
+				vr: Util.arrayToObject(action.payload.tags.vr, v => [v.tag, v.frequency]),
+				all: Util.arrayToObject(action.payload.tags.all, v => [v.tag, v.frequency])
+			};
 			state.nextTagRequest = getNextRequestTime();
-			state.tags.forEach(t => (state.tagFrequencies[t.tag] = t.frequency));
 		});
 		builder.addCase(tagList.rejected, (state, action) => {});
 		builder.addCase(tagUpdateEdit.fulfilled, (state, action) => {
-			action.payload.prevTags.forEach(t => state.tagFrequencies[t]--);
-			action.payload.newTags.forEach(t => state.tagFrequencies[t]++);
+			action.payload.prevTags.forEach(t => {
+				if (action.payload.realm == "video") {
+					state.tagFrequencies.videos[t]--;
+				}
+				if (action.payload.realm == "vr") {
+					state.tagFrequencies.vr[t]--;
+				}
+				if (action.payload.realm == "image") {
+					state.tagFrequencies.images[t]--;
+				}
+				state.tagFrequencies.all[t]--;
+			});
+			action.payload.newTags.forEach(t => {
+				if (action.payload.realm == "video") {
+					state.tagFrequencies.videos[t]++;
+				}
+				if (action.payload.realm == "vr") {
+					state.tagFrequencies.vr[t]++;
+				}
+				if (action.payload.realm == "image") {
+					state.tagFrequencies.images[t]++;
+				}
+				state.tagFrequencies.all[t]++;
+			});
 		});
 		builder.addCase(tagUpdateEdit.rejected, (state, action) => {});
 		builder.addCase(tagInfoGet.fulfilled, (state, action) => {
@@ -127,3 +168,21 @@ export const TagSlice = createSlice({
 
 export default TagSlice.reducer as Reducer<TagState>;
 export const selectTagState = (state: RootState) => state.tag;
+
+export const selectTagFrequencies = (state: RootState) => {
+	const freq = state.tag.tagFrequencies;
+
+	if (
+		SearchFilterOptions.instance.showImages &&
+		SearchFilterOptions.instance.showVideo &&
+		SearchFilterOptions.instance.showVr
+	) {
+		return freq.all;
+	}
+
+	return Util.addObjects(
+		SearchFilterOptions.instance.showImages ? state.tag.tagFrequencies.images : {},
+		SearchFilterOptions.instance.showVideo ? state.tag.tagFrequencies.videos : {},
+		SearchFilterOptions.instance.showVr ? state.tag.tagFrequencies.vr : {}
+	);
+};
