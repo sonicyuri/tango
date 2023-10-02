@@ -10,13 +10,14 @@ import { Util } from "../util/Util";
 
 interface TagChipProps {
 	tag: string;
+	hyphensToSpaces?: boolean;
 }
 
 const TagChip = (props: TagChipProps) => {
+	const hyphensToSpaces = props.hyphensToSpaces === undefined ? true : props.hyphensToSpaces;
 	const t = props.tag;
 
-	const { categories } = useAppSelector(selectTagState);
-	const tagFrequencies = useAppSelector(selectTagFrequencies);
+	const { categories, tagFrequencies } = useAppSelector(selectTagState);
 
 	const cat = BooruTag.getCategory(t, categories);
 
@@ -32,9 +33,11 @@ const TagChip = (props: TagChipProps) => {
 	const tagText = cat && tagParts.length > 1 ? tagParts[1] : t;
 	const tagWithoutCategory = (
 		<div style={{ display: "flex", alignItems: "center" }}>
-			<Typography variant="body2">{Util.formatTag(tagText)}</Typography>
+			<Typography variant="body2">
+				{hyphensToSpaces ? Util.formatTag(tagText) : tagText.replace(/_/g, "_&#8203;")}
+			</Typography>
 			<Typography variant="subtitle2" style={{ paddingLeft: "5px" }}>
-				{tagFrequencies[t]}
+				{tagFrequencies.all[t]}
 			</Typography>
 		</div>
 	);

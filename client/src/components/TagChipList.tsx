@@ -17,7 +17,7 @@ interface TagChipListProps {
 const TagChipList = (props: TagChipListProps) => {
 	const limitTags = props.limitTags || false;
 	const { categories } = useAppSelector(selectTagState);
-	const tagCategories = useAppSelector(selectTagFrequencies);
+	const tagFrequencies = useAppSelector(selectTagFrequencies);
 
 	// which categories are used?
 	const postCategories: { [name: string]: BooruTagCategory } = {};

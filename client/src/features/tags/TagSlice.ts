@@ -118,14 +118,11 @@ export const TagSlice = createSlice({
 	},
 	extraReducers: builder => {
 		builder.addCase(tagList.fulfilled, (state, action) => {
-			state.tags = action.payload.tags.all.sort((a, b) => b.frequency - a.frequency);
+			state.tags = Object.keys(action.payload.tags.all)
+				.map(k => new BooruTag(k, action.payload.tags.all[k]))
+				.sort((a, b) => b.frequency - a.frequency);
 			state.categories = action.payload.categories;
-			state.tagFrequencies = {
-				images: Util.arrayToObject(action.payload.tags.images, v => [v.tag, v.frequency]),
-				videos: Util.arrayToObject(action.payload.tags.videos, v => [v.tag, v.frequency]),
-				vr: Util.arrayToObject(action.payload.tags.vr, v => [v.tag, v.frequency]),
-				all: Util.arrayToObject(action.payload.tags.all, v => [v.tag, v.frequency])
-			};
+			state.tagFrequencies = action.payload.tags;
 			state.nextTagRequest = getNextRequestTime();
 		});
 		builder.addCase(tagList.rejected, (state, action) => {});

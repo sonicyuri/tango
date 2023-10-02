@@ -19,7 +19,7 @@ const TagCloud = (props: TagCloudProps) => {
 	const navigate = useNavigate();
 
 	const words = props.tags
-		.map(t => ({ text: Util.formatTag(t, true), value: tagFrequencies.all[t] }))
+		.map(t => ({ text: Util.stripTagCategory(Util.formatTag(t)), value: tagFrequencies.all[t] }))
 		.sort((a, b) => b.value - a.value);
 
 	return (
