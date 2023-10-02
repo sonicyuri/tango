@@ -16,11 +16,11 @@ interface TagsListProps {
 const TagsListPage = (props: TagsListProps) => {
 	const dispatch = useAppDispatch();
 
-	const { tags, tagFrequencies, categories } = useAppSelector(selectTagState);
+	const { tagFrequencies } = useAppSelector(selectTagState);
 
 	const [showAll, setShowAll] = useState(false);
 
-	const tagsToShow = Object.keys(tagFrequencies);
+	const tagsToShow = Object.keys(tagFrequencies.all);
 	const tagList = <TagChipList tags={tagsToShow} orderBy="popularity" limitTags={!showAll} />;
 	const tagCloud = <TagCloud tags={tagsToShow} />;
 

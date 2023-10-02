@@ -3,7 +3,12 @@ import { BooruTag, BooruTagCategory, ShimmieTagCategory } from "../../models/Boo
 import { BooruRequest } from "../BooruRequest";
 
 interface TagListResult {
-	tags: BooruTag[];
+	tags: {
+		images: BooruTag[];
+		videos: BooruTag[];
+		vr: BooruTag[];
+		all: BooruTag[];
+	};
 	categories: BooruTagCategory[];
 }
 
@@ -26,7 +31,12 @@ class TagService {
 			return {
 				type: "success",
 				result: {
-					tags: Object.keys(tags).map(t => new BooruTag(t, tags[t])),
+					tags: {
+						images: Object.keys(tags["images"]).map(t => new BooruTag(t, tags[t])),
+						videos: Object.keys(tags["videos"]).map(t => new BooruTag(t, tags[t])),
+						vr: Object.keys(tags["vr"]).map(t => new BooruTag(t, tags[t])),
+						all: Object.keys(tags["all"]).map(t => new BooruTag(t, tags[t]))
+					},
 					categories: v.result.categories.map((c: ShimmieTagCategory) => new BooruTagCategory(c))
 				}
 			};

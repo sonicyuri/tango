@@ -119,7 +119,9 @@ export const postSetTags = createAsyncThunk("post/set_tags", async (request: Pos
 
 		await PostService.setPostTags(request.post, request.tags);
 
-		thunkApi.dispatch(tagUpdateEdit({ prevTags: request.post.tags, newTags: request.tags.split(" ") }));
+		thunkApi.dispatch(
+			tagUpdateEdit({ post: request.post, prevTags: request.post.tags, newTags: request.tags.split(" ") })
+		);
 
 		const post = await PostService.getPostById(request.post.id);
 

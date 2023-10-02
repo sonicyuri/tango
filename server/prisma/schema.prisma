@@ -147,24 +147,31 @@ model Post {
   id                  Int                @id @default(autoincrement())
   owner_id            Int
   owner_ip            String             @db.VarChar(45)
-  filename            String             @db.VarChar(64)
+  filename            String             @db.VarChar(255)
   filesize            Int
   hash                String             @unique(map: "hash") @db.Char(32)
   ext                 String             @db.Char(4)
   source              String?            @db.VarChar(255)
   width               Int
   height              Int
-  posted              DateTime           @default(dbgenerated("('1970-01-01 00:00:00')")) @db.DateTime(0)
-  locked              PostLocked         @default(N)
-  author              String?            @db.VarChar(255)
-  rating              String             @default("u") @db.Char(1)
+  posted              DateTime           @default(now()) @db.Timestamp(0)
+  locked              Boolean            @default(false)
+  lossless            Boolean?
+  video               Boolean?
+  audio               Boolean?
+  length              Int?
+  mime                String?            @db.VarChar(512)
+  image               Boolean?
+  video_codec         String?            @db.VarChar(512)
   favorites           Int                @default(0)
-  parent_id           Int?
-  has_children        PostHasChildren    @default(N)
   numeric_score       Int                @default(0)
+  parent_id           Int?
+  has_children        Boolean            @default(false)
+
   comments            Comment[]
   post_tags           PostTag[]
   users               User               @relation(fields: [owner_id], references: [id], onUpdate: Restrict, map: "images_ibfk_1")
+  import				PostImport?		
   numeric_score_votes NumericScoreVote[]
   pool_images         PoolPost[]		 @ignore
   user_favorites      UserFavorite[]
@@ -172,11 +179,17 @@ model Post {
   @@index([favorites], map: "images__favorites")
   @@index([numeric_score], map: "images__numeric_score")
   @@index([parent_id], map: "images__parent_id")
-  @@index([rating], map: "images__rating")
   @@index([hash])
   @@index([height])
   @@index([owner_id])
   @@index([width])
+  @@index([has_children], map: "images__has_children")
+  @@index([audio])
+  @@index([ext])
+  @@index([image])
+  @@index([length])
+  @@index([mime])
+  @@index([video])
   @@map("images")
 }
 
@@ -314,6 +327,18 @@ model TagInfo {
 	description String		@db.Text
 
 	tag 		Tag 		@relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict)
+
+	@@index([id])
+}
+
+model PostImport {
+	id			String		@id @default(cuid())
+	post_id 	Int			@unique
+	source_name	String		@db.VarChar(50)
+	source_id	String		@db.Text
+	source_data	String		@db.Text
+
+	post		Post		@relation(fields: [post_id], references: [id])
 
 	@@index([id])
 }
