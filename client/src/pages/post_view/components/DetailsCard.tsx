@@ -4,6 +4,7 @@ import { Button, Card, CardContent, CardHeader, Link as MuiLink, Stack, Typograp
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import { favoriteSet, selectFavoriteState } from "../../../features/favorites/FavoriteSlice";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
+import { postDownload } from "../../../features/posts/PostSlice";
 import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory, Logger } from "../../../util/Logger";
 import { Util } from "../../../util/Util";
@@ -22,9 +23,11 @@ const DetailsCard = (props: DetailsCardProps) => {
 	// set up detail rows
 	const genericDetailRow = (body: string) => <Typography variant="body1">{body}</Typography>;
 
-	// TODO: fix downloads (actually download, don't redirect)
+	const handleDownload = () => {
+		dispatch(postDownload(props.post));
+	};
 	const downloadLink = (
-		<MuiLink href={props.post.videoUrl} download={props.post.hash + "." + props.post.extension} underline="none">
+		<MuiLink onClick={handleDownload} underline="none" style={{ cursor: "pointer" }}>
 			Download File
 		</MuiLink>
 	);

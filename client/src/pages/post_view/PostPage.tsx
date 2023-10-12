@@ -47,7 +47,7 @@ const PostPage = () => {
 
 	const { searchState, currentPost, cursor } = useAppSelector(selectPostState);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams] = useSearchParams();
 	const [editing, setEditing] = useState(false);
 
 	// handles navigating left-right based on swipe, keys, or buttons
@@ -77,12 +77,12 @@ const PostPage = () => {
 
 	// set up swiping
 	const swipeHandlers = useSwipeable({
-		onSwipedLeft: eventData => {
+		onSwipedLeft: () => {
 			if (!editing) {
 				handleNavigate(1);
 			}
 		},
-		onSwipedRight: eventData => {
+		onSwipedRight: () => {
 			if (!editing) {
 				handleNavigate(-1);
 			}

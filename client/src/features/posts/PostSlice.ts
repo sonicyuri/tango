@@ -133,6 +133,22 @@ export const postSetTags = createAsyncThunk("post/set_tags", async (request: Pos
 	}
 });
 
+export const postDownload = createAsyncThunk("post/download", async (request: BooruPost, thunkApi) => {
+	return fetch(request.videoUrl, { method: "GET" })
+		.then(res => res.blob())
+		.then(blob => {
+			const a = document.createElement("a");
+			a.href = window.URL.createObjectURL(blob);
+			a.download = request.hash + "." + request.extension;
+			document.body.appendChild(a);
+			a.click();
+			window.URL.revokeObjectURL(a.href);
+			document.body.removeChild(a);
+
+			return null;
+		});
+});
+
 const initialState: PostState = {
 	cursor: null,
 	searchState: "initial",
@@ -201,6 +217,8 @@ export const PostSlice = createSlice({
 		builder.addCase(postViewById.rejected, (state, action) => {
 			state.searchState = "failed";
 		});
+		builder.addCase(postDownload.fulfilled, (state, action) => {});
+		builder.addCase(postDownload.rejected, (state, action) => {});
 	}
 });
 
