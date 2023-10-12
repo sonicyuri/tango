@@ -1,10 +1,10 @@
 use actix_web::{web, Scope};
 
 mod api;
-mod middleware;
+pub mod middleware;
 mod model;
 mod schema;
-mod util;
+pub mod util;
 
 pub fn scope() -> Scope {
     web::scope("/user")

@@ -22,7 +22,9 @@ async fn not_found() -> Result<HttpResponse, Error> {
 }
 
 fn configure(conf: &mut web::ServiceConfig) {
-    let scope = web::scope("/api").service(modules::auth::scope());
+    let scope = web::scope("/api")
+        .service(modules::auth::scope())
+        .service(modules::favorites::scope());
 
     conf.service(scope)
         .default_service(web::route().to(not_found));
