@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
@@ -6,7 +7,7 @@ pub struct UserModel {
     pub id: i32,
     pub name: String,
     pub pass: Option<String>,
-    pub joindate: chrono::NaiveDateTime,
+    pub joindate: DateTime<Utc>,
     pub class: String,
     pub email: Option<String>,
 }
@@ -16,7 +17,7 @@ pub struct UserModel {
 pub struct UserModelResponse {
     pub id: i32,
     pub name: String,
-    pub joindate: chrono::NaiveDateTime,
+    pub joindate: DateTime<Utc>,
     pub class: String,
     pub email: Option<String>,
 }
