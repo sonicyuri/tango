@@ -1,11 +1,11 @@
 /** @format */
 import { BooruRequest } from "../BooruRequest";
 
-type FavoriteListResponse = { result: "success"; favorites: string[] } | { result: "failed"; message: string };
+type FavoriteListResponse = { type: "success"; result: string[] } | { type: "error"; message: string };
 
 class FavoriteService {
 	static async getFavorites(): Promise<FavoriteListResponse> {
-		return BooruRequest.runQueryJson("/api/shimmie/get_favorites").then(v => v as FavoriteListResponse);
+		return BooruRequest.runQueryJsonV2("/favorites/list").then(v => v as FavoriteListResponse);
 	}
 
 	static async setFavorite(postId: string, favorite: boolean): Promise<FavoriteListResponse> {
