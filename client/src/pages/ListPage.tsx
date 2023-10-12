@@ -140,7 +140,16 @@ const ListPage = () => {
 					);
 				})}
 			</Grid>
-			<div className="ListPage-footer">{renderPagination("pg-bottom")}</div>
+			<div className="ListPage-footer">
+				{renderPagination("pg-bottom")}
+				{cursor.hiddenCount > 0 ? (
+					<Typography variant="body2" style={{ lineHeight: "33px" }}>
+						{cursor.hiddenCount} additional posts hidden based on your filter settings
+					</Typography>
+				) : (
+					<></>
+				)}
+			</div>
 			<Backdrop open={searchState == "loading"}>
 				<div>
 					<LoadingSpinner />

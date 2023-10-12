@@ -10,6 +10,7 @@ interface ShimmieFindImagesV2 {
 	images: ShimmiePost[];
 	total_pages: number;
 	page_number: number;
+	hidden: number;
 }
 
 // how many posts from the edges before we preload the next page
@@ -26,6 +27,7 @@ export class PostSearchCursor {
 	// if a post id is in this array, it should always exist in the posts cache!
 	private pagesCache: { [page: number]: string[] };
 	private postsCache: { [id: string]: BooruPost };
+	private hidden: number = 0;
 	private runningPagePromises: { [page: number]: Promise<void> };
 	private runningPostPromises: { [post: string]: Promise<void> };
 	// cursor pos in page, index
@@ -50,6 +52,10 @@ export class PostSearchCursor {
 
 	public get currentQuery(): string | null {
 		return this.query;
+	}
+
+	public get hiddenCount(): number {
+		return this.hidden;
 	}
 
 	/**
@@ -238,11 +244,6 @@ export class PostSearchCursor {
 		}
 	}
 
-	// includes search filter options in your query
-	private processQuery(query: string): string {
-		return query.split(" ").concat(SearchFilterOptions.instance.createQuery(query)).join(" ");
-	}
-
 	private load(page: number, currentId: string | null = null): Promise<void> {
 		if (currentId != null && this.runningPostPromises[currentId] !== undefined) {
 			return this.runningPostPromises[currentId];
@@ -250,21 +251,28 @@ export class PostSearchCursor {
 			return this.runningPagePromises[page];
 		}
 
-		const q = currentId == null ? this.processQuery(this.query || "").trim() : "";
+		const q = currentId == null ? (this.query || "").trim() : "";
 
 		let url =
 			q.length > 0
 				? `/api/shimmie/find_images_v2/${encodeURIComponent(q)}/${page}`
 				: `/api/shimmie/find_images_v2/${page}`;
 
+		let urlParams: { [k: string]: any } = {
+			content_types: SearchFilterOptions.instance.getContentTypes()
+		};
+
 		if (currentId != null) {
-			url += "?current_id=" + currentId;
+			urlParams["current_id"] = currentId;
 		}
+
+		url += "?" + Util.objectToUrlParams(urlParams).toString();
 
 		const newPromise = BooruRequest.runQueryJson(url)
 			.then(j => {
 				const res = j as ShimmieFindImagesV2;
 				this.maxPage = res.total_pages;
+				this.hidden = res.hidden;
 				return { page: res.page_number, images: res.images.map(i => new BooruPost(i)) };
 			})
 			.then(res => {

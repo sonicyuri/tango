@@ -132,7 +132,7 @@ const PostPage = () => {
 				<VideoPost post={currentPost} swipe={swipeHandlers} />
 			);
 		// video element steals events needed for detecting swipe
-		needsSwipeListener = true;
+		//needsSwipeListener = true;
 	} else if (FlashExtensions.indexOf(currentPost.extension) != -1) {
 		postContent = <FlashPost post={currentPost} />;
 	} else {

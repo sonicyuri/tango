@@ -3,12 +3,7 @@ import { BooruTag, BooruTagCategory, ShimmieTagCategory } from "../../models/Boo
 import { BooruRequest } from "../BooruRequest";
 
 interface TagListResult {
-	tags: {
-		images: { [tag: string]: number };
-		videos: { [tag: string]: number };
-		vr: { [tag: string]: number };
-		all: { [tag: string]: number };
-	};
+	tags: { [tag: string]: number };
 	categories: BooruTagCategory[];
 }
 

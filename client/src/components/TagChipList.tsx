@@ -2,7 +2,7 @@
 import { Typography } from "@mui/material";
 
 import { useAppSelector } from "../features/Hooks";
-import { selectTagFrequencies, selectTagState } from "../features/tags/TagSlice";
+import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag, BooruTagCategory } from "../models/BooruTag";
 import TagChip from "./TagChip";
 
@@ -16,8 +16,7 @@ interface TagChipListProps {
 
 const TagChipList = (props: TagChipListProps) => {
 	const limitTags = props.limitTags || false;
-	const { categories } = useAppSelector(selectTagState);
-	const tagFrequencies = useAppSelector(selectTagFrequencies);
+	const { categories, tagFrequencies } = useAppSelector(selectTagState);
 
 	// which categories are used?
 	const postCategories: { [name: string]: BooruTagCategory } = {};

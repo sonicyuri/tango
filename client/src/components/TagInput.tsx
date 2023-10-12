@@ -6,7 +6,7 @@ import { matchSorter } from "match-sorter";
 import { useNavigate } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { selectTagFrequencies, selectTagState } from "../features/tags/TagSlice";
+import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag } from "../models/BooruTag";
 import { LogFactory } from "../util/Logger";
 import { Util } from "../util/Util";
@@ -29,8 +29,7 @@ const TagInput = (props: TagInputProps) => {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 
-	const { tags, categories } = useAppSelector(selectTagState);
-	const tagFrequencies = useAppSelector(selectTagFrequencies);
+	const { tags, categories, tagFrequencies } = useAppSelector(selectTagState);
 	const tagsCopy = tags
 		.slice()
 		.map(t => new BooruTag(t.tag, tagFrequencies[t.tag] || 0))
