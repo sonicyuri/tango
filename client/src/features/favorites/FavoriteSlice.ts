@@ -48,8 +48,8 @@ export const favoriteSet = createAsyncThunk(
 			thunkApi.dispatch(setLoadingStateAction("loading"));
 
 			const res = await FavoriteService.setFavorite(request.postId, request.favorite);
-			if (res.result == "success") {
-				return { favorites: res.favorites };
+			if (res.type == "success") {
+				return { favorites: res.result };
 			} else {
 				thunkApi.dispatch(notify(res.message, "error"));
 				return thunkApi.rejectWithValue({});

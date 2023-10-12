@@ -9,10 +9,10 @@ class FavoriteService {
 	}
 
 	static async setFavorite(postId: string, favorite: boolean): Promise<FavoriteListResponse> {
-		const p = new URLSearchParams();
-		p.append("postId", postId);
-		p.append("action", favorite ? "set" : "unset");
-		return BooruRequest.runQuery("/api/shimmie/set_favorite", "POST", p)
+		return BooruRequest.runQueryVersioned("v2", "/favorites/set", "POST", {
+			postId,
+			action: favorite ? "set" : "unset"
+		})
 			.then(v => v.json())
 			.then(v => v as FavoriteListResponse);
 	}
