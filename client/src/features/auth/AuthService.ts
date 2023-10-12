@@ -46,12 +46,7 @@ class AuthService {
 	static async login(credentials: Credentials): Promise<AuthResponse> {
 		BooruRequest.init(null);
 
-		const params = new URLSearchParams();
-		params.append("username", credentials.username);
-		params.append("password", credentials.password);
-		params.append("rememberMe", credentials.rememberMe ? "1" : "0");
-
-		return BooruRequest.runQueryVersioned("v2", "/user/login", "POST", params)
+		return BooruRequest.runQueryVersioned("v2", "/user/login", "POST", credentials)
 			.then(res => res.json())
 			.then(rawRes => {
 				const res = rawRes as LoginApiResponse;
