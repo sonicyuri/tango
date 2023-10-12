@@ -2,3 +2,4 @@ Config.toml
 .env
 target/
 Cargo.lock
+.sqlx

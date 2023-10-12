@@ -10,6 +10,7 @@ build_prod = "build --target=x86_64-unknown-linux-gnu"
 
 [dependencies]
 actix-web = "4.4.0"
+base64 = "0.21.4"
 bcrypt = "0.15.0"
 chrono = { version = "0.4.31", features = ["serde"] }
 config = "0.13.3"

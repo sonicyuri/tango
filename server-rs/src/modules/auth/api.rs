@@ -5,7 +5,7 @@ use super::model::{
 use super::schema::{UserLoginSchema, UserRefreshSchema};
 
 use super::middleware::AuthFactory;
-use super::util::{validate_auth_token, AuthTokenKind};
+use super::util::{check_user, get_basic_auth_header, validate_auth_token, AuthTokenKind};
 use crate::util::{
     api_error, api_success, error_response, success_response, ApiError, ApiErrorType,
 };
@@ -13,6 +13,8 @@ use crate::AppState;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use log::error;
 use serde::Serialize;
+use serde_json::json;
+use sqlx::MySqlPool;
 
 use super::util;
 
@@ -24,59 +26,51 @@ async fn user_info_handler(req: HttpRequest) -> Result<HttpResponse, ApiError> {
     Ok(api_success(filter_db_record(&user)))
 }
 
+#[get("/nginx_callback", wrap = "AuthFactory { reject_unauthed: false }")]
+async fn user_nginx_callback_handler(req: HttpRequest, data: web::Data<AppState>) -> HttpResponse {
+    if let Some(_) = super::middleware::get_user(&req) {
+        return HttpResponse::Ok().json(json!({ "type": "success" }));
+    }
+
+    let credentials = get_basic_auth_header(&req);
+    if credentials.is_none() {
+        return HttpResponse::Unauthorized().json(json!({"type": "needs_auth"}));
+    }
+
+    let (username, password) = credentials.unwrap();
+    let user = check_user(&data.db, &username, &password).await;
+
+    match user {
+        Ok(_) => HttpResponse::Ok().json(json!({ "type": "success" })),
+        Err(_) => return HttpResponse::Unauthorized().json(json!({ "type": "needs_auth"})),
+    }
+}
+
 #[post("/login")]
 async fn user_login_handler(
     body: web::Json<UserLoginSchema>,
     data: web::Data<AppState>,
-) -> impl Responder {
-    let query_result = sqlx::query_as!(
-        UserModel,
-        r#"SELECT * FROM users WHERE name = ?"#,
-        body.username
-    )
-    .fetch_one(&data.db)
-    .await;
+) -> Result<HttpResponse, ApiError> {
+    let user = check_user(&data.db, &body.username, &body.password).await?;
 
-    match query_result {
-        Ok(user) => {
-            let pass_hash = util::standardize_php_hash(user.pass.clone().unwrap_or("".to_owned()));
+    let access_token: Option<AuthTokenResponse> =
+        util::create_auth_token(&user, util::AuthTokenKind::Access).ok();
+    let refresh_token: Option<AuthTokenResponse> =
+        util::create_auth_token(&user, util::AuthTokenKind::Refresh).ok();
 
-            match bcrypt::verify(body.password.to_owned(), &pass_hash) {
-                Ok(true) => {
-                    let access_token: Option<AuthTokenResponse> =
-                        util::create_auth_token(&user, util::AuthTokenKind::Access).ok();
-                    let refresh_token: Option<AuthTokenResponse> =
-                        util::create_auth_token(&user, util::AuthTokenKind::Refresh).ok();
-
-                    match access_token {
-                        Some(access_token) => {
-                            HttpResponse::Ok().json(success_response(UserLoginResponse {
-                                access: access_token,
-                                refresh: refresh_token,
-                                user: filter_db_record(&user),
-                            }))
-                        }
-                        None => {
-                            return HttpResponse::InternalServerError()
-                                .json(error_response("failed to create access token"));
-                        }
-                    }
-                }
-                Ok(false) => {
-                    return HttpResponse::Forbidden().json(error_response("invalid credentials"));
-                }
-                Err(err) => {
-                    return HttpResponse::InternalServerError()
-                        .json(error_response(format!("{:?}", err).as_str()));
-                }
-            }
+    match access_token {
+        Some(access_token) => {
+            return Ok(api_success(UserLoginResponse {
+                access: access_token,
+                refresh: refresh_token,
+                user: filter_db_record(&user),
+            }))
         }
-        Err(sqlx::Error::RowNotFound) => {
-            return HttpResponse::Forbidden().json(error_response("invalid credentials"));
-        }
-        Err(err) => {
-            return HttpResponse::InternalServerError()
-                .json(error_response(format!("{:?}", err).as_str()));
+        None => {
+            return Err(api_error(
+                ApiErrorType::ServerError,
+                "Failed to create auth token",
+            ));
         }
     }
 }
