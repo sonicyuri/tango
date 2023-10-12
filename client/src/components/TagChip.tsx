@@ -4,7 +4,7 @@ import Color from "colorjs.io";
 import { Link } from "react-router-dom";
 
 import { useAppSelector } from "../features/Hooks";
-import { selectTagFrequencies, selectTagState } from "../features/tags/TagSlice";
+import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag } from "../models/BooruTag";
 import { Util } from "../util/Util";
 
@@ -33,11 +33,11 @@ const TagChip = (props: TagChipProps) => {
 	const tagText = cat && tagParts.length > 1 ? tagParts[1] : t;
 	const tagWithoutCategory = (
 		<div style={{ display: "flex", alignItems: "center" }}>
-			<Typography variant="body2">
+			<Typography variant="body2" style={{ whiteSpace: "break-spaces" }}>
 				{hyphensToSpaces ? Util.formatTag(tagText) : tagText.replace(/_/g, "_&#8203;")}
 			</Typography>
-			<Typography variant="subtitle2" style={{ paddingLeft: "5px" }}>
-				{tagFrequencies.all[t]}
+			<Typography variant="subtitle2" style={{ paddingLeft: "5px", whiteSpace: "break-spaces" }}>
+				{tagFrequencies[t]}
 			</Typography>
 		</div>
 	);

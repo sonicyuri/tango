@@ -22,12 +22,7 @@ type TagInfoRequest = { state: TagInfoState; tag: string };
 interface TagState {
 	tags: BooruTag[];
 	categories: BooruTagCategory[];
-	tagFrequencies: {
-		images: { [tag: string]: number };
-		videos: { [tag: string]: number };
-		vr: { [tag: string]: number };
-		all: { [tag: string]: number };
-	};
+	tagFrequencies: { [tag: string]: number };
 	nextTagRequest: moment.Moment;
 	tagInfos: { [tag: string]: TagInfoResult };
 	tagInfoLoadingStates: { [tag: string]: TagInfoState };
@@ -103,7 +98,7 @@ export const tagInfoGet = createAsyncThunk("tag/get_info", async (tag: string, t
 
 const initialState: TagState = {
 	tags: [],
-	tagFrequencies: { images: {}, videos: {}, vr: {}, all: {} },
+	tagFrequencies: {},
 	categories: [],
 	nextTagRequest: getNextRequestTime(),
 	tagInfos: {},
@@ -118,8 +113,8 @@ export const TagSlice = createSlice({
 	},
 	extraReducers: builder => {
 		builder.addCase(tagList.fulfilled, (state, action) => {
-			state.tags = Object.keys(action.payload.tags.all)
-				.map(k => new BooruTag(k, action.payload.tags.all[k]))
+			state.tags = Object.keys(action.payload.tags)
+				.map(k => new BooruTag(k, action.payload.tags[k]))
 				.sort((a, b) => b.frequency - a.frequency);
 			state.categories = action.payload.categories;
 			state.tagFrequencies = action.payload.tags;
@@ -128,28 +123,10 @@ export const TagSlice = createSlice({
 		builder.addCase(tagList.rejected, (state, action) => {});
 		builder.addCase(tagUpdateEdit.fulfilled, (state, action) => {
 			action.payload.prevTags.forEach(t => {
-				if (action.payload.realm == "video") {
-					state.tagFrequencies.videos[t]--;
-				}
-				if (action.payload.realm == "vr") {
-					state.tagFrequencies.vr[t]--;
-				}
-				if (action.payload.realm == "image") {
-					state.tagFrequencies.images[t]--;
-				}
-				state.tagFrequencies.all[t]--;
+				state.tagFrequencies[t] = (state.tagFrequencies[t] || 1) - 1;
 			});
 			action.payload.newTags.forEach(t => {
-				if (action.payload.realm == "video") {
-					state.tagFrequencies.videos[t]++;
-				}
-				if (action.payload.realm == "vr") {
-					state.tagFrequencies.vr[t]++;
-				}
-				if (action.payload.realm == "image") {
-					state.tagFrequencies.images[t]++;
-				}
-				state.tagFrequencies.all[t]++;
+				state.tagFrequencies[t] = (state.tagFrequencies[t] || 0) + 1;
 			});
 		});
 		builder.addCase(tagUpdateEdit.rejected, (state, action) => {});
@@ -165,21 +142,3 @@ export const TagSlice = createSlice({
 
 export default TagSlice.reducer as Reducer<TagState>;
 export const selectTagState = (state: RootState) => state.tag;
-
-export const selectTagFrequencies = (state: RootState) => {
-	const freq = state.tag.tagFrequencies;
-
-	if (
-		SearchFilterOptions.instance.showImages &&
-		SearchFilterOptions.instance.showVideo &&
-		SearchFilterOptions.instance.showVr
-	) {
-		return freq.all;
-	}
-
-	return Util.addObjects(
-		SearchFilterOptions.instance.showImages ? state.tag.tagFrequencies.images : {},
-		SearchFilterOptions.instance.showVideo ? state.tag.tagFrequencies.videos : {},
-		SearchFilterOptions.instance.showVr ? state.tag.tagFrequencies.vr : {}
-	);
-};

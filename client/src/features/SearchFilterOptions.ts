@@ -37,35 +37,18 @@ export class SearchFilterOptions {
 		this.saveValues();
 	}
 
-	public createQuery(baseQuery: string): string {
-		const baseQueryParts = baseQuery.split(" ");
-		const baseQueryTags: { [key: string]: boolean } = {};
-		baseQueryParts.forEach(t => {
-			const realTag = t.startsWith("-") ? t.substr(1) : t;
-			baseQueryTags[realTag] = !t.startsWith("-");
-		});
-
-		const shouldShowVideo =
-			baseQueryTags["content=video"] === undefined ? this._showVideo : baseQueryTags["content=video"];
-		const shouldShowImages =
-			baseQueryTags["content=image"] === undefined ? this._showImages : baseQueryTags["content=image"];
-		const shouldShowVr = baseQueryTags["vr"] === undefined ? this._showVr : baseQueryTags["vr"];
-
-		let parts: string[] = [];
-
-		if (!shouldShowVideo) {
-			parts.push(shouldShowVr ? "vr" : "-content=video");
+	public getContentTypes(): string {
+		const parts: string[] = [];
+		if (this.showImages) {
+			parts.push("image");
 		}
-
-		if (!shouldShowImages) {
-			parts.push("-content=image");
+		if (this.showVideo) {
+			parts.push("video");
 		}
-
-		if (!shouldShowVr) {
-			parts.push("-vr");
+		if (this.showVr) {
+			parts.push("vr");
 		}
-
-		return parts.join(" ");
+		return parts.join(",");
 	}
 
 	private saveValues() {

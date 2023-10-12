@@ -125,4 +125,13 @@ export class Util {
 
 		return accum;
 	}
+
+	static objectToUrlParams<T>(body: T): URLSearchParams {
+		const params = new URLSearchParams();
+		for (const k of Object.keys(body)) {
+			params.append(k, (body as any)[k]);
+		}
+
+		return params;
+	}
 }

@@ -2,6 +2,7 @@
 import base64 from "base-64";
 
 import { LogFactory, Logger } from "../util/Logger";
+import { Util } from "../util/Util";
 import { PostSearchCursor } from "./PostSearchCursor";
 
 const BASE_URL = "https://booru.anime.lgbt";
@@ -97,12 +98,7 @@ class BooruRequest {
 		}
 
 		if (version == "v1") {
-			const params = new URLSearchParams();
-			for (const k of Object.keys(body)) {
-				params.append(k, body[k]);
-			}
-
-			return params;
+			return Util.objectToUrlParams(body);
 		}
 
 		return JSON.stringify(body);
