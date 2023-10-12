@@ -23,10 +23,7 @@
 		"typescript.tsdk": "./client/node_modules/typescript/lib",
 		"typescript.enablePromptUseWorkspaceTsdk": true,
 		"rust-analyzer.linkedProjects": [
-			".\\server-rs\\Cargo.toml",
-			".\\server-rs\\Cargo.toml",
-			".\\server-rs\\Cargo.toml",
-			".\\Cargo.toml"
+			"${workspaceFolder}/server-rs/Cargo.toml"
 		],
 		"jest.disabledWorkspaceFolders": [
 			"server-rs"

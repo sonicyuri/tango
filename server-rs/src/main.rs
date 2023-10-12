@@ -1,3 +1,4 @@
+use actix_web::web::JsonConfig;
 use actix_web::HttpResponse;
 use config::Config;
 use std::io::Error;
@@ -7,7 +8,9 @@ use actix_web::{http::header, web, App, HttpServer};
 use dotenv::dotenv;
 use log::{error, info, trace, warn};
 use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
-use util::{api_error, error_response};
+use util::{api_error, error_response, ApiErrorType};
+
+use crate::util::api_error_owned;
 
 mod modules;
 mod util;
@@ -18,7 +21,7 @@ pub struct AppState {
 }
 
 async fn not_found() -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::NotFound().json(error_response("Route not found")))
+    Ok(HttpResponse::NotFound().json(error_response("Route not found".to_owned())))
 }
 
 fn configure(conf: &mut web::ServiceConfig) {
@@ -67,8 +70,14 @@ async fn main() -> std::io::Result<()> {
             config: config.clone(),
         };
 
+        let json_config = JsonConfig::default().error_handler(|err, req| {
+            let err_str = err.to_string();
+            api_error_owned(ApiErrorType::InvalidRequest, err_str).into()
+        });
+
         App::new()
             .app_data(web::Data::new(state))
+            .app_data(json_config)
             .configure(configure)
             .wrap(Logger::default())
     })

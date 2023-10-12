@@ -6,7 +6,7 @@
 	],
 	"settings": {
 		"rust-analyzer.linkedProjects": [
-			"C:/Users/Ashley/Projects/Web/tango/server-rs/Cargo.toml",
+			"${workspaceFolder}/Cargo.toml",
 			".\\Cargo.toml",
 			".\\Cargo.toml",
 			".\\Cargo.toml"
