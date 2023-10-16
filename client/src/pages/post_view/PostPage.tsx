@@ -29,6 +29,7 @@ import ImagePost from "./components/ImagePost";
 import TagsCard from "./components/TagsCard";
 import VideoPost from "./components/VideoPost";
 import VrPost from "./components/VrPost";
+import { BooruPost } from "../../models/BooruPost";
 
 const logger: Logger = LogFactory.create("PostPage");
 
@@ -45,7 +46,7 @@ const PostPage = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
 
-	const { searchState, currentPost, cursor } = useAppSelector(selectPostState);
+	const { searchState, currentPost: _currentPost, cursor } = useAppSelector(selectPostState);
 
 	const [searchParams] = useSearchParams();
 	const [editing, setEditing] = useState(false);
@@ -109,12 +110,25 @@ const PostPage = () => {
 		}
 	}, [params.postId]);
 
-	// NO HOOKS BELOW THIS POINT - early returns start here
+	// use a dummy post if real post isn't available
+	let currentPost =
+		_currentPost ??
+		new BooruPost({
+			id: "0",
+			width: 0,
+			height: 0,
+			filesize: 0,
+			hash: "",
+			ext: "dummy",
+			mime: "",
+			posted: 0,
+			source: null,
+			owner_id: "",
+			tags: []
+		});
 
-	if (searchState == "loading") {
-		// TODO: nicer loading with blank info instead of simply nothing?
-		return <LoadingSpinner />;
-	} else if (searchState == "failed" || currentPost == null) {
+	// NO HOOKS BELOW THIS POINT - early returns start here
+	if (searchState == "failed") {
 		return Util.logAndDisplayError(logger, "failed to obtain post", currentPost);
 	}
 
@@ -122,7 +136,9 @@ const PostPage = () => {
 	let postContent = <></>;
 	let needsSwipeListener = false;
 
-	if (ImageExtensions.indexOf(currentPost.extension) != -1) {
+	if (currentPost.extension == "dummy") {
+		postContent = <></>;
+	} else if (ImageExtensions.indexOf(currentPost.extension) != -1) {
 		postContent = <ImagePost post={currentPost} />;
 	} else if (VideoExtensions.indexOf(currentPost.extension) != -1) {
 		postContent =
