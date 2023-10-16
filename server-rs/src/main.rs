@@ -28,7 +28,8 @@ fn configure(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
         .service(modules::auth::scope())
         .service(modules::favorites::scope())
-        .service(modules::tags::scope());
+        .service(modules::tags::scope())
+        .service(modules::import::scope());
 
     conf.service(scope)
         .default_service(web::route().to(not_found));
