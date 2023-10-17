@@ -72,6 +72,7 @@ impl ImportService for E621ImportService {
         return Ok(ImportServicePrepareResult {
             image_url: response.post.file.url,
             tags,
+            service: "e621".to_owned(),
         });
     }
 }

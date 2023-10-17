@@ -7,6 +7,7 @@ use crate::util::ApiError;
 pub struct ImportServicePrepareResult {
     pub image_url: String,
     pub tags: Vec<String>,
+    pub service: String,
 }
 
 #[async_trait]

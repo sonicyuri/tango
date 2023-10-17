@@ -8,6 +8,7 @@ import { BooruRequest, CredentialsInvalidError } from "../BooruRequest";
 import { favoriteList } from "../favorites/FavoriteSlice";
 import { RootState } from "../Store";
 import { tagList } from "../tags/TagSlice";
+import { userConfigGet } from "../user_config/UserConfigSlice";
 import AuthService, { Credentials } from "./AuthService";
 
 const logger: Logger = LogFactory.create("AuthSlice");
@@ -44,6 +45,7 @@ export const login = createAsyncThunk("auth/login", async (credentials: Credenti
 
 		thunkApi.dispatch(notify("Login successful!", "success"));
 
+		thunkApi.dispatch(userConfigGet(null));
 		thunkApi.dispatch(tagList(null));
 		thunkApi.dispatch(favoriteList(null));
 
@@ -75,6 +77,7 @@ export const refresh = createAsyncThunk("auth/refresh", async (refreshToken: str
 
 		thunkApi.dispatch(notify("Login successful!", "success"));
 
+		thunkApi.dispatch(userConfigGet(null));
 		thunkApi.dispatch(tagList(null));
 		thunkApi.dispatch(favoriteList(null));
 
@@ -109,6 +112,7 @@ export const loginToken = createAsyncThunk(
 
 			thunkApi.dispatch(notify("Login successful!", "success"));
 
+			thunkApi.dispatch(userConfigGet(null));
 			thunkApi.dispatch(tagList(null));
 			thunkApi.dispatch(favoriteList(null));
 
