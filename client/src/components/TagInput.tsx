@@ -21,6 +21,8 @@ const UnpaddedFilledInput = styled(TextField)({
 
 export interface TagInputProps {
 	values: string[];
+	variant?: "search" | "edit";
+
 	onValuesChange: (tags: string[]) => void;
 	onSubmit: () => void;
 }
@@ -83,6 +85,8 @@ const TagInput = (props: TagInputProps) => {
 			  });
 	};
 
+	const variant = props.variant ?? "search";
+
 	return (
 		<div
 			className="TagInput"
@@ -98,6 +102,7 @@ const TagInput = (props: TagInputProps) => {
 					props.onValuesChange(values.map(v => v.trim().replace(/\s+/g, "_")))
 				}
 				freeSolo
+				disableClearable={variant == "edit"}
 				renderTags={(value: readonly string[], getTagProps) => {
 					return value.map((tag: string, index: number) => (
 						// eslint-disable-next-line react/jsx-key
@@ -110,7 +115,13 @@ const TagInput = (props: TagInputProps) => {
 						/>
 					));
 				}}
-				renderInput={params => <UnpaddedFilledInput {...params} variant="filled" placeholder="Search" />}
+				renderInput={params => (
+					<UnpaddedFilledInput
+						{...params}
+						variant={variant == "search" ? "filled" : "outlined"}
+						placeholder="Search"
+					/>
+				)}
 				renderOption={(props, option) => {
 					const category = BooruTag.getCategory(option, categories);
 

@@ -12,6 +12,7 @@ export interface PageContainerProps {
 	 * If set, this will be rendered alongside the title h3 within its container.
 	 */
 	header?: React.ReactNode;
+	style?: React.CSSProperties;
 }
 
 /**
@@ -19,7 +20,7 @@ export interface PageContainerProps {
  */
 const PageContainer = (props: PageContainerProps) => {
 	return (
-		<Container>
+		<Container style={props.style}>
 			<Paper elevation={24} style={{ padding: "20px" }}>
 				{props.title || props.header ? (
 					<Box style={{ display: "flex", alignItems: "center", paddingBottom: "10px" }}>
