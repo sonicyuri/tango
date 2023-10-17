@@ -7,7 +7,7 @@ use std::pin::Pin;
 use std::rc::Rc;
 use uuid::Uuid;
 
-use crate::modules::auth::model::UserModel;
+use super::model::UserModel;
 use crate::util::{api_error, error_response, unauthorized_error, ApiError, ApiErrorType};
 use crate::AppState;
 

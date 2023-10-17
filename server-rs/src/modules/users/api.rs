@@ -4,7 +4,7 @@ use super::model::{
 };
 use super::schema::{UserLoginSchema, UserRefreshSchema};
 
-use super::middleware::AuthFactory;
+use super::middleware::{get_user, AuthFactory};
 use super::util::{check_user, get_basic_auth_header, validate_auth_token, AuthTokenKind};
 use crate::util::{
     api_error, api_success, error_response, success_response, ApiError, ApiErrorType,
@@ -20,7 +20,7 @@ use super::util;
 
 #[get("/info", wrap = "AuthFactory { reject_unauthed: true }")]
 async fn user_info_handler(req: HttpRequest) -> Result<HttpResponse, ApiError> {
-    let user = super::middleware::get_user(&req)
+    let user = get_user(&req)
         .ok_or_else(|| api_error(ApiErrorType::InvalidRequest, "Failed to get user"))?;
 
     Ok(api_success(filter_db_record(&user)))
@@ -28,7 +28,7 @@ async fn user_info_handler(req: HttpRequest) -> Result<HttpResponse, ApiError> {
 
 #[get("/nginx_callback", wrap = "AuthFactory { reject_unauthed: false }")]
 async fn user_nginx_callback_handler(req: HttpRequest, data: web::Data<AppState>) -> HttpResponse {
-    if let Some(_) = super::middleware::get_user(&req) {
+    if let Some(_) = get_user(&req) {
         return HttpResponse::Ok().json(json!({ "type": "success" }));
     }
 

@@ -58,6 +58,7 @@ const TagsCard = (props: TagsCardProps) => {
 				Edit
 			</Button>
 			<ImportButton
+				post={props.post}
 				onChange={visible => {
 					isImporting.current = visible;
 					if (visible) {

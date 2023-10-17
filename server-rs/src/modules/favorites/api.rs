@@ -2,7 +2,7 @@ use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use log::error;
 use sqlx::MySqlPool;
 
-use crate::modules::auth::middleware::{get_user, AuthFactory};
+use crate::modules::users::middleware::{get_user, AuthFactory};
 use crate::util::{api_error, api_success, format_db_error};
 use crate::{util::ApiError, AppState};
 

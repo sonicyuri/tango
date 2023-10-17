@@ -1,6 +1,7 @@
 /** @format */
 import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
 import { notify } from "reapop";
+import { BooruPost } from "../../models/BooruPost";
 
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
@@ -13,7 +14,13 @@ type ImportLoadingState = "initial" | "loading" | "ready" | "failed";
 interface ImportState {
 	prepareResponse: ImportPrepareResult | null;
 	lastImportedUrl: string;
+	lastImportedPost: BooruPost | null;
 	loadingState: ImportLoadingState;
+}
+
+export interface ImportPrepareRequest {
+	post: BooruPost;
+	url: string;
 }
 
 const setLoadingState: CaseReducer<ImportState, PayloadAction<ImportLoadingState>> = (state, action) => {
@@ -25,18 +32,18 @@ const setLoadingStateAction = (newState: ImportLoadingState): PayloadAction<Impo
 	payload: newState
 });
 
-export const importPrepare = createAsyncThunk("import/prepare", async (url: string, thunkApi) => {
+export const importPrepare = createAsyncThunk("import/prepare", async (request: ImportPrepareRequest, thunkApi) => {
 	try {
 		thunkApi.dispatch(setLoadingStateAction("loading"));
 
-		const res = await ImportService.prepare(url);
+		const res = await ImportService.prepare(request.url);
 		if (res.type == "error") {
 			logger.error("error preparing import", res.message);
 			thunkApi.dispatch(notify("Import error: " + res.message, "error"));
 			return thunkApi.rejectWithValue({});
 		}
 
-		return { result: res.result, url };
+		return { result: res.result, url: request.url, post: request.post };
 	} catch (error: any) {
 		logger.error("error preparing import", error);
 		return thunkApi.rejectWithValue({});
@@ -46,6 +53,7 @@ export const importPrepare = createAsyncThunk("import/prepare", async (url: stri
 const initialState: ImportState = {
 	prepareResponse: null,
 	lastImportedUrl: "",
+	lastImportedPost: null,
 	loadingState: "initial"
 };
 
@@ -58,9 +66,10 @@ export const ImportSlice = createSlice({
 	extraReducers: builder => {
 		builder.addCase(importPrepare.fulfilled, (state, action) => {
 			state.loadingState = "ready";
-			let { result, url } = action.payload;
+			let { result, url, post } = action.payload;
 			state.prepareResponse = result;
 			state.lastImportedUrl = url;
+			state.lastImportedPost = post;
 		});
 
 		builder.addCase(importPrepare.rejected, (state, action) => {

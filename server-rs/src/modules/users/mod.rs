@@ -1,6 +1,7 @@
 use actix_web::{web, Scope};
 
 mod api;
+mod config;
 pub mod middleware;
 mod model;
 mod schema;
@@ -12,4 +13,5 @@ pub fn scope() -> Scope {
         .service(api::user_info_handler)
         .service(api::user_refresh_handler)
         .service(api::user_nginx_callback_handler)
+        .service(config::scope())
 }
