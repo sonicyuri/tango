@@ -21,18 +21,24 @@ import { postSetTags } from "../../features/posts/PostSlice";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
 import { selectUserConfigState, userConfigSet } from "../../features/user_config/UserConfigSlice";
+import { ImportOptions, UserConfig } from "../../features/user_config/UserConfigService";
 
 const ImportPage = () => {
-	const { loadingState, prepareResponse, lastImportedPost } = useAppSelector(selectImportState);
+	const { prepareResponse, lastImportedPost } = useAppSelector(selectImportState);
 	const { config } = useAppSelector(selectUserConfigState);
 	const navigate = useNavigate();
 	const dispatch = useAppDispatch();
 
-	let existingMappings =
-		prepareResponse != null && config.tag_mappings ? config.tag_mappings[prepareResponse.service] : {};
+	let importOptions =
+		prepareResponse != null && config.import_service_config
+			? config.import_service_config[prepareResponse.service]
+			: {
+					mappings: {},
+					deleted_tags: []
+			  };
 
-	const [tagMapping, setTagMapping] = useState<{ [tag: string]: string }>(existingMappings);
-	const [deletedTags, setDeletedTags] = useState<string[]>([]);
+	const [tagMapping, setTagMapping] = useState<{ [tag: string]: string }>({ ...importOptions.mappings });
+	const [deletedTags, setDeletedTags] = useState<string[]>([...importOptions.deleted_tags]);
 
 	useEffect(() => {
 		if (prepareResponse == null) {
@@ -50,11 +56,16 @@ const ImportPage = () => {
 			return;
 		}
 
-		let mappings = config.tag_mappings || {};
-		mappings[prepareResponse.service] = tagMapping;
-		config.tag_mappings = mappings;
+		let newImportOptions: ImportOptions = { ...importOptions };
+		newImportOptions.deleted_tags = deletedTags;
+		newImportOptions.mappings = tagMapping;
 
-		dispatch(userConfigSet(config));
+		let configCopy: UserConfig = { ...config };
+		let serviceConfigs = { ...configCopy.import_service_config } || {};
+		serviceConfigs[prepareResponse.service] = newImportOptions;
+		configCopy.import_service_config = serviceConfigs;
+
+		dispatch(userConfigSet(configCopy));
 
 		const finalTags = prepareResponse.tags
 			.filter(t => deletedTags.indexOf(t) == -1)
@@ -150,7 +161,7 @@ const ImportPage = () => {
 					<Grid xs={8}></Grid>
 					<Grid xs={2}>
 						<Button variant="contained" style={{ width: "100%" }} onClick={handleSubmit}>
-							Submit Tags
+							Submit
 						</Button>
 					</Grid>
 				</Grid>

@@ -76,7 +76,7 @@ pub async fn post_edit_handler(
     // we have tags we need to insert
     if missing_tags.len() > 0 {
         let insert_query_str: String = format!(
-            "INSERT INTO image_tags (`tag`, `count`) VALUES {}",
+            "INSERT INTO tags (`tag`, `count`) VALUES {}",
             itertools::Itertools::intersperse(
                 missing_tags.iter().map(|t| { "(?, 0)".to_owned() }),
                 ", ".to_owned()
@@ -158,7 +158,7 @@ pub async fn post_edit_handler(
             });
 
         let tag_update_query_str = format!(
-            "INSERT INTO `tags` (`tag`, `count`) VALUES {} 
+            "INSERT INTO tags (`tag`, `count`) VALUES {} 
 			ON DUPLICATE KEY UPDATE count = VALUES(count)",
             tag_counts.iter().map(|(_, _)| { "(?, ?)" }).join(",")
         );
