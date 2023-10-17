@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "./features/Hooks";
 import AdminPage from "./pages/admin/AdminPage";
 import TagAliasPage from "./pages/admin/TagAliasPage";
 import ErrorPage from "./pages/ErrorPage";
+import ImportPage from "./pages/import/ImportPage";
 import ListPage from "./pages/ListPage";
 import PostPage from "./pages/post_view/PostPage";
 import RootPage from "./pages/RootPage";
@@ -23,6 +24,10 @@ const App = () => {
 			element: <RootPage />,
 			errorElement: <ErrorPage />,
 			children: [
+				{
+					path: "/import",
+					element: <ImportPage />
+				},
 				{
 					path: "/user/profile",
 					element: <ProfilePage />

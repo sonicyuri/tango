@@ -18,9 +18,7 @@ const TagCloud = (props: TagCloudProps) => {
 	const { categories, tagFrequencies } = useAppSelector(selectTagState);
 	const navigate = useNavigate();
 
-	const words = props.tags
-		.map(t => ({ text: Util.stripTagCategory(Util.formatTag(t)), value: tagFrequencies[t] }))
-		.sort((a, b) => b.value - a.value);
+	const words = props.tags.map(t => ({ text: t, value: tagFrequencies[t] })).sort((a, b) => b.value - a.value);
 
 	return (
 		<div style={{ aspectRatio: 1, textShadow: "#000000 1px 1px 2px" }}>
@@ -39,6 +37,7 @@ const TagCloud = (props: TagCloudProps) => {
 						const cat = BooruTag.getCategory(word.text, categories);
 						return cat?.color ?? "#ffffff";
 					},
+
 					getWordTooltip: word => `${word.text}, ${word.value} use${word.value == 1 ? "" : "s"}`
 				}}
 			/>

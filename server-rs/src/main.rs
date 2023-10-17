@@ -1,13 +1,15 @@
 use actix_web::web::JsonConfig;
 use actix_web::HttpResponse;
 use config::Config;
-use std::io::Error;
+use sqlx::ConnectOptions;
+use std::io::{Error, ErrorKind};
+use std::str::FromStr;
 
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use dotenv::dotenv;
 use log::{error, info, trace, warn};
-use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
+use sqlx::mysql::{MySqlConnectOptions, MySqlPool, MySqlPoolOptions};
 use util::{api_error, error_response, ApiErrorType};
 
 use crate::util::api_error_owned;
@@ -29,21 +31,26 @@ fn configure(conf: &mut web::ServiceConfig) {
         .service(modules::auth::scope())
         .service(modules::favorites::scope())
         .service(modules::tags::scope())
-        .service(modules::import::scope());
+        .service(modules::import::scope())
+        .service(modules::posts::scope());
 
     conf.service(scope)
         .default_service(web::route().to(not_found));
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<(), Error> {
     dotenv().ok();
     log4rs::init_file("log4rs.yml", Default::default()).unwrap();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let mut connection_options = MySqlConnectOptions::from_str(database_url.as_str())
+        .map_err(|e| Error::new(ErrorKind::InvalidData, "Failed to parse DATABASE_URL"))?;
+    connection_options = connection_options.log_statements(log::LevelFilter::Info);
+
     let pool = match MySqlPoolOptions::new()
         .max_connections(10)
-        .connect(&database_url)
+        .connect_with(connection_options)
         .await
     {
         Ok(pool) => {
