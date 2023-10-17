@@ -1,6 +1,6 @@
 /** @format */
 import { Button, Card, CardActions, CardContent, CardHeader } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import LoadingSpinner from "../../../components/LoadingSpinner";
@@ -11,6 +11,7 @@ import { postSetTags } from "../../../features/posts/PostSlice";
 import { selectTagState, tagList } from "../../../features/tags/TagSlice";
 import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory } from "../../../util/Logger";
+import ImportButton from "./ImportButton";
 
 const logger = LogFactory.create("TagsCard");
 
@@ -26,12 +27,18 @@ const TagsCard = (props: TagsCardProps) => {
 	const [loading, setLoading] = useState(false);
 	const [editing, setEditing] = useState(false);
 	const [tempTags, setTempTags] = useState(props.post.tags);
+	const isImporting = useRef(false);
 
 	const { tags } = useAppSelector(selectTagState);
 
+	const updateEditingState = (state: boolean) => {
+		setEditing(state);
+		// tell our parent that we're editing if we're only importing, just so WASD doesn't happen while we're typing
+		props.onEditingChanged(state || isImporting.current);
+	};
+
 	useEffect(() => {
-		setEditing(false);
-		props.onEditingChanged(false);
+		updateEditingState(false);
 	}, [props.post]);
 
 	const showTags = (
@@ -41,15 +48,26 @@ const TagsCard = (props: TagsCardProps) => {
 	);
 
 	const showTagsButtons = (
-		<Button
-			variant="contained"
-			onClick={() => {
-				setEditing(true);
-				props.onEditingChanged(true);
-				setTempTags(props.post.tags);
-			}}>
-			Edit Tags
-		</Button>
+		<>
+			<Button
+				variant="contained"
+				onClick={() => {
+					updateEditingState(true);
+					setTempTags(props.post.tags);
+				}}>
+				Edit
+			</Button>
+			<ImportButton
+				onChange={visible => {
+					isImporting.current = visible;
+					if (visible) {
+						props.onEditingChanged(true);
+					} else {
+						updateEditingState(editing);
+					}
+				}}
+			/>
+		</>
 	);
 
 	const onSubmit = () => {
@@ -69,8 +87,7 @@ const TagsCard = (props: TagsCardProps) => {
 				}
 
 				setLoading(false);
-				setEditing(false);
-				props.onEditingChanged(false);
+				updateEditingState(false);
 			});
 	};
 
@@ -84,8 +101,7 @@ const TagsCard = (props: TagsCardProps) => {
 			<Button
 				variant="outlined"
 				onClick={() => {
-					setEditing(false);
-					props.onEditingChanged(false);
+					updateEditingState(false);
 				}}
 				disabled={loading}>
 				Discard

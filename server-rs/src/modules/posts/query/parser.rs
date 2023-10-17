@@ -7,6 +7,7 @@ pub struct ImageQuery {
 }
 
 impl ImageQuery {
+    // todo: handle aliases
     pub fn new(tags: Vec<String>) -> ImageQuery {
         let mut tags_map: BTreeMap<String, bool> = BTreeMap::new();
         tags.iter().for_each(|tag| {

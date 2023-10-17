@@ -5,11 +5,11 @@ type FavoriteListResponse = { type: "success"; result: string[] } | { type: "err
 
 class FavoriteService {
 	static async getFavorites(): Promise<FavoriteListResponse> {
-		return BooruRequest.runQueryJsonV2("/favorites/list").then(v => v as FavoriteListResponse);
+		return BooruRequest.runQueryJsonV2("/favorite/list").then(v => v as FavoriteListResponse);
 	}
 
 	static async setFavorite(postId: string, favorite: boolean): Promise<FavoriteListResponse> {
-		return BooruRequest.runQueryVersioned("v2", "/favorites/set", "POST", {
+		return BooruRequest.runQueryVersioned("v2", "/favorite/set", "POST", {
 			postId,
 			action: favorite ? "set" : "unset"
 		})

@@ -20,7 +20,7 @@ const TagsListPage = (props: TagsListProps) => {
 
 	const [showAll, setShowAll] = useState(false);
 
-	const tagsToShow = Object.keys(tagFrequencies.all);
+	const tagsToShow = Object.keys(tagFrequencies);
 	const tagList = <TagChipList tags={tagsToShow} orderBy="popularity" limitTags={!showAll} />;
 	const tagCloud = <TagCloud tags={tagsToShow} />;
 

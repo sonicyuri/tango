@@ -1,5 +1,5 @@
 /** @format */
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { SwipeableHandlers } from "react-swipeable";
 
 import { BooruPost } from "../../../models/BooruPost";
@@ -29,6 +29,10 @@ const VideoPost = (props: VideoPostProps) => {
 			}
 		}
 	};
+
+	useEffect(() => {
+		videoElem.current?.load();
+	}, [props.post]);
 
 	return (
 		<>

@@ -7,6 +7,7 @@ import postReducer from "./posts/PostSlice";
 import tagReducer from "./tags/TagSlice";
 import tagAliasReducer from "./tags/TagAliasSlice";
 import favoriteReducer from "./favorites/FavoriteSlice";
+import importReducer from "./import/ImportSlice";
 
 export const Store = configureStore({
 	reducer: {
@@ -15,7 +16,8 @@ export const Store = configureStore({
 		post: postReducer,
 		tag: tagReducer,
 		favorite: favoriteReducer,
-		tag_alias: tagAliasReducer
+		tag_alias: tagAliasReducer,
+		import: importReducer
 	},
 	middleware: getDefaultMiddleware =>
 		getDefaultMiddleware({
