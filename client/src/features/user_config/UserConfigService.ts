@@ -2,8 +2,13 @@
 
 import { BooruRequest } from "../BooruRequest";
 
+export interface ImportOptions {
+	mappings: { [tag: string]: string };
+	deleted_tags: string[];
+}
+
 export interface UserConfig {
-	tag_mappings?: { [service: string]: { [tag: string]: string } };
+	import_service_config?: { [service: string]: ImportOptions };
 }
 
 export type UserConfigResponse = { type: "success"; result: UserConfig } | { type: "error"; message: string };
