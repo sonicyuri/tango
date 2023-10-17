@@ -5,6 +5,7 @@ import { BooruRequest } from "../BooruRequest";
 export interface ImportPrepareResult {
 	image_url: string;
 	tags: string[];
+	service: string;
 }
 
 export type ImportPrepareResponse =

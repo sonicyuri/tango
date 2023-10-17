@@ -12,7 +12,7 @@ import {
 	TextField
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import PageContainer from "../../components/PageContainer";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
 import { selectImportState } from "../../features/import/ImportSlice";
@@ -20,13 +20,19 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { postSetTags } from "../../features/posts/PostSlice";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
+import { selectUserConfigState, userConfigSet } from "../../features/user_config/UserConfigSlice";
 
 const ImportPage = () => {
 	const { loadingState, prepareResponse, lastImportedPost } = useAppSelector(selectImportState);
-	const [tagMapping, setTagMapping] = useState<{ [tag: string]: string }>({});
-	const [deletedTags, setDeletedTags] = useState<string[]>([]);
+	const { config } = useAppSelector(selectUserConfigState);
 	const navigate = useNavigate();
 	const dispatch = useAppDispatch();
+
+	let existingMappings =
+		prepareResponse != null && config.tag_mappings ? config.tag_mappings[prepareResponse.service] : {};
+
+	const [tagMapping, setTagMapping] = useState<{ [tag: string]: string }>(existingMappings);
+	const [deletedTags, setDeletedTags] = useState<string[]>([]);
 
 	useEffect(() => {
 		if (prepareResponse == null) {
@@ -44,11 +50,23 @@ const ImportPage = () => {
 			return;
 		}
 
-		const finalTags = prepareResponse.tags.filter(t => deletedTags.indexOf(t) == -1).map(t => tagMapping[t]);
+		let mappings = config.tag_mappings || {};
+		mappings[prepareResponse.service] = tagMapping;
+		config.tag_mappings = mappings;
 
-		/*dispatch(postSetTags({
-			post: lastImportedPost
-		}))*/
+		dispatch(userConfigSet(config));
+
+		const finalTags = prepareResponse.tags
+			.filter(t => deletedTags.indexOf(t) == -1)
+			.map(t => tagMapping[t])
+			.filter(t => t.trim().length > 0);
+
+		dispatch(
+			postSetTags({
+				post: lastImportedPost,
+				tags: finalTags
+			})
+		);
 	};
 	const handleCancel = () => {
 		navigate(-1);

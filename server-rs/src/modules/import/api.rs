@@ -11,8 +11,6 @@ use crate::{
 
 #[post("/prepare", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn import_prepare_handler(
-    req: HttpRequest,
-    data: web::Data<AppState>,
     body: web::Json<ImportPrepareSchema>,
 ) -> Result<HttpResponse, ApiError> {
     let service = get_service(body.url.clone()).ok_or(api_error(

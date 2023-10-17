@@ -32,11 +32,13 @@ export const favoriteList = createAsyncThunk("favorite/list", async (_: null, th
 		if (res.type == "success") {
 			return { favorites: res.result };
 		} else {
-			thunkApi.dispatch(notify(res.message, "error"));
+			logger.error("error listing favorites", res.message);
+			thunkApi.dispatch(notify("Error listing favorites: " + res.message, "error"));
 			return thunkApi.rejectWithValue({});
 		}
 	} catch (error: any) {
 		logger.error("error listing favorites", error);
+		thunkApi.dispatch(notify("Error listing favorites", "error"));
 		return thunkApi.rejectWithValue({});
 	}
 });
@@ -51,11 +53,13 @@ export const favoriteSet = createAsyncThunk(
 			if (res.type == "success") {
 				return { favorites: res.result };
 			} else {
-				thunkApi.dispatch(notify(res.message, "error"));
+				logger.error("error setting favorite", res.message);
+				thunkApi.dispatch(notify("Failed to set favorite: " + res.message, "error"));
 				return thunkApi.rejectWithValue({});
 			}
 		} catch (error: any) {
 			logger.error("error setting favorite", error);
+			thunkApi.dispatch(notify("Failed to set favorite", "error"));
 			return thunkApi.rejectWithValue({});
 		}
 	}
