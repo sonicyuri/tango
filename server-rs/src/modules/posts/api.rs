@@ -60,7 +60,8 @@ pub async fn post_edit_handler(
     let new_tags: Vec<String> = body
         .tags
         .iter()
-        .filter(|t| t.trim().len() > 0)
+        .map(|t| t.trim())
+        .filter(|t| t.len() > 0)
         .map(|t| t.to_owned())
         .collect();
 

@@ -117,18 +117,19 @@ export const postSetTags = createAsyncThunk("post/set_tags", async (request: Pos
 			return thunkApi.rejectWithValue({});
 		}
 
-		await PostService.setPostTags(request.post, request.tags);
+		let result = await PostService.setPostTags(request.post, request.tags);
+		if (result.type == "error") {
+			logger.error("error setting tags", result.message);
+			thunkApi.dispatch(notify("Failed to set tags: " + result.message, "error"));
+			return thunkApi.rejectWithValue({});
+		}
 
-		thunkApi.dispatch(
-			tagUpdateEdit({ post: request.post, prevTags: request.post.tags, newTags: request.tags.split(" ") })
-		);
+		thunkApi.dispatch(tagUpdateEdit({ post: request.post, prevTags: request.post.tags, newTags: request.tags }));
 
-		const post = await PostService.getPostById(request.post.id);
-
-		return { post };
+		return new BooruPost(result.result);
 	} catch (error: any) {
 		logger.error("error setting tags", error);
-		thunkApi.dispatch(notify("Set tags failed - " + error, "error"));
+		thunkApi.dispatch(notify("Failed to set tags: " + error, "error"));
 		return thunkApi.rejectWithValue({});
 	}
 });
@@ -200,12 +201,12 @@ export const PostSlice = createSlice({
 		});
 
 		builder.addCase(postSetTags.fulfilled, (state, action) => {
-			if (state.currentPost?.id == action.payload.post?.id) {
-				state.currentPost = action.payload.post;
+			if (state.currentPost?.id == action.payload.id) {
+				state.currentPost = action.payload;
 			}
 
-			if (action.payload.post != null) {
-				state.cursor?.storeOrUpdatePost(action.payload.post);
+			if (action.payload != null) {
+				state.cursor?.storeOrUpdatePost(action.payload);
 			}
 		});
 		builder.addCase(postSetTags.rejected, (state, action) => {});

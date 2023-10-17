@@ -25,8 +25,10 @@ export interface PostDirectLinkRequest {
 
 export interface PostSetTagsRequest {
 	post: BooruPost;
-	tags: string;
+	tags: string[];
 }
+
+export type PostSetTagsResponse = { type: "success"; result: ShimmiePost } | { type: "error"; message: string };
 
 class PostService {
 	static async getPostById(id: string): Promise<BooruPost | null> {
@@ -39,20 +41,10 @@ class PostService {
 		});
 	}
 
-	static setPostTags(post: BooruPost, newTags: string): Promise<void> {
-		const data = new URLSearchParams();
-		data.append("postId", post.id);
-		data.append("tags", newTags);
-
-		return BooruRequest.runQuery("/api/shimmie/set_tags", "POST", data)
-			.then(res => res.json())
-			.then(res => {
-				if (res["result"] === "success") {
-					return Promise.resolve();
-				}
-
-				return Promise.reject(new Error(res["message"]));
-			});
+	static setPostTags(post: BooruPost, newTags: string[]): Promise<PostSetTagsResponse> {
+		return BooruRequest.runQueryVersioned("v2", "/api/post/edit", "POST", { post_id: post.id, tags: newTags }).then(
+			res => res.json()
+		);
 	}
 }
 

@@ -76,7 +76,7 @@ const TagsCard = (props: TagsCardProps) => {
 		dispatch(
 			postSetTags({
 				post: props.post,
-				tags: tempTags.join(" ")
+				tags: tempTags
 			})
 		)
 			.unwrap()
