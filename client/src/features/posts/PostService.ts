@@ -42,7 +42,7 @@ class PostService {
 	}
 
 	static setPostTags(post: BooruPost, newTags: string[]): Promise<PostSetTagsResponse> {
-		return BooruRequest.runQueryVersioned("v2", "/api/post/edit", "POST", { post_id: post.id, tags: newTags }).then(
+		return BooruRequest.runQueryVersioned("v2", "/post/edit", "POST", { post_id: post.id, tags: newTags }).then(
 			res => res.json()
 		);
 	}

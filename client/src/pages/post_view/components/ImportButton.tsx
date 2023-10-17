@@ -7,8 +7,10 @@ import { useNavigate } from "react-router";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
 import { importPrepare, selectImportState } from "../../../features/import/ImportSlice";
+import { BooruPost } from "../../../models/BooruPost";
 
 interface ImportButtonProps {
+	post: BooruPost;
 	onChange: (visible: boolean) => void;
 }
 
@@ -29,7 +31,7 @@ const ImportButton = (props: ImportButtonProps) => {
 			setAnchorEl(null);
 			props.onChange(false);
 		} else if (event.key == "Enter") {
-			dispatch(importPrepare(url))
+			dispatch(importPrepare({ url, post: props.post }))
 				.unwrap()
 				.then(() => {
 					setUrl("");

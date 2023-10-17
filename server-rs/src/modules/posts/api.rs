@@ -1,19 +1,17 @@
 use std::collections::HashMap;
 
-use actix_web::{post, web, HttpRequest, HttpResponse};
+use actix_web::{post, web, HttpResponse};
 use itertools::Itertools;
-use log::info;
-use sqlx::Row;
 
 use super::query::alias_resolver::TagAliasResolver;
 use super::schema::PostEditSchema;
 use crate::{
     modules::{
-        auth::middleware::AuthFactory,
         posts::{
             model::{PostModel, PostResponse},
             util::fetch_tags,
         },
+        users::middleware::AuthFactory,
     },
     util::{api_error, api_success, format_db_error, ApiError, ApiErrorType},
     AppState,
@@ -21,7 +19,6 @@ use crate::{
 
 #[post("/edit", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn post_edit_handler(
-    req: HttpRequest,
     data: web::Data<AppState>,
     body: web::Json<PostEditSchema>,
 ) -> Result<HttpResponse, ApiError> {

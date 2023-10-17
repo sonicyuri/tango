@@ -4,7 +4,7 @@ use super::schema::ImportPrepareSchema;
 use super::services::get_service;
 use super::services::service::ImportService;
 use crate::{
-    modules::auth::middleware::AuthFactory,
+    modules::users::middleware::AuthFactory,
     util::{api_error, api_success, ApiError},
     AppState,
 };
