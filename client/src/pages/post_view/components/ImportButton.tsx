@@ -4,6 +4,7 @@ import { Button, Popover, TextField } from "@mui/material";
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
+import LoadingOverlay from "../../../components/LoadingOverlay";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
 import { importPrepare, selectImportState } from "../../../features/import/ImportSlice";
@@ -71,11 +72,7 @@ const ImportButton = (props: ImportButtonProps) => {
 					}}
 					onKeyUp={handleKey}
 				/>
-				<div
-					className="ImportButton-loading-overlay"
-					style={{ visibility: loadingState == "loading" ? "visible" : "hidden" }}>
-					<LoadingSpinner />
-				</div>
+				<LoadingOverlay isLoading={loadingState == "loading"} />
 			</Popover>
 		</>
 	);

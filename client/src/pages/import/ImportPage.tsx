@@ -17,15 +17,19 @@ import PageContainer from "../../components/PageContainer";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
 import { selectImportState } from "../../features/import/ImportSlice";
 import Grid from "@mui/material/Unstable_Grid2";
-import { postSetTags } from "../../features/posts/PostSlice";
+import { postSetTags, selectPostState } from "../../features/posts/PostSlice";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
 import { selectUserConfigState, userConfigSet } from "../../features/user_config/UserConfigSlice";
 import { ImportOptions, UserConfig } from "../../features/user_config/UserConfigService";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import LoadingOverlay from "../../components/LoadingOverlay";
+import { notify } from "reapop";
 
 const ImportPage = () => {
 	const { prepareResponse, lastImportedPost } = useAppSelector(selectImportState);
 	const { config } = useAppSelector(selectUserConfigState);
+	const { cursor } = useAppSelector(selectPostState);
 	const navigate = useNavigate();
 	const dispatch = useAppDispatch();
 
@@ -39,6 +43,7 @@ const ImportPage = () => {
 
 	const [tagMapping, setTagMapping] = useState<{ [tag: string]: string }>({ ...importOptions.mappings });
 	const [deletedTags, setDeletedTags] = useState<string[]>([...importOptions.deleted_tags]);
+	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
 		if (prepareResponse == null) {
@@ -70,14 +75,26 @@ const ImportPage = () => {
 		const finalTags = prepareResponse.tags
 			.filter(t => deletedTags.indexOf(t) == -1)
 			.map(t => tagMapping[t])
-			.filter(t => t.trim().length > 0);
+			.filter(t => t.trim().length > 0)
+			.concat(lastImportedPost.tags);
 
+		setIsLoading(true);
 		dispatch(
 			postSetTags({
 				post: lastImportedPost,
 				tags: finalTags
 			})
-		);
+		)
+			.unwrap()
+			.then(post => {
+				setIsLoading(false);
+				dispatch(notify("Updated post with imported tags!", "success"));
+				if (cursor != null) {
+					navigate(cursor.makePostLink(post));
+				} else {
+					navigate(-1);
+				}
+			});
 	};
 	const handleCancel = () => {
 		navigate(-1);
@@ -165,11 +182,17 @@ const ImportPage = () => {
 						</Button>
 					</Grid>
 				</Grid>
+				<LoadingOverlay isLoading={isLoading} />
 			</>
 		);
 	}
 
-	return <PageContainer title="Import">{body}</PageContainer>;
+	// relative so it can be the parent to LoadingOverlay
+	return (
+		<PageContainer title="Import" style={{ position: "relative" }}>
+			{body}
+		</PageContainer>
+	);
 };
 
 export default ImportPage;

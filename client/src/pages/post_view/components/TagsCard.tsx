@@ -2,6 +2,7 @@
 import { Button, Card, CardActions, CardContent, CardHeader } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import LoadingOverlay from "../../../components/LoadingOverlay";
 
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import TagChipList from "../../../components/TagChipList";
@@ -26,7 +27,7 @@ const TagsCard = (props: TagsCardProps) => {
 
 	const [loading, setLoading] = useState(false);
 	const [editing, setEditing] = useState(false);
-	const [tempTags, setTempTags] = useState(props.post.tags);
+	const [tempTags, setTempTags] = useState(props.post.tags.sort());
 	const isImporting = useRef(false);
 
 	const { tags } = useAppSelector(selectTagState);
@@ -42,7 +43,7 @@ const TagsCard = (props: TagsCardProps) => {
 	}, [props.post]);
 
 	const showTags = (
-		<div className="TagsCard">
+		<div className="TagsCard-tags">
 			<TagChipList tags={props.post.tags} orderBy="alphabetical" />
 		</div>
 	);
@@ -50,7 +51,7 @@ const TagsCard = (props: TagsCardProps) => {
 	const showTagsButtons = (
 		<>
 			<Button
-				variant="contained"
+				variant="outlined"
 				onClick={() => {
 					updateEditingState(true);
 					setTempTags(props.post.tags);
@@ -92,11 +93,13 @@ const TagsCard = (props: TagsCardProps) => {
 			});
 	};
 
-	const editTags = <TagInput values={tempTags} onValuesChange={values => setTempTags(values)} onSubmit={onSubmit} />;
+	const editTags = (
+		<TagInput values={tempTags} variant="edit" onValuesChange={values => setTempTags(values)} onSubmit={onSubmit} />
+	);
 
 	const editTagsButtons = (
 		<>
-			<Button variant="contained" onClick={onSubmit} disabled={loading}>
+			<Button variant="outlined" onClick={onSubmit} disabled={loading}>
 				Save
 			</Button>
 			<Button
@@ -111,15 +114,15 @@ const TagsCard = (props: TagsCardProps) => {
 	);
 
 	return (
-		<Card raised={true}>
-			<CardHeader title="Tags" style={{ paddingBottom: 0 }} />
-			<CardContent style={{ position: "relative", paddingTop: 0, paddingBottom: 0 }}>
-				<div className="Tags-loading" style={{ visibility: loading ? "visible" : "hidden" }}>
-					<LoadingSpinner />
-				</div>
+		<Card raised={true} className="TagsCard">
+			<div className="TagsCard-header">
+				<CardHeader title="Tags" />
+				<CardActions>{editing ? editTagsButtons : showTagsButtons}</CardActions>
+			</div>
+			<CardContent style={{ position: "relative" }}>
+				<LoadingOverlay isLoading={loading} />
 				{editing ? editTags : showTags}
 			</CardContent>
-			<CardActions style={{ padding: "16px" }}>{editing ? editTagsButtons : showTagsButtons}</CardActions>
 		</Card>
 	);
 };
