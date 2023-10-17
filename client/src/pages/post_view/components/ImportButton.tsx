@@ -7,7 +7,6 @@ import { useNavigate } from "react-router";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
 import { importPrepare, selectImportState } from "../../../features/import/ImportSlice";
-import { ImportUtil } from "../../import/ImportUtil";
 
 interface ImportButtonProps {
 	onChange: (visible: boolean) => void;
