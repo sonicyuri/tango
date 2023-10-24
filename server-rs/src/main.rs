@@ -3,7 +3,10 @@ use actix_web::HttpResponse;
 use config::Config;
 use sqlx::ConnectOptions;
 use std::io::{Error, ErrorKind};
+use std::rc::Rc;
 use std::str::FromStr;
+use std::sync::Arc;
+use storage::AppStorage;
 
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
@@ -15,11 +18,13 @@ use util::{api_error, error_response, ApiErrorType};
 use crate::util::api_error_owned;
 
 mod modules;
+mod storage;
 mod util;
 
 pub struct AppState {
     db: MySqlPool,
     config: Config,
+    storage: Arc<AppStorage>,
 }
 
 async fn not_found() -> Result<HttpResponse, Error> {
@@ -71,12 +76,15 @@ async fn main() -> Result<(), Error> {
 
     let port: i64 = config.get_int("port").unwrap_or(8121);
 
+    let storage = AppStorage::new(&config).await;
+
     info!("Starting server on port {}", port);
 
     HttpServer::new(move || {
         let state: AppState = AppState {
             db: pool.clone(),
             config: config.clone(),
+            storage: Arc::new(storage.clone()),
         };
 
         let json_config = JsonConfig::default().error_handler(|err, req| {

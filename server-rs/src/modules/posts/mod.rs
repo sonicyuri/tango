@@ -1,7 +1,7 @@
 use actix_web::{web, Scope};
 
 mod api;
-mod model;
+pub mod model;
 mod query;
 mod schema;
 mod util;

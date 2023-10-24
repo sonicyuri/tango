@@ -61,6 +61,6 @@ impl<'de> Deserialize<'de> for FavoriteAction {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct FavoriteSetSchema {
-    pub postId: String,
+    pub post_id: String,
     pub action: FavoriteAction,
 }
