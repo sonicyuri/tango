@@ -1,20 +1,61 @@
-use actix_web::{post, web, HttpRequest, HttpResponse};
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
 
-use super::schema::ImportPrepareSchema;
+use super::resolvers::get_resolvers;
 use super::services::get_service;
 use super::services::service::ImportService;
+use super::{
+    resolvers::resolver::ImportResolver, resolvers::resolver::ImportResolverFile,
+    schema::ImportPrepareSchema,
+};
+use crate::modules::posts::model::PostModel;
+use crate::util::{format_db_error, ApiErrorType};
 use crate::{
-    modules::users::middleware::AuthFactory,
+    modules::{
+        import::{resolvers::get_resolver, schema::ImportResolveSchema},
+        users::middleware::AuthFactory,
+    },
     util::{api_error, api_success, ApiError},
     AppState,
 };
+
+#[get("/resolve", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn import_list_resolvers_handler() -> Result<HttpResponse, ApiError> {
+    let resolvers = get_resolvers();
+    Ok(api_success(resolvers))
+}
+
+#[post("/resolve", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn import_resolve_handler(
+    body: web::Json<ImportResolveSchema>,
+    data: web::Data<AppState>,
+) -> Result<HttpResponse, ApiError> {
+    let resolver = get_resolver(body.resolver.clone()).ok_or(api_error(
+        ApiErrorType::InvalidRequest,
+        "Unknown or unsupported resolver",
+    ))?;
+
+    let post = sqlx::query_as!(PostModel, "SELECT * FROM images WHERE id = ?", body.post_id)
+        .fetch_one(&data.db)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => {
+                api_error(ApiErrorType::InvalidRequest, "Couldn't find post")
+            }
+            e => format_db_error(e),
+        })?;
+
+    let result = resolver
+        .search(ImportResolverFile::new(post, data.storage.clone()))
+        .await?;
+    Ok(api_success(result))
+}
 
 #[post("/prepare", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn import_prepare_handler(
     body: web::Json<ImportPrepareSchema>,
 ) -> Result<HttpResponse, ApiError> {
     let service = get_service(body.url.clone()).ok_or(api_error(
-        crate::util::ApiErrorType::InvalidRequest,
+        ApiErrorType::InvalidRequest,
         "Unknown or unsupported service",
     ))?;
 

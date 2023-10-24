@@ -48,7 +48,7 @@ pub async fn favorites_set_handler(
     ))?;
 
     let query_result =
-        sqlx::query_scalar!("SELECT COUNT(id) FROM images WHERE id = ?", body.postId)
+        sqlx::query_scalar!("SELECT COUNT(id) FROM images WHERE id = ?", body.post_id)
             .fetch_one(&data.db)
             .await
             .map_err(format_db_error)?;
@@ -65,7 +65,7 @@ pub async fn favorites_set_handler(
             sqlx::query!(
                 "INSERT IGNORE INTO user_favorites SET user_id = ?, image_id = ?",
                 user.id,
-                body.postId
+                body.post_id
             )
             .execute(&data.db)
             .await
@@ -75,7 +75,7 @@ pub async fn favorites_set_handler(
             sqlx::query!(
                 "DELETE FROM user_favorites WHERE user_id = ? AND image_id = ?",
                 user.id,
-                body.postId
+                body.post_id
             )
             .execute(&data.db)
             .await
