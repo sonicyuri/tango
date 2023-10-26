@@ -15,13 +15,11 @@ export type UserConfigResponse = { type: "success"; result: UserConfig } | { typ
 
 class UserConfigService {
 	static get(): Promise<UserConfigResponse> {
-		return BooruRequest.runQueryJsonV2("/user/config/get");
+		return BooruRequest.runQueryJsonV2("/user/config");
 	}
 
 	static set(config: UserConfig): Promise<UserConfigResponse> {
-		return BooruRequest.runQueryVersioned("v2", "/user/config/set?replace=true", "POST", config).then(v =>
-			v.json()
-		);
+		return BooruRequest.runQueryVersioned("v2", "/user/config?replace=true", "POST", config).then(v => v.json());
 	}
 }
 

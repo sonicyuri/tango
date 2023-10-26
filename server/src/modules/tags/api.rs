@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::modules::users::middleware::{get_user, AuthFactory};
 use actix_web::{get, web, HttpRequest, HttpResponse};
 
 use crate::{
@@ -9,7 +10,7 @@ use crate::{
 
 use super::model::{TagCategory, TagListResponse};
 
-#[get("/list")]
+#[get("/list", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn tags_list_handler(data: web::Data<AppState>) -> Result<HttpResponse, ApiError> {
     let tag_query = sqlx::query!(r#"SELECT tag, COUNT(tag_id) AS count FROM tags AS t INNER JOIN image_tags AS it ON it.tag_id = t.id INNER JOIN images AS i ON i.id = it.image_id GROUP BY tag_id"#)
 		.fetch_all(&data.db)

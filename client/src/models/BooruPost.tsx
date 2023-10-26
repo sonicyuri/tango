@@ -1,5 +1,18 @@
 /** @format */
 
+import getTangoConfig from "../TangoConfig";
+
+const TangoConfig = getTangoConfig();
+const StorageConfig = TangoConfig.storage;
+if (StorageConfig.type !== "s3") {
+	throw new Error(`Unknown storage type ${StorageConfig.type}`);
+}
+
+const BaseUrl = StorageConfig.base_url;
+if (BaseUrl === undefined) {
+	throw new Error(`Missing base URL`);
+}
+
 interface ShimmiePost {
 	id: string;
 	width: number;
@@ -50,11 +63,11 @@ class BooruPost {
 	}
 
 	get videoUrl() {
-		return `https://s3.wasabisys.com/booru/images/${this.hash}`;
+		return `${BaseUrl}/images/${this.hash}`;
 	}
 
 	get thumbUrl() {
-		return `https://s3.wasabisys.com/booru/thumbs/${this.hash}`;
+		return `${BaseUrl}/thumbs/${this.hash}`;
 	}
 
 	get aspectRatio() {

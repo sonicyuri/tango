@@ -17,17 +17,17 @@ type TagInfoResponse = { type: "success"; result: TagInfoResult } | { type: "err
 
 class TagService {
 	static async getTags(): Promise<TagListResponse> {
-		return BooruRequest.runQueryJson("/api/shimmie/get_tags_v2").then(v => {
+		return BooruRequest.runQueryJsonV2("/tag/list").then(v => {
 			if (v.type == "error") {
 				return v;
 			}
 
-			const tags = v.tags;
+			const tags = v.result.tags;
 			return {
 				type: "success",
 				result: {
 					tags,
-					categories: v.categories.map((c: ShimmieTagCategory) => new BooruTagCategory(c))
+					categories: v.result.categories.map((c: ShimmieTagCategory) => new BooruTagCategory(c))
 				}
 			};
 		});

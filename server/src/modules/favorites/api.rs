@@ -8,7 +8,7 @@ use crate::{util::ApiError, AppState};
 
 use super::schema::{FavoriteAction, FavoriteSetSchema};
 
-pub async fn get_favorites(user_id: i32, db: &MySqlPool) -> Result<Vec<String>, ApiError> {
+async fn get_favorites(user_id: i32, db: &MySqlPool) -> Result<Vec<String>, ApiError> {
     let query_result = sqlx::query!(
         r#"SELECT image_id FROM user_favorites WHERE user_id = ?"#,
         user_id

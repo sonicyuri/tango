@@ -1,6 +1,6 @@
 {
 	"name": "tango-client",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"private": true,
 	"dependencies": {
 		"@emotion/react": "^11.10.5",
@@ -74,6 +74,7 @@
 		"eslint-plugin-brace-rules": "^0.1.6",
 		"prettier": "2.5.1",
 		"vite": "^4.4.8",
+		"vite-plugin-html": "^3.2.0",
 		"vite-plugin-svgr": "^3.2.0",
 		"vite-tsconfig-paths": "^4.2.0"
 	}

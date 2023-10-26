@@ -1,0 +1,16 @@
+{
+	"endpoints": {
+		"v1": {
+			"development": "https://booru.anime.lgbt",
+			"production": "https://booru.anime.lgbt"
+		},
+		"v2": {
+			"development": "https://tango.moe/api",
+			"production": "https://tango.moe/api"
+		}
+	},
+	"storage": {
+		"type": "s3",
+		"base_url": "https://s3.wasabisys.com/booru"
+	}
+}

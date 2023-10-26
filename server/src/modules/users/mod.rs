@@ -13,5 +13,6 @@ pub fn scope() -> Scope {
         .service(api::user_info_handler)
         .service(api::user_refresh_handler)
         .service(api::user_nginx_callback_handler)
-        .service(config::scope())
+        .service(config::api::user_config_get_handler)
+        .service(config::api::user_config_set_handler)
 }
