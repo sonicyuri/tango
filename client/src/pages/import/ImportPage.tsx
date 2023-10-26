@@ -63,7 +63,7 @@ const ImportPage = () => {
 
 		let newImportOptions: ImportOptions = { ...importOptions };
 		newImportOptions.deleted_tags = deletedTags;
-		newImportOptions.mappings = tagMapping;
+		newImportOptions.mappings = { ...newImportOptions.mappings, ...tagMapping };
 
 		let configCopy: UserConfig = { ...config };
 		let serviceConfigs = { ...configCopy.import_service_config } || {};

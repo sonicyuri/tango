@@ -2,9 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "server-rs"
 		}
 	],
 	"settings": {
@@ -23,10 +20,7 @@
 		"typescript.tsdk": "./client/node_modules/typescript/lib",
 		"typescript.enablePromptUseWorkspaceTsdk": true,
 		"rust-analyzer.linkedProjects": [
-			"${workspaceFolder}/server-rs/Cargo.toml"
-		],
-		"jest.disabledWorkspaceFolders": [
-			"server-rs"
+			"${workspaceFolder}/server/Cargo.toml"
 		],
 		"rust-analyzer.showUnlinkedFileNotification": false
 	}

@@ -1,6 +1,0 @@
-{
-	"server": {
-		"port": 3033,
-		"endpoint": "/api"
-	}
-}
