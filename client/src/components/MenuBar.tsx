@@ -54,6 +54,32 @@ const MenuBar = () => {
 		setFilterMenuEl(event.currentTarget);
 	};
 
+	const menuItems = [
+		<MenuItem key="profile" component={RouterLink} to="/user/profile">
+			Profile
+		</MenuItem>,
+		<MenuItem key="favorites" component={RouterLink} to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
+			Favorites
+		</MenuItem>,
+		<MenuItem key="settings" disabled>
+			Settings
+		</MenuItem>
+	];
+
+	if (user && UserClass.canClass(user.class, "manage_admintools")) {
+		menuItems.push(
+			<MenuItem key="admin" component={RouterLink} to="/admin">
+				Admin
+			</MenuItem>
+		);
+	}
+
+	menuItems.push(
+		<MenuItem key="logout" onClick={handleLogout}>
+			Log Out
+		</MenuItem>
+	);
+
 	const accountMenu = (
 		<Menu
 			anchorEl={anchorEl}
@@ -69,21 +95,7 @@ const MenuBar = () => {
 			}}
 			open={isMenuOpen}
 			onClose={handleMenuClose}>
-			<MenuItem component={RouterLink} to="/user/profile">
-				Profile
-			</MenuItem>
-			<MenuItem component={RouterLink} to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
-				Favorites
-			</MenuItem>
-			<MenuItem>Settings</MenuItem>
-			{user && UserClass.canClass(user.class, "manage_admintools") ? (
-				<MenuItem component={RouterLink} to="/admin">
-					Admin
-				</MenuItem>
-			) : (
-				<></>
-			)}
-			<MenuItem onClick={handleLogout}>Log Out</MenuItem>
+			{menuItems}
 		</Menu>
 	);
 

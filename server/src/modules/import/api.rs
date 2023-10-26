@@ -44,6 +44,13 @@ pub async fn import_resolve_handler(
             e => format_db_error(e),
         })?;
 
+    if post.image.is_some() && post.image.unwrap_or(0) == 0 {
+        return Err(api_error(
+            ApiErrorType::InvalidRequest,
+            "Only image posts can be resolved.",
+        ));
+    }
+
     let result = resolver
         .search(ImportResolverFile::new(post, data.storage.clone()))
         .await?;

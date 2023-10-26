@@ -1,68 +1,82 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+<!-- @format -->
 
-## Available Scripts
+# tango-client
 
-In the project directory, you can run:
+A responsive mobile-friendly frontend to the Tango/Shimmie booru using TypeScript, React, Redux, and Material UI.
 
-### `npm start`
+## Requirements
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+-   Node.js version 18 or greater
+-   Yarn package manager
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+## Setup
 
-### `npm test`
+Clone this repository. Enter the `client` directory and run `yarn install`. Next, create a file named `config.json`. This specifies constants that will be built into the generated HTML. It should look something like this:
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+{
+	"endpoints": {
+		"v1": {
+			"development": "https://your.server",
+			"production": "https://your.server"
+		},
+		"v2": {
+			"development": "https://tango.your.server/api",
+			"production": "https://tango.your.server/api"
+		}
+	},
+	"storage": {
+		"type": "s3",
+		"base_url": "https://s3.your_provider.com/bucket_name"
+	}
+}
+```
 
-### `npm run build`
+The details of each config option are described below. Once you have your config file, the client can be run with `yarn start` and built with `yarn build`.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Config Options
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+Note that URLs shouldn't have trailing slashes.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+#### Endpoints
 
-### `npm run eject`
+You must specify both a V1 and V2 endpoint. For each, multiple endpoints can be specified based on the value of NODE_ENV when `yarn build` is run. If the value of `NODE_ENV` can't be found in the config, the endpoint for `development` will be used. If no such environment exists in the config, the first environment specified will be used.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+##### V1
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+This is the URL to the root of your Shimmie install. `/api/shimmie` should be able to be appended to your URL and point correctly to the shimmie_api extension. This will be removed in future versions.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+##### V2
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+This is the URL of the root of the Tango REST API. By default, the Tango server's endpoints are mounted on `/api`, so that `/` can be used to serve the built Tango client. Include that `/api` in your endpoint.
 
-## Learn More
+#### Storage
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+This specifies where thumbnails and content files can be accessed.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+##### base_url
 
-### Code Splitting
+This is where URLs for thumbnails and content should be relative to. The client will append `/images/<hash>` and `/thumbs/<hash>` to this value to generate content and thumbnail URLs, respectively.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+##### type
 
-### Analyzing the Bundle Size
+The type of storage. The intention is that the `base_url` points to a public S3 or S3-compatible bucket, so `s3` is currently the only accepted value for this field. However, as this config is currently only used for generating URLs, the actual files can be stored anywhere.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+## License
 
-### Making a Progressive Web App
+Tango Client
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+Copyright ©️ 2023 Ashley Rogers
 
-### Advanced Configuration
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
 
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.

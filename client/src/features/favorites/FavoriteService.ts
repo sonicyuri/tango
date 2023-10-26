@@ -10,7 +10,7 @@ class FavoriteService {
 
 	static async setFavorite(postId: string, favorite: boolean): Promise<FavoriteListResponse> {
 		return BooruRequest.runQueryVersioned("v2", "/favorite/set", "POST", {
-			postId,
+			post_id: postId,
 			action: favorite ? "set" : "unset"
 		})
 			.then(v => v.json())
