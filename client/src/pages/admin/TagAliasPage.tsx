@@ -6,7 +6,7 @@ import React, { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { notify } from "reapop";
 
-import { UserClass } from "../models/user_classes/UserClass";
+import { UserClass } from "../../models/user_classes/UserClass";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import PageContainer from "../../components/PageContainer";
 import { selectAuthState } from "../../features/auth/AuthSlice";
