@@ -30,7 +30,7 @@ async fn get_config(db: &MySqlPool, user_id: i32) -> Result<serde_json::Value, A
         )
 }
 
-#[get("/get", wrap = "AuthFactory { reject_unauthed: true }")]
+#[get("/config", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn user_config_get_handler(
     req: HttpRequest,
     data: web::Data<AppState>,
@@ -45,7 +45,7 @@ pub async fn user_config_get_handler(
     Ok(api_success(config))
 }
 
-#[post("/set", wrap = "AuthFactory { reject_unauthed: true }")]
+#[post("/config", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn user_config_set_handler(
     req: HttpRequest,
     data: web::Data<AppState>,

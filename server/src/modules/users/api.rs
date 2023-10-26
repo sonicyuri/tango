@@ -55,8 +55,10 @@ async fn user_login_handler(
 
     let access_token: Option<AuthTokenResponse> =
         util::create_auth_token(&user, util::AuthTokenKind::Access).ok();
-    let refresh_token: Option<AuthTokenResponse> =
-        util::create_auth_token(&user, util::AuthTokenKind::Refresh).ok();
+    let refresh_token: Option<AuthTokenResponse> = match body.remember_me.unwrap_or(false) {
+        true => util::create_auth_token(&user, util::AuthTokenKind::Refresh).ok(),
+        false => None,
+    };
 
     match access_token {
         Some(access_token) => {
@@ -80,8 +82,8 @@ async fn user_refresh_handler(
     body: web::Json<UserRefreshSchema>,
     data: web::Data<AppState>,
 ) -> Result<HttpResponse, ApiError> {
-    let user_id =
-        validate_auth_token(body.refreshToken.as_str(), AuthTokenKind::Refresh).map_err(|e| {
+    let user_id = validate_auth_token(body.refresh_token.as_str(), AuthTokenKind::Refresh)
+        .map_err(|e| {
             api_error(
                 ApiErrorType::OperationFailed,
                 "Failed to validate refresh token",

@@ -35,7 +35,7 @@ type InfoApiResponse =
 export interface Credentials {
 	username: string;
 	password: string;
-	rememberMe: boolean;
+	remember_me: boolean;
 }
 
 export type AuthResponse = { type: "success"; result: User } | { type: "error"; message: string } | { type: "reset" };
@@ -100,7 +100,7 @@ class AuthService {
 		BooruRequest.init(null);
 
 		const params = new URLSearchParams();
-		params.append("refreshToken", refreshToken);
+		params.append("refresh_token", refreshToken);
 
 		return BooruRequest.runQueryVersioned("v2", "/user/refresh", "POST", params)
 			.then(res => res.json())

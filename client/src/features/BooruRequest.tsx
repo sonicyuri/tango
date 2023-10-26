@@ -1,12 +1,14 @@
 /** @format */
 import base64 from "base-64";
+import getTangoConfig from "../TangoConfig";
 
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
 import { PostSearchCursor } from "./PostSearchCursor";
 
-const BASE_URL = "https://booru.anime.lgbt";
-const AUTH_BASE_URL = "https://tango.moe/api";
+const TangoConfig = getTangoConfig();
+const EndpointV1Url = TangoConfig.endpoints.v1;
+const EndpointV2Url = TangoConfig.endpoints.v2;
 
 export class CredentialsInvalidError extends Error {
 	constructor(message: string) {
@@ -37,7 +39,7 @@ class BooruRequest {
 		method: string,
 		body: RequestBody = undefined
 	): Promise<Response> {
-		const url = (version == "v1" ? BASE_URL : AUTH_BASE_URL) + endpoint;
+		const url = (version == "v1" ? EndpointV1Url : EndpointV2Url) + endpoint;
 
 		const headers = new Headers();
 		headers.append("Authorization", this.authHeader || "");

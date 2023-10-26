@@ -36,7 +36,7 @@ const LoginPage = () => {
 	const initialValues: Credentials = {
 		username: LocalSettings.username.value || "",
 		password: "",
-		rememberMe: false
+		remember_me: false
 	};
 
 	const validationSchema = Yup.object().shape({
@@ -106,7 +106,7 @@ const LoginPage = () => {
 								<Switch
 									id="rememberMe"
 									name="rememberMe"
-									checked={formik.values.rememberMe}
+									checked={formik.values.remember_me}
 									onChange={formik.handleChange}
 								/>
 							}
