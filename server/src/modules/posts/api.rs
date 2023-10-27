@@ -1,10 +1,14 @@
 use std::collections::HashMap;
+use std::str;
 
+use actix_multipart::Field;
+use actix_web::http::header::DispositionType;
 use actix_web::{post, web, HttpResponse};
+use futures::{Future, TryStreamExt};
 use itertools::Itertools;
 
-use super::query::alias_resolver::TagAliasResolver;
 use super::schema::PostEditSchema;
+use super::{query::alias_resolver::TagAliasResolver, schema::PostsNewSchema};
 use crate::{
     modules::{
         posts::{
@@ -16,6 +20,48 @@ use crate::{
     util::{api_error, api_success, format_db_error, ApiError, ApiErrorType},
     AppState,
 };
+
+async fn get_data_field(field: &mut Field) -> Result<PostsNewSchema, ApiError> {
+    let mut bytes: Vec<u8> = Vec::new();
+    while let Ok(Some(chunk)) = field.try_next().await {
+        bytes.append(&mut chunk.to_vec())
+    }
+
+    let data_str = str::from_utf8(&bytes)
+        .map_err(|e| api_error(ApiErrorType::InvalidRequest, "Can't decode data field"))?;
+
+    Ok(
+        serde_json::from_str::<PostsNewSchema>(data_str).map_err(|e| {
+            api_error(
+                ApiErrorType::InvalidRequest,
+                "Failed to deserialize data field",
+            )
+        })?,
+    )
+}
+
+#[post("/new", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn post_new_handler(
+    data: web::Data<AppState>,
+    mut body: actix_multipart::Multipart,
+) -> Result<HttpResponse, ApiError> {
+    let mut fields: HashMap<String, Field> = HashMap::new();
+
+    while let Ok(Some(mut field)) = body.try_next().await {
+        fields.insert(field.name().to_owned(), field);
+    }
+
+    let body_data_field = fields.get_mut("data").ok_or(api_error(
+        ApiErrorType::InvalidRequest,
+        "Missing 'data' field",
+    ))?;
+
+    let body_data = get_data_field(body_data_field).await?;
+
+    //let post_jobs: Vec<dyn Future<Output = Result<PostModel, ApiError>>> = Vec::new();
+
+    Ok(api_success(0))
+}
 
 #[post("/edit", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn post_edit_handler(
