@@ -104,8 +104,8 @@ const LoginPage = () => {
 						<FormControlLabel
 							control={
 								<Switch
-									id="rememberMe"
-									name="rememberMe"
+									id="remember_me"
+									name="remember_me"
 									checked={formik.values.remember_me}
 									onChange={formik.handleChange}
 								/>
