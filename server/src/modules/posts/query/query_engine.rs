@@ -1,4 +1,9 @@
-use sqlx::MySqlPool;
+use num::clamp;
+use num::traits::clamp_min;
+use sqlx::query::QueryAs;
+use sqlx::{MySql, MySqlPool};
+
+use crate::util::{format_db_error, ApiError, api_error};
 
 use super::super::model::PostModel;
 
@@ -8,14 +13,33 @@ use super::query_object::QueryObject;
 pub struct QueryEngine {}
 
 pub struct QueryResult {}
-/*
-impl QueryEngine {
-    pub fn run(db: MySqlPool, query: ImageQuery) -> QueryResult {
-        QueryResult {}
-    }
 
-    fn create_query<'a, A, B, C>(query: ImageQuery) {
-        let query_object = QueryEngine::tags_into_query(&query.tag_conditions);
+impl QueryEngine {
+    pub async fn run<'a, A, B, C>(
+        db: &MySqlPool,
+        query: ImageQuery,
+    ) -> Result<QueryResult, ApiError> {
+		Err(api_error(crate::util::ApiErrorType::ServerError, "Not implemented"))
+        /*let query_object = QueryEngine::tags_into_query(&query.tag_conditions);
+
+        let limit = clamp(query.limit, 1, 100);
+        let offset = clamp_min(query.offset, 0);
+
+        let query_str = format!(
+            "{} LIMIT {} OFFSET {}",
+            query_object.query.join(" "),
+            limit,
+            offset
+        );
+
+        let mut sql_query: QueryAs<_, PostModel, _> =
+            sqlx::query_as::<MySql, PostModel>(query_str.as_str());
+
+        for (_, p) in query_object.parameters.iter().enumerate() {
+            sql_query = sql_query.bind(p);
+        }
+
+        let posts = sql_query.fetch_all(db).await.map_err(format_db_error)?;*/
     }
 
     fn tags_into_query(tag_conditions: &Vec<(String, bool)>) -> QueryObject {
@@ -47,7 +71,7 @@ impl QueryEngine {
         let mut num_conditions = 0;
         if positive_tags.len() > 0 {
             query_object.push_query("t.tag IN (");
-            query_object.insert_params(&positive_tags.iter().map(|t| t.as_str()));
+            query_object.insert_params(positive_tags.iter().map(|t| t.as_str()));
             query_object.push_query(")");
             num_conditions = num_conditions + 1;
         };
@@ -62,7 +86,7 @@ impl QueryEngine {
                 RIGHT JOIN tags AS t ON it.tag_id = t.id
                 WHERE t.tag IN (",
             );
-            query_object.insert_params(&negative_tags.iter().map(|t| t.as_str()));
+            query_object.insert_params(negative_tags.iter().map(|t| t.as_str()));
             query_object.push_query("))");
             num_conditions = num_conditions + 1;
         };
@@ -72,4 +96,3 @@ impl QueryEngine {
         return query_object;
     }
 }
-*/

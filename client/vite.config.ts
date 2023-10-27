@@ -42,7 +42,7 @@ export default defineConfig({
 		svgrPlugin(),
 		createHtmlPlugin({
 			entry: "/src/index.tsx",
-			template: "/src/index.html",
+			template: "index.html",
 			inject: {
 				data: {
 					tangoConfig: {
