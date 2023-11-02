@@ -7,14 +7,14 @@ use super::{
     resolvers::resolver::ImportResolver, resolvers::resolver::ImportResolverFile,
     schema::ImportPrepareSchema,
 };
+use crate::error::ApiErrorType;
 use crate::modules::posts::model::PostModel;
-use crate::util::{format_db_error, ApiErrorType};
 use crate::{
+    error::{api_error, api_success, ApiError},
     modules::{
         import::{resolvers::get_resolver, schema::ImportResolveSchema},
         users::middleware::AuthFactory,
     },
-    util::{api_error, api_success, ApiError},
     AppState,
 };
 
@@ -41,7 +41,7 @@ pub async fn import_resolve_handler(
             sqlx::Error::RowNotFound => {
                 api_error(ApiErrorType::InvalidRequest, "Couldn't find post")
             }
-            e => format_db_error(e),
+            e => e.into(),
         })?;
 
     if post.image.is_some() && post.image.unwrap_or(0) == 0 {

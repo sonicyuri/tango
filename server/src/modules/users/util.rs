@@ -13,7 +13,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use sqlx::MySqlPool;
 
-use crate::util::{api_error, ApiError, ApiErrorType};
+use crate::error::{api_error, ApiError, ApiErrorType};
 
 use super::model::{AuthTokenResponse, UserModel};
 

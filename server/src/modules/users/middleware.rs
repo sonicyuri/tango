@@ -8,7 +8,7 @@ use std::rc::Rc;
 use uuid::Uuid;
 
 use super::model::UserModel;
-use crate::util::{api_error, error_response, unauthorized_error, ApiError, ApiErrorType};
+use crate::error::{api_error, ApiError, ApiErrorType};
 use crate::AppState;
 
 use super::model::UserModelResponse;

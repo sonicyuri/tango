@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::MySqlPool;
 
-use crate::util::{format_db_error, ApiError};
+use crate::error::ApiError;
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct PostTag {
@@ -28,7 +28,7 @@ pub async fn fetch_tags(db: &MySqlPool, tags: &Vec<String>) -> Result<Vec<PostTa
     }
 
     // turn all tags into IDs
-    let tag_objs: Vec<PostTag> = tag_query.fetch_all(db).await.map_err(format_db_error)?;
+    let tag_objs: Vec<PostTag> = tag_query.fetch_all(db).await?;
 
     return Ok(tag_objs);
 }

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use crate::util::ApiError;
+use crate::error::ApiError;
 
 #[derive(Serialize, Deserialize)]
 pub struct ImportServicePrepareResult {

@@ -42,11 +42,13 @@ pub struct PostResponse {
     pub posted: i32,
     pub source: Option<String>,
     pub owner_id: i32,
-    pub tags: Vec<String>,
+    pub numeric_score: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>,
 }
 
 impl PostResponse {
-    pub fn from_model(model: PostModel, tags: Vec<String>) -> PostResponse {
+    pub fn from_model(model: PostModel, tags: Option<Vec<String>>) -> PostResponse {
         PostResponse {
             id: model.id,
             width: model.width,
@@ -58,6 +60,7 @@ impl PostResponse {
             posted: model.posted.timestamp() as i32,
             source: model.source,
             owner_id: model.owner_id,
+            numeric_score: model.numeric_score,
             tags: tags,
         }
     }

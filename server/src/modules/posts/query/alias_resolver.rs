@@ -3,15 +3,16 @@ use std::collections::{HashMap, HashSet};
 use log::error;
 use sqlx::MySqlPool;
 
-use crate::util::{api_error, format_db_error, ApiError, ApiErrorType};
+use crate::error::{api_error, ApiError, ApiErrorType};
 
-pub struct TagAliasResolver {}
+pub struct TagAliasResolver {
+    aliases: HashMap<String, String>,
+}
 
 async fn fetch_alias_map(db: &MySqlPool) -> Result<HashMap<String, String>, ApiError> {
     let result = sqlx::query!("SELECT oldtag, newtag FROM aliases")
         .fetch_all(db)
-        .await
-        .map_err(format_db_error)?;
+        .await?;
 
     Ok(HashMap::from_iter(
         result.iter().map(|r| (r.oldtag.clone(), r.newtag.clone())),
@@ -19,9 +20,14 @@ async fn fetch_alias_map(db: &MySqlPool) -> Result<HashMap<String, String>, ApiE
 }
 
 impl TagAliasResolver {
-    pub async fn resolve(db: &MySqlPool, tags: &Vec<String>) -> Result<Vec<String>, ApiError> {
-        let mut final_tags: HashSet<String> = HashSet::new();
+    pub async fn new(db: &MySqlPool) -> Result<TagAliasResolver, ApiError> {
         let aliases = fetch_alias_map(db).await?;
+
+        Ok(TagAliasResolver { aliases })
+    }
+
+    pub fn resolve(&self, tags: &Vec<String>) -> Vec<String> {
+        let mut final_tags: HashSet<String> = HashSet::new();
         let mut resolved_tags: HashSet<String> = HashSet::new();
 
         let mut tags_to_resolve: Vec<String> = Vec::from_iter(tags.iter().map(|t| t.clone()));
@@ -34,7 +40,7 @@ impl TagAliasResolver {
 
             resolved_tags.insert(tag.clone());
 
-            if let Some(alias) = aliases.get(&tag) {
+            if let Some(alias) = self.aliases.get(&tag) {
                 let alias_tags = alias.split(' ').map(|t| t.to_owned());
 
                 tags_to_resolve.extend(alias_tags);
@@ -43,6 +49,6 @@ impl TagAliasResolver {
             }
         }
 
-        Ok(final_tags.into_iter().collect())
+        final_tags.into_iter().collect()
     }
 }

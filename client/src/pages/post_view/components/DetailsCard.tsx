@@ -51,8 +51,10 @@ const DetailsCard = (props: DetailsCardProps) => {
 
 	const detailsRows: { title?: string; body: JSX.Element }[] = [
 		{ body: favoriteButton },
+
 		{ title: "Date posted", body: genericDetailRow(Util.formatDate(props.post.postedAt)) },
 		{ title: "File size", body: genericDetailRow(Util.formatBytes(props.post.fileSize)) },
+		{ title: "Score", body: genericDetailRow(props.post.numericScore.toString()) },
 		{ body: downloadLink }
 	];
 

@@ -24,6 +24,7 @@ interface ShimmiePost {
 	posted: number;
 	source: string | null;
 	owner_id: string;
+	numeric_score: number;
 	tags: string[];
 }
 
@@ -44,6 +45,8 @@ class BooruPost {
 	public postedAt: Date;
 	// the source of the image
 	public source: string | null;
+	// the numeric score of this image
+	public numericScore: number;
 	// the ID of the owner
 	public ownerId: string;
 	// all the tags added to the image
@@ -60,6 +63,7 @@ class BooruPost {
 		this.source = obj.source;
 		this.ownerId = obj.owner_id;
 		this.tags = obj.tags;
+		this.numericScore = obj.numeric_score || 0;
 	}
 
 	get videoUrl() {

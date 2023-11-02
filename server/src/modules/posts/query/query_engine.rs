@@ -3,7 +3,7 @@ use num::traits::clamp_min;
 use sqlx::query::QueryAs;
 use sqlx::{MySql, MySqlPool};
 
-use crate::util::{format_db_error, ApiError, api_error};
+use crate::error::{api_error, ApiError, ApiErrorType};
 
 use super::super::model::PostModel;
 
@@ -19,7 +19,7 @@ impl QueryEngine {
         db: &MySqlPool,
         query: ImageQuery,
     ) -> Result<QueryResult, ApiError> {
-		Err(api_error(crate::util::ApiErrorType::ServerError, "Not implemented"))
+        Err(api_error(ApiErrorType::ServerError, "Not implemented"))
         /*let query_object = QueryEngine::tags_into_query(&query.tag_conditions);
 
         let limit = clamp(query.limit, 1, 100);
