@@ -6,9 +6,7 @@ use super::schema::{UserLoginSchema, UserRefreshSchema};
 
 use super::middleware::{get_user, AuthFactory};
 use super::util::{check_user, get_basic_auth_header, validate_auth_token, AuthTokenKind};
-use crate::util::{
-    api_error, api_success, error_response, success_response, ApiError, ApiErrorType,
-};
+use crate::error::{api_error, api_success, ApiError, ApiErrorType};
 use crate::AppState;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use log::error;

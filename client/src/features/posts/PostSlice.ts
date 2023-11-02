@@ -6,7 +6,13 @@ import { BooruPost } from "../../models/BooruPost";
 import { PostSearchCursor } from "../PostSearchCursor";
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
-import PostService, { PostDirectLinkRequest, PostGetRequest, PostListRequest, PostSetTagsRequest } from "./PostService";
+import PostService, {
+	PostDirectLinkRequest,
+	PostGetRequest,
+	PostListRequest,
+	PostSetTagsRequest,
+	VoteRequest
+} from "./PostService";
 import { tagUpdateEdit } from "../tags/TagSlice";
 
 const logger: Logger = LogFactory.create("PostSlice");
@@ -20,6 +26,7 @@ interface PostState {
 	searchState: PostSearchState;
 	posts: BooruPost[];
 	currentPost: BooruPost | null;
+	votes: { [image_id: string]: number };
 }
 
 const setSearchState: CaseReducer<PostState, PayloadAction<PostSearchState>> = (state, action) => {
@@ -150,11 +157,53 @@ export const postDownload = createAsyncThunk("post/download", async (request: Bo
 		});
 });
 
+export const postListVotes = createAsyncThunk("post/list_votes", async (req: null, thunkApi) => {
+	try {
+		let result = await PostService.getVotes();
+		if (result.type == "error") {
+			logger.error("error fetching votes", result.message);
+			thunkApi.dispatch(notify("Error fetching user votes: " + result.message, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+
+		return result.result;
+	} catch (error: any) {
+		logger.error("error fetching votes", error);
+		thunkApi.dispatch(notify("Error fetching user votes", "error"));
+		return thunkApi.rejectWithValue({});
+	}
+});
+
+export const postVote = createAsyncThunk("post/vote", async (req: VoteRequest, thunkApi) => {
+	try {
+		let result = await PostService.vote(req);
+		if (result.type == "error") {
+			logger.error("error making vote", result.message);
+			thunkApi.dispatch(notify("Error making vote on post: " + result.message, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+
+		let score = 0;
+		if (req.action == "up") {
+			score = 1;
+		} else if (req.action == "down") {
+			score = -1;
+		}
+
+		return { post: result.result, score };
+	} catch (error: any) {
+		logger.error("error making vote", error);
+		thunkApi.dispatch(notify("Error making vote on post", "error"));
+		return thunkApi.rejectWithValue({});
+	}
+});
+
 const initialState: PostState = {
 	cursor: null,
 	searchState: "initial",
 	posts: [],
-	currentPost: null
+	currentPost: null,
+	votes: {}
 };
 
 export const PostSlice = createSlice({
@@ -220,6 +269,24 @@ export const PostSlice = createSlice({
 		});
 		builder.addCase(postDownload.fulfilled, (state, action) => {});
 		builder.addCase(postDownload.rejected, (state, action) => {});
+
+		builder.addCase(postListVotes.fulfilled, (state, action) => {
+			state.votes = {};
+			Object.keys(action.payload).forEach(k => {
+				let score = Number(k);
+				action.payload[score].forEach(v => (state.votes[v] = score));
+			});
+		});
+		builder.addCase(postListVotes.rejected, (state, action) => {});
+
+		builder.addCase(postVote.fulfilled, (state, action) => {
+			state.votes[action.payload.post.id] = action.payload.score;
+			state.cursor?.updatePostScore(new BooruPost(action.payload.post));
+			if (state.currentPost?.id == action.payload.post.id) {
+				state.currentPost.numericScore = action.payload.post.numeric_score;
+			}
+		});
+		builder.addCase(postVote.rejected, (state, action) => {});
 	}
 });
 
