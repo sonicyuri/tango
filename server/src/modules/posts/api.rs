@@ -7,8 +7,8 @@ use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use futures::{Future, TryStreamExt};
 use itertools::Itertools;
 
-use super::schema::{PostDeleteSchema, PostEditSchema, PostVoteSchema};
-use super::{query::alias_resolver::TagAliasResolver, schema::PostsNewSchema};
+use super::query::alias_resolver::TagAliasResolver;
+use super::schema::{PostDeleteSchema, PostVoteSchema};
 use crate::error::api_error_owned;
 use crate::modules::users::middleware::get_user;
 use crate::{
