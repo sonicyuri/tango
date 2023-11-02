@@ -4,11 +4,12 @@ use async_trait::async_trait;
 use itertools::Itertools;
 use log::{error, info, warn};
 
-use crate::modules::import::resolvers::resolver::ImportResolverFile;
-use crate::util::{api_error, api_error_owned, ApiError, ApiErrorType};
+use crate::error::{api_error, api_error_owned, ApiError, ApiErrorType};
+use crate::util::create_client;
 
-use super::super::super::util::create_client;
-use super::super::resolver::{ImportResolver, ImportResolverImageResult, ImportResolverInfo};
+use super::super::resolver::{
+    ImportResolver, ImportResolverFile, ImportResolverImageResult, ImportResolverInfo,
+};
 use super::schema::FluffleSearchResponse;
 
 pub struct FluffleImportResolver {}

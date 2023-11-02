@@ -7,8 +7,8 @@ use sqlx::MySqlPool;
 
 use super::super::middleware::{get_user, AuthFactory};
 use super::schema::UserConfigSetQuery;
-use crate::util::{api_error, api_success, format_db_error};
-use crate::{util::ApiError, AppState};
+use crate::error::{api_error, api_success, ApiErrorType};
+use crate::{error::ApiError, AppState};
 
 static CONFIG_KEY: &'static str = "_tango_config";
 
@@ -21,7 +21,7 @@ async fn get_config(db: &MySqlPool, user_id: i32) -> Result<serde_json::Value, A
         .map_or_else(
             |e| match e {
                 sqlx::Error::RowNotFound => Ok(serde_json::Value::Object(serde_json::Map::new())),
-                e => Err(format_db_error(e)),
+                e => Err(e.into()),
             },
             |(config,)| {
                 Ok(serde_json::from_str(config.as_str())
@@ -35,10 +35,8 @@ pub async fn user_config_get_handler(
     req: HttpRequest,
     data: web::Data<AppState>,
 ) -> Result<HttpResponse, ApiError> {
-    let user = get_user(&req).ok_or(api_error(
-        crate::util::ApiErrorType::AuthorizationFailed,
-        "Missing user",
-    ))?;
+    let user =
+        get_user(&req).ok_or(api_error(ApiErrorType::AuthorizationFailed, "Missing user"))?;
 
     let config = get_config(&data.db, user.id).await?;
 
@@ -52,10 +50,8 @@ pub async fn user_config_set_handler(
     params: web::Query<UserConfigSetQuery>,
     body: web::Json<HashMap<String, serde_json::Value>>,
 ) -> Result<HttpResponse, ApiError> {
-    let user = get_user(&req).ok_or(api_error(
-        crate::util::ApiErrorType::AuthorizationFailed,
-        "Missing user",
-    ))?;
+    let user =
+        get_user(&req).ok_or(api_error(ApiErrorType::AuthorizationFailed, "Missing user"))?;
 
     let mut new_config: Map<String, Value> = match params.replace.unwrap_or(true) {
         true => Map::new(),
@@ -75,10 +71,7 @@ pub async fn user_config_set_handler(
 
     let value_str = serde_json::to_string(&new_config).map_err(|e| {
         error!("Serde serialization error: {:?}", e);
-        api_error(
-            crate::util::ApiErrorType::ServerError,
-            "Failed to set config",
-        )
+        api_error(ApiErrorType::ServerError, "Failed to set config")
     })?;
 
     sqlx::query!(
@@ -89,8 +82,7 @@ pub async fn user_config_set_handler(
         value_str
     )
     .execute(&data.db)
-    .await
-    .map_err(format_db_error)?;
+    .await?;
 
     Ok(api_success(new_config))
 }

@@ -3,13 +3,16 @@ use std::str;
 
 use actix_multipart::Field;
 use actix_web::http::header::DispositionType;
-use actix_web::{post, web, HttpResponse};
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use futures::{Future, TryStreamExt};
 use itertools::Itertools;
 
-use super::schema::PostEditSchema;
+use super::schema::{PostDeleteSchema, PostEditSchema, PostVoteSchema};
 use super::{query::alias_resolver::TagAliasResolver, schema::PostsNewSchema};
+use crate::error::api_error_owned;
+use crate::modules::users::middleware::get_user;
 use crate::{
+    error::{api_error, api_success, ApiError, ApiErrorType},
     modules::{
         posts::{
             model::{PostModel, PostResponse},
@@ -17,58 +20,55 @@ use crate::{
         },
         users::middleware::AuthFactory,
     },
-    util::{api_error, api_success, format_db_error, ApiError, ApiErrorType},
     AppState,
 };
 
-async fn get_data_field(field: &mut Field) -> Result<PostsNewSchema, ApiError> {
-    let mut bytes: Vec<u8> = Vec::new();
-    while let Ok(Some(chunk)) = field.try_next().await {
-        bytes.append(&mut chunk.to_vec())
-    }
+#[get("/vote", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn post_list_votes_handler(
+    req: HttpRequest,
+    data: web::Data<AppState>,
+) -> Result<HttpResponse, ApiError> {
+    let user =
+        get_user(&req).ok_or(api_error(ApiErrorType::AuthorizationFailed, "Missing user"))?;
 
-    let data_str = str::from_utf8(&bytes)
-        .map_err(|e| api_error(ApiErrorType::InvalidRequest, "Can't decode data field"))?;
+    let mut result: HashMap<i32, Vec<String>> = HashMap::new();
 
-    Ok(
-        serde_json::from_str::<PostsNewSchema>(data_str).map_err(|e| {
-            api_error(
-                ApiErrorType::InvalidRequest,
-                "Failed to deserialize data field",
-            )
-        })?,
+    let results = sqlx::query_as::<_, (i32, i32)>(
+        "SELECT image_id, score FROM numeric_score_votes WHERE user_id = ?",
     )
-}
+    .bind(user.id)
+    .fetch_all(&data.db)
+    .await?;
 
-#[post("/new", wrap = "AuthFactory { reject_unauthed: true }")]
-pub async fn post_new_handler(
-    data: web::Data<AppState>,
-    mut body: actix_multipart::Multipart,
-) -> Result<HttpResponse, ApiError> {
-    let mut fields: HashMap<String, Field> = HashMap::new();
+    for (image_id, score) in results {
+        let vec = match result.contains_key(&score) {
+            true => result
+                .get_mut(&score)
+                .ok_or(api_error(ApiErrorType::ServerError, "Failed to map score"))?,
+            false => {
+                result.insert(score, Vec::new());
+                result
+                    .get_mut(&score)
+                    .ok_or(api_error(ApiErrorType::ServerError, "Failed to map score"))?
+            }
+        };
 
-    while let Ok(Some(mut field)) = body.try_next().await {
-        fields.insert(field.name().to_owned(), field);
+        vec.push(image_id.to_string());
     }
 
-    let body_data_field = fields.get_mut("data").ok_or(api_error(
-        ApiErrorType::InvalidRequest,
-        "Missing 'data' field",
-    ))?;
-
-    let body_data = get_data_field(body_data_field).await?;
-
-    //let post_jobs: Vec<dyn Future<Output = Result<PostModel, ApiError>>> = Vec::new();
-
-    Ok(api_success(0))
+    Ok(api_success(result))
 }
 
-#[post("/edit", wrap = "AuthFactory { reject_unauthed: true }")]
-pub async fn post_edit_handler(
+#[post("/vote", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn post_vote_handler(
+    req: HttpRequest,
     data: web::Data<AppState>,
-    body: web::Json<PostEditSchema>,
+    body: web::Json<PostVoteSchema>,
 ) -> Result<HttpResponse, ApiError> {
-    let previous_post = sqlx::query_as!(
+    let user =
+        get_user(&req).ok_or(api_error(ApiErrorType::AuthorizationFailed, "Missing user"))?;
+
+    let mut post: PostModel = sqlx::query_as!(
         PostModel,
         r#"SELECT * FROM images WHERE id = ?"#,
         body.post_id
@@ -77,155 +77,126 @@ pub async fn post_edit_handler(
     .await
     .map_err(|e| match e {
         sqlx::Error::RowNotFound => api_error(ApiErrorType::InvalidRequest, "Post not found"),
-        _ => format_db_error(e),
+        _ => e.into(),
     })?;
 
-    let previous_tags: Vec<(String, i32)> = sqlx::query!(
-        r#"SELECT t.tag, t.count FROM image_tags AS it 
-		JOIN tags AS t ON t.id = it.tag_id WHERE it.image_id = ?"#,
-        body.post_id
+    let previous_vote = sqlx::query_as::<_, (i32,)>(
+        r"SELECT score FROM numeric_score_votes WHERE image_id = ? AND user_id = ?",
     )
-    .fetch_all(&data.db)
+    .bind(post.id)
+    .bind(user.id)
+    .fetch_one(&data.db)
     .await
-    .map_err(format_db_error)?
-    .iter()
-    .map(|e| (e.tag.to_owned(), e.count))
-    .collect();
+    .ok();
 
-    let transaction = data.db.begin().await.map_err(format_db_error)?;
+    let new_score = match body.action.as_str() {
+        "up" => Ok(1),
+        "down" => Ok(-1),
+        "clear" => Ok(0),
+        _ => Err(api_error_owned(
+            ApiErrorType::InvalidRequest,
+            format!("Invalid action value {}", body.action),
+        )),
+    }?;
 
-    // accumulate tag counts
-    let mut tag_counts: HashMap<String, i32> = HashMap::new();
-    previous_tags.iter().for_each(|(tag, count)| {
-        tag_counts.insert(tag.clone(), *count);
-    });
+    let score_change = match previous_vote {
+        Some((vote,)) => new_score - vote,
+        None => new_score,
+    };
 
-    let new_tags: Vec<String> = body
-        .tags
-        .iter()
-        .map(|t| t.trim())
-        .filter(|t| t.len() > 0)
-        .map(|t| t.to_owned())
-        .collect();
+    let transaction = data.db.begin().await?;
 
-    let final_tags = TagAliasResolver::resolve(&data.db, &new_tags).await?;
-    let mut final_tag_objs = fetch_tags(&data.db, &final_tags).await?;
-    final_tag_objs.iter().for_each(|t| {
-        tag_counts.insert(t.tag.clone(), t.count);
-    });
-
-    let missing_tags: Vec<&String> = final_tags
-        .iter()
-        .filter(|t| !tag_counts.contains_key(*t))
-        .collect();
-
-    // we have tags we need to insert
-    if missing_tags.len() > 0 {
-        let insert_query_str: String = format!(
-            "INSERT INTO tags (`tag`, `count`) VALUES {}",
-            itertools::Itertools::intersperse(
-                missing_tags.iter().map(|t| { "(?, 0)".to_owned() }),
-                ", ".to_owned()
-            )
-            .collect::<String>()
-        );
-
-        let mut insert_query = sqlx::query(&insert_query_str);
-        for (_, t) in missing_tags.iter().enumerate() {
-            insert_query = insert_query.bind(t);
-        }
-
-        insert_query
-            .execute(&data.db)
-            .await
-            .map_err(format_db_error)?;
-
-        // obtain the tag objects for the new tags we've inserted
-        let mut missing_tag_objs = fetch_tags(
-            &data.db,
-            &missing_tags.iter().map(|t| (*t).clone()).collect(),
+    if new_score == 0 && previous_vote.is_some() {
+        sqlx::query!(
+            r#"DELETE FROM numeric_score_votes WHERE image_id = ? AND user_id = ?"#,
+            post.id,
+            user.id
         )
+        .execute(&data.db)
+        .await?;
+    } else if new_score != 0 && previous_vote.is_some() {
+        sqlx::query!(
+            r#"UPDATE numeric_score_votes SET score = ? WHERE image_id = ? AND user_id = ?"#,
+            new_score,
+            post.id,
+            user.id
+        )
+        .execute(&data.db)
+        .await?;
+    } else if new_score != 0 {
+        sqlx::query!(
+            r#"INSERT INTO numeric_score_votes (`image_id`, `user_id`, `score`) VALUES (?,?,?)"#,
+            post.id,
+            user.id,
+            new_score
+        )
+        .execute(&data.db)
+        .await?;
+    }
+
+    let final_score = match score_change {
+        0 => post.numeric_score,
+        _ => {
+            sqlx::query!(
+                r"UPDATE images SET numeric_score = numeric_score + ? WHERE id = ?",
+                score_change,
+                post.id
+            )
+            .execute(&data.db)
+            .await?;
+
+            let (score,) =
+                sqlx::query_as::<_, (i32,)>(r#"SELECT numeric_score FROM images WHERE id = ?"#)
+                    .bind(post.id)
+                    .fetch_one(&data.db)
+                    .await?;
+            score
+        }
+    };
+
+    transaction.commit().await?;
+
+    post.numeric_score = final_score;
+
+    return Ok(api_success(PostResponse::from_model(post, None)));
+}
+
+#[post("/delete", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn post_delete_handler(
+    req: HttpRequest,
+    data: web::Data<AppState>,
+    body: web::Json<PostDeleteSchema>,
+) -> Result<HttpResponse, ApiError> {
+    let user =
+        get_user(&req).ok_or(api_error(ApiErrorType::AuthorizationFailed, "Missing user"))?;
+
+    // TODO: implement real permissions checking
+    if user.class != "admin" {
+        return Err(api_error(
+            ApiErrorType::Forbidden,
+            "Only admin can delete posts",
+        ));
+    }
+
+    let post = sqlx::query_as!(PostModel, "SELECT * FROM images WHERE id = ?", body.post_id)
+        .fetch_one(&data.db)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => api_error(ApiErrorType::InvalidRequest, "Post not found"),
+            _ => e.into(),
+        })?;
+
+    data.storage
+        .delete_file(data.storage.image_path(post.hash.clone()))
         .await?;
 
-        missing_tag_objs.iter().for_each(|t| {
-            tag_counts.insert(t.tag.clone(), t.count);
-        });
+    data.storage
+        .delete_file(data.storage.thumb_path(post.hash))
+        .await?;
 
-        final_tag_objs.append(&mut missing_tag_objs);
-    }
-
-    // delete previous tags
-    sqlx::query!("DELETE FROM image_tags WHERE image_id = ?", body.post_id)
+    sqlx::query!("DELETE FROM images WHERE id = ?", body.post_id)
         .execute(&data.db)
-        .await
-        .map_err(format_db_error)?;
+        .await?;
 
-    if final_tags.len() > 0 {
-        // perform the actual tag edit
-        let query = format!(
-            "INSERT INTO image_tags (`image_id`, `tag_id`) VALUES {};",
-            itertools::Itertools::intersperse(
-                final_tag_objs
-                    .iter()
-                    .map(|t| format!("({}, {})", body.post_id, t.id)),
-                ",".to_owned()
-            )
-            .collect::<String>()
-        );
-
-        sqlx::query(query.as_str())
-            .execute(&data.db)
-            .await
-            .map_err(format_db_error)?;
-    }
-
-    // edit tag counts
-
-    // use INSERT ON DUPLICATE to update multiple at once
-    if tag_counts.len() > 0 {
-        // subtract old tags
-        previous_tags
-            .iter()
-            .for_each(|(tag, count)| match tag_counts.get_mut(tag) {
-                Some(count) => {
-                    *count = *count - 1;
-                }
-                None => {}
-            });
-
-        // add new tags
-        final_tags
-            .iter()
-            .for_each(|tag| match tag_counts.get_mut(tag) {
-                Some(count) => {
-                    *count = *count + 1;
-                }
-                None => {}
-            });
-
-        let tag_update_query_str = format!(
-            "INSERT INTO tags (`tag`, `count`) VALUES {} 
-			ON DUPLICATE KEY UPDATE count = VALUES(count)",
-            tag_counts.iter().map(|(_, _)| { "(?, ?)" }).join(",")
-        );
-
-        // update tags
-        let mut tag_update_query = sqlx::query(tag_update_query_str.as_str());
-
-        for (_, (tag, count)) in tag_counts.iter().enumerate() {
-            tag_update_query = tag_update_query.bind(tag);
-            tag_update_query = tag_update_query.bind(count);
-        }
-
-        tag_update_query
-            .execute(&data.db)
-            .await
-            .map_err(format_db_error)?;
-    }
-
-    let response = PostResponse::from_model(previous_post, final_tags);
-
-    transaction.commit().await.map_err(format_db_error)?;
-
-    Ok(api_success(response))
+    Ok(api_success("success"))
 }

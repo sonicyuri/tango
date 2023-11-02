@@ -5,9 +5,9 @@ use log::error;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    error::{api_error, ApiError, ApiErrorType},
     modules::posts::{self, model::PostModel},
     storage::{self, AppStorage},
-    util::{api_error, ApiError, ApiErrorType},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -39,17 +39,20 @@ impl ImportResolverFile {
     }
 
     pub fn get_url(&self) -> String {
-        self.storage.image_path(self.hash.clone())
+        self.storage.image_url(self.hash.clone())
     }
 
     pub async fn get_file(&self) -> Result<Vec<u8>, ApiError> {
-        self.storage.get_file(self.hash.clone()).await.map_err(|e| {
-            error!("Get object error: {:?}", e);
-            api_error(
-                ApiErrorType::ServerError,
-                "Couldn't obtain image from storage",
-            )
-        })
+        self.storage
+            .get_image(self.hash.clone())
+            .await
+            .map_err(|e| {
+                error!("Get object error: {:?}", e);
+                api_error(
+                    ApiErrorType::ServerError,
+                    "Couldn't obtain image from storage",
+                )
+            })
     }
 }
 

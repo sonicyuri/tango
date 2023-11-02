@@ -221,6 +221,12 @@ export class PostSearchCursor {
 		this.postsCache[post.id] = post;
 	}
 
+	public updatePostScore(post: BooruPost): void {
+		if (this.postsCache[post.id]) {
+			this.postsCache[post.id].numericScore = post.numericScore;
+		}
+	}
+
 	public async getPosts(page: number, forceReload: boolean = false): Promise<BooruPost[]> {
 		if (page > this.maxPage) {
 			page = this.maxPage;

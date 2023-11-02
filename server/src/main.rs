@@ -11,12 +11,15 @@ use storage::AppStorage;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use dotenv::dotenv;
+use error::{api_error, api_error_owned, ApiErrorType};
 use log::{error, info, trace, warn};
 use sqlx::mysql::{MySqlConnectOptions, MySqlPool, MySqlPoolOptions};
-use util::{api_error, error_response, ApiErrorType};
+use util::error_response;
 
-use crate::util::api_error_owned;
+use booru_config::BooruConfig;
 
+mod booru_config;
+mod error;
 mod modules;
 mod storage;
 mod util;
@@ -25,6 +28,7 @@ pub struct AppState {
     db: MySqlPool,
     config: Config,
     storage: Arc<AppStorage>,
+    booru_config: BooruConfig,
 }
 
 async fn not_found() -> Result<HttpResponse, Error> {
@@ -77,6 +81,7 @@ async fn main() -> Result<(), Error> {
     let port: i64 = config.get_int("port").unwrap_or(8121);
 
     let storage = AppStorage::new(&config).await;
+    let booru_config = BooruConfig::new(&pool.clone()).await;
 
     info!("Starting server on port {}", port);
 
@@ -84,6 +89,7 @@ async fn main() -> Result<(), Error> {
         let state: AppState = AppState {
             db: pool.clone(),
             config: config.clone(),
+            booru_config: booru_config.clone(),
             storage: Arc::new(storage.clone()),
         };
 
