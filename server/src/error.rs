@@ -58,6 +58,13 @@ impl From<ApiError> for ApiKeyedError {
     }
 }
 
+impl From<sqlx::Error> for ApiKeyedError {
+    fn from(value: sqlx::Error) -> Self {
+        let api_err: ApiError = value.into();
+        api_err.into()
+    }
+}
+
 impl actix_web::error::ResponseError for ApiError {
     fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
         HttpResponse::build(self.status_code()).json(error_response(self.message.clone()))

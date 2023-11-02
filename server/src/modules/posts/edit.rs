@@ -8,8 +8,8 @@ use futures::{Future, TryStreamExt};
 use itertools::Itertools;
 use sqlx::MySqlPool;
 
+use super::query::alias_resolver::TagAliasResolver;
 use super::schema::{PostEditSchema, PostVoteSchema};
-use super::{query::alias_resolver::TagAliasResolver, schema::PostsNewSchema};
 use crate::error::api_error_owned;
 use crate::modules::users::middleware::get_user;
 use crate::{
@@ -51,8 +51,6 @@ pub async fn set_post_tags(
     .iter()
     .map(|e| (e.tag.to_owned(), e.count))
     .collect();
-
-    let transaction = db.begin().await?;
 
     // accumulate tag counts
     let mut tag_counts: HashMap<String, i32> = HashMap::new();
@@ -172,8 +170,6 @@ pub async fn set_post_tags(
 
     let response = PostResponse::from_model(previous_post, Some(final_tags));
 
-    transaction.commit().await?;
-
     Ok(response)
 }
 
@@ -182,7 +178,9 @@ pub async fn post_edit_handler(
     data: web::Data<AppState>,
     body: web::Json<PostEditSchema>,
 ) -> Result<HttpResponse, ApiError> {
+    let transaction = data.db.begin().await?;
     let response = set_post_tags(&data.db, body.post_id.clone(), body.tags.clone()).await?;
+    transaction.commit().await?;
 
     Ok(api_success(response))
 }
