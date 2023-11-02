@@ -7,6 +7,7 @@ use tempfile::NamedTempFile;
 
 use super::media::{create_thumbnail, UploadInfo};
 use crate::booru_config::BooruConfig;
+use crate::error::ApiError;
 use crate::modules::posts::edit::set_post_tags;
 use crate::modules::posts::model::PostResponse;
 use crate::storage::AppStorage;

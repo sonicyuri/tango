@@ -10,16 +10,17 @@ use futures::{Future, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use log::error;
 use reqwest::StatusCode;
+use sqlx::mysql::MySqlQueryResult;
 use sqlx::MySqlPool;
 use tempfile::NamedTempFile;
 
-use super::super::schema::PostsNewSchema;
 use super::media::{create_thumbnail, get_content_info, UploadInfo};
+use super::schema::{PoolResponse, PostNewSchema, PostsNewPoolSchema, PostsNewSchema};
 use crate::booru_config::BooruConfig;
 use crate::error::{api_error_owned, ApiKeyedError};
+use crate::modules::posts::new::schema::{PoolModel, PostNewResponse};
 use crate::modules::posts::new::upload::{upload_and_create_post, OwnerContext};
 use crate::modules::posts::query::alias_resolver::TagAliasResolver;
-use crate::modules::posts::schema::PostNewSchema;
 use crate::modules::users::middleware::get_user;
 use crate::storage::AppStorage;
 use crate::{
@@ -36,7 +37,7 @@ use crate::{
 
 use super::process::{process_file_upload, process_upload, process_url_upload};
 
-pub async fn get_data_field(bytes: &Vec<u8>) -> Result<PostsNewSchema, ApiError> {
+pub fn get_data_field(bytes: &Vec<u8>) -> Result<PostsNewSchema, ApiError> {
     let data_str = str::from_utf8(&bytes).map_err(|e| {
         error!("Failed to decode body data field: {:?}", e);
         api_error(ApiErrorType::InvalidRequest, "Can't decode data field")
@@ -87,7 +88,7 @@ pub async fn post_new_handler(
         "Missing 'data' field",
     ))?;
 
-    let body_data = get_data_field(body_data_field).await?;
+    let body_data = get_data_field(body_data_field)?;
     if body_data.posts.len() > data.booru_config.upload_count as usize {
         return Err(api_error_owned(
             ApiErrorType::InvalidRequest,
@@ -112,9 +113,36 @@ pub async fn post_new_handler(
         return Err(api_error(ApiErrorType::InvalidRequest, "Duplicate `filename` values").into());
     }
 
+    // validate pool options
+    if let Some(pool_options) = &body_data.pool {
+        if pool_options.title.len() < 1 {
+            return Err(api_error(ApiErrorType::InvalidRequest, "Missing pool title").into());
+        }
+    }
+
+    let mut next_index = 0;
     let mut post_tags_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut post_pool_index_map: HashMap<String, i32> = HashMap::new();
     for post in &body_data.posts {
         post_tags_map.insert(post.filename.clone(), post.tags.clone());
+        if let Some(index) = post.pool_index {
+            if index < 0 {
+                return Err(
+                    api_error(ApiErrorType::InvalidRequest, "pool_index must be >= 0").into(),
+                );
+            } else if post_pool_index_map.contains_key(&post.filename) {
+                return Err(api_error(
+                    ApiErrorType::InvalidRequest,
+                    "overlapping pool_index values - make sure every entry has a unique pool_index",
+                )
+                .into());
+            }
+            post_pool_index_map.insert(post.filename.clone(), index);
+        } else {
+            post_pool_index_map.insert(post.filename.clone(), next_index);
+        }
+
+        next_index += 1;
     }
 
     let upload_params: Vec<(PostNewSchema, Option<Vec<u8>>)> = body_data
@@ -152,8 +180,11 @@ pub async fn post_new_handler(
         },
     );
 
+    let transaction = data.db.begin().await?;
+
     let mut posts: HashMap<String, PostResponse> = HashMap::new();
 
+    // upload and create each post
     for (filename, info, file) in files {
         let tags = post_tags_map
             .remove(&filename.clone())
@@ -186,5 +217,58 @@ pub async fn post_new_handler(
         posts.insert(new_filename, post);
     }
 
-    Ok(api_success(posts))
+    let mut pool: Option<PoolResponse> = None;
+
+    // create the pool
+    if let Some(pool_options) = body_data.pool {
+        // create pool itself
+        let response: MySqlQueryResult = sqlx::query!(
+            r#"INSERT INTO pools (`user_id`, `public`, `title`, `description`, `posts`) VALUES(?, ?, ?, ?, ?)"#,
+            user.id,
+            !pool_options.private.unwrap_or(false),
+            pool_options.title,
+            pool_options.description,
+            posts.len() as i32
+        )
+		.execute(&data.db)
+		.await?;
+
+        let pool_id = response.last_insert_id();
+
+        // add images
+        for (filename, post) in &posts {
+            let pool_index = post_pool_index_map.get(filename).unwrap_or(&0);
+
+            sqlx::query!(
+                r#"INSERT INTO pool_images (`pool_id`, `image_id`, `image_order`) VALUES(?, ?, ?)"#,
+                pool_id,
+                post.id,
+                pool_index
+            )
+            .execute(&data.db)
+            .await?;
+        }
+
+        // record operation in pool history
+        sqlx::query!(
+            r#"INSERT INTO pool_history (`pool_id`, `user_id`, `action`, `images`, `count`)
+			VALUES (?, ?, 1, ?, ?)"#,
+            pool_id,
+            user.id,
+            posts.values().map(|p| p.id).join(" "),
+            posts.len() as i32
+        )
+        .execute(&data.db)
+        .await?;
+
+        let pool_model = sqlx::query_as!(PoolModel, "SELECT * FROM pools WHERE id = ?", pool_id)
+            .fetch_one(&data.db)
+            .await?;
+
+        pool = Some(pool_model.into());
+    }
+
+    transaction.commit().await?;
+
+    Ok(api_success(PostNewResponse { posts, pool }))
 }

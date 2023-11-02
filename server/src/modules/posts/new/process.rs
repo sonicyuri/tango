@@ -4,12 +4,8 @@ use log::error;
 use sqlx::MySqlPool;
 use tempfile::NamedTempFile;
 
-use crate::{
-    booru_config::BooruConfig,
-    error::{api_error, ApiError, ApiErrorType},
-    modules::posts::schema::{PostNewSchema, PostsNewSchema},
-    util::create_client,
-};
+use super::schema::{PostNewSchema, PostsNewSchema};
+use crate::{booru_config::BooruConfig, util::create_client};
 use std::{
     io::{Read, Write},
     str,
