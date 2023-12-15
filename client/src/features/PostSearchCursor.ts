@@ -6,11 +6,13 @@ import { Util } from "../util/Util";
 import { current } from "immer";
 import { SearchFilterOptions } from "./SearchFilterOptions";
 
-interface PostListResponse {
+interface PostListResult {
 	posts: ShimmiePost[];
 	offset: number;
 	total_results: number;
 }
+
+type PostListResponse = { type: "error"; message: string } | { type: "success"; result: PostListResult };
 
 // how many posts from the edges before we preload the next page
 const PagePostPreloadThreshold = 5;
@@ -268,8 +270,15 @@ export class PostSearchCursor {
 			.then(r => r.json())
 			.then(j => {
 				const res = j as PostListResponse;
+				if (res.type == "error") {
+					return Promise.reject(new Error(res.message));
+				} else {
+					return res.result;
+				}
+			})
+			.then(res => {
 				this.maxPage = Math.ceil(res.total_results / PageSize);
-				return { page: res.offset / PageSize, posts: res.posts.map(i => new BooruPost(i)) };
+				return { page: Math.floor(res.offset / PageSize) + 1, posts: res.posts.map(i => new BooruPost(i)) };
 			})
 			.then(res => {
 				const { posts, page: newPage } = res;

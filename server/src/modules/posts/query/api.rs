@@ -22,8 +22,8 @@ pub async fn post_list_handler(
 ) -> Result<HttpResponse, ApiError> {
     let alias_resolver = TagAliasResolver::new(&data.db).await?;
 
-    let limit = body.limit.unwrap_or(30).min(1).max(100);
-    let offset = body.offset.unwrap_or(0).min(0);
+    let limit = body.limit.unwrap_or(30).min(100).max(1);
+    let offset = body.offset.unwrap_or(0).max(0);
     let query = body
         .query
         .clone()
