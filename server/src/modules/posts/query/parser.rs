@@ -172,6 +172,7 @@ impl ImageQuery {
         };
 
         if column == "random" {
+			let param = param.parse::<i32>().unwrap_or(0);
             return format!("RAND({})", param);
         }
 
@@ -226,7 +227,7 @@ impl ImageQuery {
             match IMAGE_CONDITION_REGEX.captures(lower.as_str()) {
                 Some(captures) => {
                     if captures.len() >= 5 {
-                        if &captures[0] == "order" {
+                        if &captures[1] == "order" {
                             order = ImageQuery::parse_order(
                                 &captures[3],
                                &captures[5],
