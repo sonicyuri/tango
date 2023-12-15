@@ -257,11 +257,9 @@ impl ImageQuery {
 							tags_to_remove.push(tag.clone());
 						}
                     }
-                }
-                None => {
-                    tags_to_remove.push(tag.clone());
-                }
-            }
+                },
+                None => {}
+			}
         }
 
 		// remove found image conditions from the map
