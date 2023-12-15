@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::web::Query;
 use itertools::Itertools;
 use num::clamp;
@@ -39,8 +41,50 @@ impl QueryEngine {
 
         let mut safe_results: Vec<PostQueryResult> = Vec::new();
 
-        for post in results {
-            safe_results.push(PostQueryResult::from_model(post, db).await?);
+        if results.len() > 0 {
+            // find pools and tags for the results in bulk instead of doing two queries per
+            let mut post_tags_map: HashMap<i32, Vec<String>> = HashMap::new();
+            let mut post_pools_map: HashMap<i32, Vec<i32>> = HashMap::new();
+            // initialize maps
+            for p in &results {
+                post_tags_map.insert(p.id, Vec::new());
+                post_pools_map.insert(p.id, Vec::new());
+            }
+
+            let post_ids_str = results.iter().map(|p| p.id.to_string()).join(",");
+
+            let tag_query = format!("SELECT it.image_id, t.tag FROM image_tags AS it LEFT JOIN tags AS t ON it.tag_id = t.id WHERE it.image_id IN ({})", post_ids_str);
+            let tag_results = sqlx::query_as::<_, (i32, String)>(tag_query.as_str())
+                .fetch_all(db)
+                .await?;
+
+            for (post_id, tag) in tag_results {
+                let v = post_tags_map.get_mut(&post_id);
+                if let Some(v) = v {
+                    v.push(tag);
+                }
+            }
+
+            let pool_query = format!(
+                "SELECT image_id, pool_id FROM pool_images WHERE image_id IN ({})",
+                post_ids_str
+            );
+            let pool_results = sqlx::query_as::<_, (i32, i32)>(pool_query.as_str())
+                .fetch_all(db)
+                .await?;
+
+            for (post_id, pool_id) in pool_results {
+                let v = post_pools_map.get_mut(&post_id);
+                if let Some(v) = v {
+                    v.push(pool_id);
+                }
+            }
+
+            for post in results {
+                let tags = post_tags_map.remove(&post.id).unwrap_or(Vec::new());
+                let pools = post_pools_map.remove(&post.id).unwrap_or(Vec::new());
+                safe_results.push(PostQueryResult::from_model(post, tags, pools).await?);
+            }
         }
 
         Ok(QueryResult {
