@@ -24,25 +24,11 @@ pub struct PostQueryResult {
 }
 
 impl PostQueryResult {
-    pub async fn from_model(model: PostModel, db: &MySqlPool) -> Result<PostQueryResult, ApiError> {
-        let tags = 
-		sqlx::query_as::<_, (String,)>("SELECT t.tag FROM image_tags AS it LEFT JOIN tags AS t ON t.id = it.tag_id WHERE it.image_id = ?").
-		bind(model.id)
-		.fetch_all(db)
-		.await?
-		.iter()
-		.map(|(tag,)| tag.clone())
-		.collect_vec();
-
-        let pool_ids =
-            sqlx::query_as::<_, (i32,)>("SELECT pool_id FROM pool_images WHERE image_id = ?")
-                .bind(model.id)
-                .fetch_all(db)
-                .await?
-                .iter()
-                .map(|(id,)| *id)
-                .collect_vec();
-
+    pub async fn from_model(
+        model: PostModel,
+        tags: Vec<String>,
+        pools: Vec<i32>,
+    ) -> Result<PostQueryResult, ApiError> {
         Ok(PostQueryResult {
             id: model.id,
             width: model.width,
@@ -56,7 +42,7 @@ impl PostQueryResult {
             owner_id: model.owner_id,
             numeric_score: model.numeric_score,
             tags,
-            pools: pool_ids
+            pools,
         })
     }
 }
@@ -68,11 +54,10 @@ pub struct QueryResult {
     pub total_results: i32,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PostListSchema {
-	pub query: Option<String>,
-	pub offset: Option<i32>,
-	pub limit: Option<i32>,
-	pub filter: Option<ContentFilter>
+    pub query: Option<String>,
+    pub offset: Option<i32>,
+    pub limit: Option<i32>,
+    pub filter: Option<ContentFilter>,
 }
