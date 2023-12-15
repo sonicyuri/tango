@@ -124,6 +124,8 @@ const PostPage = () => {
 			posted: 0,
 			source: null,
 			owner_id: "",
+			pools: [],
+			numeric_score: 0,
 			tags: []
 		});
 

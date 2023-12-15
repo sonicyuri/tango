@@ -18,7 +18,7 @@ type PostListResponse = { type: "error"; message: string } | { type: "success"; 
 const PagePostPreloadThreshold = 5;
 
 // todo: make this editable (would require refactor)
-const PageSize = 30;
+const PageSize = 48;
 
 /**
  * Handles navigating a search query from post list and post view modes.
