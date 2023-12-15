@@ -138,7 +138,8 @@ async fn upload_and_create_with_thumb(
         info.height,
         is_video,
         is_image,
-        info.length,
+		// adjust to milliseconds
+        info.length.and_then(|l| Some(l * 1000)),
         info.mime
     )
 	.execute(db)

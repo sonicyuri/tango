@@ -1,9 +1,13 @@
+use actix_web::web::Query;
+use itertools::Itertools;
 use num::clamp;
 use num::traits::clamp_min;
 use sqlx::query::QueryAs;
 use sqlx::{MySql, MySqlPool};
 
+use super::model::{PostQueryResult, QueryResult};
 use crate::error::{api_error, ApiError, ApiErrorType};
+use crate::modules::posts::model::PostResponse;
 
 use super::super::model::PostModel;
 
@@ -12,87 +16,276 @@ use super::query_object::QueryObject;
 
 pub struct QueryEngine {}
 
-pub struct QueryResult {}
-
 impl QueryEngine {
-    pub async fn run<'a, A, B, C>(
-        db: &MySqlPool,
-        query: ImageQuery,
-    ) -> Result<QueryResult, ApiError> {
-        Err(api_error(ApiErrorType::ServerError, "Not implemented"))
-        /*let query_object = QueryEngine::tags_into_query(&query.tag_conditions);
+    pub async fn run(db: &MySqlPool, query: ImageQuery) -> Result<QueryResult, ApiError> {
+        let query_object = QueryEngine::build_query(
+            db,
+            &query.tag_conditions,
+            &query.img_conditions,
+            query.order.clone(),
+            Some(query.limit),
+            Some(query.offset),
+        )
+        .await?;
 
-        let limit = clamp(query.limit, 1, 100);
-        let offset = clamp_min(query.offset, 0);
-
-        let query_str = format!(
-            "{} LIMIT {} OFFSET {}",
-            query_object.query.join(" "),
-            limit,
-            offset
-        );
-
-        let mut sql_query: QueryAs<_, PostModel, _> =
-            sqlx::query_as::<MySql, PostModel>(query_str.as_str());
-
-        for (_, p) in query_object.parameters.iter().enumerate() {
-            sql_query = sql_query.bind(p);
+        let query_str = query_object.to_string();
+        let mut sql = sqlx::query_as::<_, PostModel>(query_str.as_str());
+        for p in query_object.parameters {
+            sql = sql.bind(p);
         }
 
-        let posts = sql_query.fetch_all(db).await.map_err(format_db_error)?;*/
+        let results = sql.fetch_all(db).await?;
+        let count = QueryEngine::count_images(db, &query).await?;
+
+        let mut safe_results: Vec<PostQueryResult> = Vec::new();
+
+        for post in results {
+            safe_results.push(PostQueryResult::from_model(post, db).await?);
+        }
+
+        Ok(QueryResult {
+            posts: safe_results,
+            offset: query.offset,
+            total_results: count,
+        })
     }
 
-    fn tags_into_query(tag_conditions: &Vec<(String, bool)>) -> QueryObject {
-        let mut positive_tags: Vec<&String> = Vec::new();
-        let mut negative_tags: Vec<&String> = Vec::new();
+    async fn count_images(db: &MySqlPool, image_query: &ImageQuery) -> Result<i32, ApiError> {
+        let query_object = QueryEngine::build_query(
+            db,
+            &image_query.tag_conditions,
+            &image_query.img_conditions,
+            image_query.order.clone(),
+            None,
+            None,
+        )
+        .await?;
 
-        tag_conditions.iter().for_each(|(t, p)| {
-            if *p {
-                positive_tags.push(t);
-            } else {
-                negative_tags.push(t);
-            }
-        });
-
-        let mut query_object = QueryObject::new();
-
-        if positive_tags.len() == 0 && negative_tags.len() == 0 {
-            query_object.push_query("SELECT i.* FROM images AS i");
-            return query_object;
-        };
-
-        query_object.push_query(
-            "SELECT i.* FROM image_tags AS it
-            RIGHT JOIN tags AS t ON it.tag_id = t.id
-            LEFT JOIN images AS i ON it.image_id = t.id
-            WHERE ",
+        let query_str = format!(
+            "SELECT COUNT(*) AS c FROM ({}) AS tbl",
+            query_object.to_string()
         );
 
-        let mut num_conditions = 0;
-        if positive_tags.len() > 0 {
-            query_object.push_query("t.tag IN (");
-            query_object.insert_params(positive_tags.iter().map(|t| t.as_str()));
-            query_object.push_query(")");
-            num_conditions = num_conditions + 1;
-        };
+        let mut query = sqlx::query_as::<_, (i32,)>(query_str.as_str());
+        for p in &query_object.parameters {
+            query = query.bind(p);
+        }
 
-        if negative_tags.len() > 0 {
-            if num_conditions > 0 {
-                query_object.push_query("AND");
+        let (count,) = query.fetch_one(db).await?;
+        Ok(count)
+    }
+
+    async fn resolve_tag_to_ids(db: &MySqlPool, tag: String) -> Result<Vec<i32>, ApiError> {
+        let result = sqlx::query_as::<_, (i32, String)>(
+            r"SELECT id, tag FROM tags WHERE LOWER(tag) LIKE LOWER(?)",
+        )
+        .bind(tag)
+        .fetch_all(db)
+        .await?;
+
+        let vec = result.iter().map(|(id, _)| *id).collect_vec();
+
+        Ok(vec)
+    }
+
+    async fn build_query(
+        db: &MySqlPool,
+        tag_conditions: &Vec<(String, bool)>,
+        img_conditions: &Vec<(QueryObject, bool)>,
+        order: String,
+        limit: Option<i32>,
+        offset: Option<i32>,
+    ) -> Result<QueryObject, ApiError> {
+        // adapted from https://github.com/shish/shimmie2/blob/main/core/imageboard/search.php#L222
+
+        let mut limit = limit;
+        let mut offset = offset;
+        let mut query: Option<QueryObject> = None;
+
+        if tag_conditions.len() == 0 && img_conditions.len() == 0 {
+            // nothing to do
+            query = Some(QueryObject::new_with_query(
+                "SELECT images.* FROM images WHERE 1=1",
+            ));
+        } else if tag_conditions.len() == 1
+            && tag_conditions[0].1
+            && img_conditions.len() == 0
+            && order == "images.id DESC"
+            && limit.is_some()
+            && offset.is_some()
+        {
+            // optimization for single-tag queries
+
+            let (tag, positive) = &tag_conditions[0];
+            let tag_ids = QueryEngine::resolve_tag_to_ids(db, (*tag).clone()).await?;
+
+            if tag_ids.len() == 0 {
+                // nothing found
+                return Ok(QueryObject::new_with_query(
+                    "SELECT images.* FROM images WHERE 1=0",
+                ));
             }
-            query_object.push_query(
-                "i.id NOT IN (
-                SELECT it.image_id FROM image_tags AS it
-                RIGHT JOIN tags AS t ON it.tag_id = t.id
-                WHERE t.tag IN (",
+
+            let tag_ids_str: String = tag_ids.iter().map(|id| id.to_string()).join(",");
+
+            let query_str = format!(
+                "SELECT images.*
+				FROM images INNER JOIN (
+					SELECT DISTINCT it.image_id
+					FROM image_tags it
+					WHERE it.tag_id IN ({})
+					ORDER BY it.image_id DESC
+					LIMIT {} OFFSET {}
+				) a on a.image_id = images.id
+				WHERE 1=1",
+                tag_ids_str,
+                limit.unwrap(),
+                offset.unwrap()
             );
-            query_object.insert_params(negative_tags.iter().map(|t| t.as_str()));
-            query_object.push_query("))");
-            num_conditions = num_conditions + 1;
-        };
 
-        query_object.push_query("GROUP BY i.image_id");
+            query = Some(QueryObject::new_with_query(query_str.as_str()));
+            // we no longer need limit and offset since we've already done that in the above query
+            limit = None;
+            offset = None;
+        } else {
+            // no faster optimization, do the full search
 
-        return query_object;
+            let mut positive_tag_ids: Vec<i32> = Vec::new();
+            let mut positive_wildcard_tag_ids: Vec<Vec<i32>> = Vec::new();
+            let mut negative_tag_ids: Vec<i32> = Vec::new();
+            // is this query all negatives of tags that don't exist?
+            let mut all_nonexistant_negatives = true;
+
+            for (tag, positive) in tag_conditions {
+                let mut tag_ids = QueryEngine::resolve_tag_to_ids(db, (*tag).clone()).await?;
+
+                if *positive {
+                    all_nonexistant_negatives = false;
+
+                    if tag_ids.len() == 0 {
+                        // nothing found for this positive tag, so no results
+                        return Ok(QueryObject::new_with_query(
+                            "SELECT images.* FROM images WHERE 1=0",
+                        ));
+                    } else if tag_ids.len() == 1 {
+                        positive_tag_ids.push(tag_ids[0]);
+                    } else {
+                        positive_wildcard_tag_ids.push(tag_ids);
+                    }
+                } else {
+                    if tag_ids.len() > 0 {
+                        all_nonexistant_negatives = false;
+                        negative_tag_ids.append(&mut tag_ids);
+                    }
+                }
+            }
+
+            if all_nonexistant_negatives {
+                // we're only excluding non-existant tags, so we can just return everything
+                query = Some(QueryObject::new_with_query(
+                    "SELECT images.* FROM images WHERE 1=1",
+                ));
+            } else if positive_tag_ids.len() > 0 || positive_wildcard_tag_ids.len() > 0 {
+                let mut inner_joins: Vec<String> = Vec::new();
+
+                for tag_id in positive_tag_ids {
+                    inner_joins.push(format!("= {}", tag_id));
+                }
+
+                for tag_ids in positive_wildcard_tag_ids {
+                    let tag_ids_str = tag_ids.iter().map(|id| id.to_string()).join(",");
+
+                    inner_joins.push(format!("IN({})", tag_ids_str));
+                }
+
+                let first = (*inner_joins.first().unwrap()).clone();
+
+                let mut sq =
+                    QueryObject::new_with_query("SELECT DISTINCT it.image_id FROM image_tags it");
+
+                let mut i = 0;
+                for inner_join in inner_joins {
+                    i += 1;
+                    let part = format!("INNER JOIN image_tags it{i} ON it{i}.image_id = it.image_id AND it{i}.tag_id {inner_join}", i=i, inner_join=inner_join);
+                    sq.push_query(part.as_str());
+                }
+
+                if negative_tag_ids.len() > 0 {
+                    let negative_tag_str =
+                        negative_tag_ids.iter().map(|id| id.to_string()).join(",");
+                    let part = format!("LEFT JOIN image_tags negative ON negative.image_id = it.image_id AND negative.tag_id IN ({})", negative_tag_str);
+                    sq.push_query(part.as_str());
+                }
+
+                sq.push_query(format!("WHERE it.tag_id {}", first).as_str());
+                if negative_tag_ids.len() > 0 {
+                    sq.push_query("AND negative.image_id IS NULL");
+                }
+                sq.push_query("GROUP BY it.image_id");
+
+                let query_str = format!(
+                    "SELECT images.*
+					FROM images
+					INNER JOIN ({}) a on a.image_id = images.id",
+                    sq.to_string()
+                );
+
+                query = Some(QueryObject::new_with_query(query_str.as_str()));
+            } else if negative_tag_ids.len() > 0 {
+                let negative_tag_str = negative_tag_ids.iter().map(|id| id.to_string()).join(",");
+                let query_str = format!(
+                    "SELECT images.*
+					FROM images
+					LEFT JOIN image_tags negative ON negative.image_id = images.id AND negative.tag_id in ({})
+					WHERE negative.image_id IS NULL",
+                    negative_tag_str
+                );
+                query = Some(QueryObject::new_with_query(query_str.as_str()));
+            } else {
+                return Err(api_error(
+                    ApiErrorType::ServerError,
+                    "Can't create tag query - no valid strategies",
+                ));
+            }
+        }
+
+        if query.is_none() {
+            return Err(api_error(
+                ApiErrorType::ServerError,
+                "Missing query object?",
+            ));
+        }
+
+        let mut query = query.unwrap();
+
+        if img_conditions.len() > 0 {
+            let mut conditions_query = QueryObject::new();
+            let mut n = 0;
+            for (condition, positive) in img_conditions {
+                if n > 0 {
+                    conditions_query.push_query("AND");
+                }
+                n += 1;
+                if !positive {
+                    conditions_query.push_query("NOT");
+                }
+                conditions_query.push_query("(");
+                conditions_query.append(condition);
+                conditions_query.push_query(")");
+            }
+
+            query.push_query("AND");
+            query.append(&conditions_query);
+        }
+
+        query.push_query(format!("ORDER BY {}", order).as_str());
+
+        if let Some(limit_val) = limit {
+            let offset_val = offset.unwrap_or(0);
+            query.push_query(format!("LIMIT {}", limit_val).as_str());
+            query.push_query(format!("OFFSET {}", offset_val).as_str());
+        }
+
+        return Ok(query);
     }
 }
