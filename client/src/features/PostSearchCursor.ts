@@ -262,7 +262,7 @@ export class PostSearchCursor {
 		}
 
 		const newPromise = BooruRequest.runQueryVersioned("v2", "/post/list", "POST", {
-			query: this.query,
+			query: this.query || "",
 			offset: (page - 1) * PageSize,
 			limit: PageSize,
 			filter: SearchFilterOptions.instance.getMap()
