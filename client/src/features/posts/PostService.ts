@@ -43,7 +43,7 @@ export type VoteResponse = { type: "success"; result: ShimmiePost } | { type: "e
 
 class PostService {
 	static async getPostById(id: string): Promise<BooruPost | null> {
-		return BooruRequest.runQueryJson("/api/shimmie/get_image/" + id).then(v => {
+		return BooruRequest.runQueryJsonV2("/api/shimmie/get_image/" + id).then(v => {
 			if (Object.keys(v).length == 0) {
 				return null;
 			}

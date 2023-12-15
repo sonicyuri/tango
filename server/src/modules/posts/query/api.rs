@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use super::alias_resolver::TagAliasResolver;
 use crate::modules::users::middleware::{get_user, AuthFactory};
-use actix_web::{get, web, HttpRequest, HttpResponse};
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use itertools::Itertools;
 
 use super::model::{PostListSchema, QueryResult};
@@ -15,7 +15,7 @@ use crate::{
     AppState,
 };
 
-#[get("/list", wrap = "AuthFactory { reject_unauthed: true }")]
+#[post("/list", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn post_list_handler(
     data: web::Data<AppState>,
     body: web::Json<PostListSchema>,

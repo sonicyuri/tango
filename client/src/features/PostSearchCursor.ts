@@ -6,15 +6,17 @@ import { Util } from "../util/Util";
 import { current } from "immer";
 import { SearchFilterOptions } from "./SearchFilterOptions";
 
-interface ShimmieFindImagesV2 {
-	images: ShimmiePost[];
-	total_pages: number;
-	page_number: number;
-	hidden: number;
+interface PostListResponse {
+	posts: ShimmiePost[];
+	offset: number;
+	total_results: number;
 }
 
 // how many posts from the edges before we preload the next page
 const PagePostPreloadThreshold = 5;
+
+// todo: make this editable (would require refactor)
+const PageSize = 30;
 
 /**
  * Handles navigating a search query from post list and post view modes.
@@ -257,37 +259,25 @@ export class PostSearchCursor {
 			return this.runningPagePromises[page];
 		}
 
-		const q = currentId == null ? (this.query || "").trim() : "";
-
-		let url =
-			q.length > 0
-				? `/api/shimmie/find_images_v2/${encodeURIComponent(q)}/${page}`
-				: `/api/shimmie/find_images_v2/${page}`;
-
-		let urlParams: { [k: string]: any } = {
-			content_types: SearchFilterOptions.instance.getContentTypes()
-		};
-
-		if (currentId != null) {
-			urlParams["current_id"] = currentId;
-		}
-
-		url += "?" + Util.objectToUrlParams(urlParams).toString();
-
-		const newPromise = BooruRequest.runQueryJson(url)
+		const newPromise = BooruRequest.runQueryVersioned("v2", "/post/list", "POST", {
+			query: this.query,
+			offset: page * PageSize,
+			limit: PageSize,
+			filter: SearchFilterOptions.instance.getMap()
+		})
+			.then(r => r.json())
 			.then(j => {
-				const res = j as ShimmieFindImagesV2;
-				this.maxPage = res.total_pages;
-				this.hidden = res.hidden;
-				return { page: res.page_number, images: res.images.map(i => new BooruPost(i)) };
+				const res = j as PostListResponse;
+				this.maxPage = Math.ceil(res.total_results / PageSize);
+				return { page: res.offset / PageSize, posts: res.posts.map(i => new BooruPost(i)) };
 			})
 			.then(res => {
-				const { images, page: newPage } = res;
-				// store all the images in the posts cache and store the ids in the page cache
+				const { posts, page: newPage } = res;
+				// store all the posts in the posts cache and store the ids in the page cache
 				// make sure we cast the id to string because that's what the rest of the program expects
-				images.forEach(img => (this.postsCache[String(img.id)] = img));
-				this.pagesCache[newPage] = images.map(img => String(img.id));
-				this.maxPageSize = Math.max(images.length, this.maxPageSize);
+				posts.forEach(post => (this.postsCache[String(post.id)] = post));
+				this.pagesCache[newPage] = posts.map(img => String(img.id));
+				this.maxPageSize = Math.max(posts.length, this.maxPageSize);
 				if (currentId != null) {
 					this.setCurrentPostById(currentId);
 				}
