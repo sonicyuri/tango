@@ -26,6 +26,7 @@ interface ShimmiePost {
 	owner_id: string;
 	numeric_score: number;
 	tags: string[];
+	pools: number[];
 }
 
 class BooruPost {

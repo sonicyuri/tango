@@ -51,6 +51,10 @@ export class SearchFilterOptions {
 		return parts.join(",");
 	}
 
+	public getMap(): { images: boolean; videos: boolean; vr: boolean } {
+		return { images: this.showImages, videos: this.showVideo, vr: this.showVr };
+	}
+
 	private saveValues() {
 		LocalSettings.searchFilterOptions.value = this;
 	}
