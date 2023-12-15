@@ -209,7 +209,7 @@ impl ImageQuery {
 		tags.append(&mut filter_tags);
 
         let mut tags_map: BTreeMap<String, bool> = BTreeMap::new();
-        tags.iter().for_each(|tag| {
+        tags.iter().filter(|t| t.len() > 0).for_each(|tag| {
             if tag.starts_with("-") {
                 tags_map.insert(tag.chars().skip(1).collect(), false);
             } else {
