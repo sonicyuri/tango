@@ -28,7 +28,6 @@ import FlashPost from "./components/FlashPost";
 import ImagePost from "./components/ImagePost";
 import TagsCard from "./components/TagsCard";
 import VideoPost from "./components/VideoPost";
-import VrPost from "./components/VrPost";
 import { BooruPost } from "../../models/BooruPost";
 import PostActions from "./components/PostActions";
 import { favoriteSet, selectFavoriteState } from "../../features/favorites/FavoriteSlice";
@@ -157,12 +156,7 @@ const PostPage = () => {
 	} else if (ImageExtensions.indexOf(currentPost.extension) != -1) {
 		postContent = <ImagePost post={currentPost} />;
 	} else if (VideoExtensions.indexOf(currentPost.extension) != -1) {
-		postContent =
-			currentPost.tags.indexOf("vr") != -1 ? (
-				<VrPost post={currentPost} />
-			) : (
-				<VideoPost post={currentPost} swipe={swipeHandlers} />
-			);
+		postContent = <VideoPost post={currentPost} swipe={swipeHandlers} />;
 		// video element steals events needed for detecting swipe
 		//needsSwipeListener = true;
 	} else if (FlashExtensions.indexOf(currentPost.extension) != -1) {
