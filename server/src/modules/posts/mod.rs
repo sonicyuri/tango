@@ -10,6 +10,7 @@ mod util;
 
 pub fn scope() -> Scope {
     web::scope("/post")
+        .service(api::post_info_handler)
         .service(edit::post_edit_handler)
         .service(api::post_vote_handler)
         .service(api::post_list_votes_handler)

@@ -27,7 +27,7 @@ pub struct PostQueryResult {
 }
 
 impl PostQueryResult {
-    pub async fn from_model(
+    pub fn from_model(
         model: PostModel,
         tags: Vec<String>,
         pools: Vec<i32>,
@@ -48,6 +48,21 @@ impl PostQueryResult {
             pools,
         })
     }
+
+	pub async fn from_model_query(model: PostModel, db: &MySqlPool) -> Result<PostQueryResult, ApiError> {
+		let tag_result = 
+			sqlx::query_as::<_, (String,)>("SELECT t.tag FROM image_tags AS it LEFT JOIN tags AS t ON it.tag_id = t.id WHERE it.image_id = ?")
+			.bind(model.id)
+			.fetch_all(db)
+			.await?;
+
+		let tags = tag_result.iter().map(|(t,)| t.to_owned()).collect_vec();
+
+		let pool_result = sqlx::query_as::<_, (i32,)>("SELECT pool_id FROM pool_images WHERE image_id = ?").bind(model.id).fetch_all(db).await?;
+		let pools = pool_result.iter().map(|(p,)| p.to_owned()).collect_vec();
+
+		PostQueryResult::from_model(model, tags, pools)
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]
