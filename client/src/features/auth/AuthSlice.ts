@@ -6,6 +6,7 @@ import { User } from "../../models/BooruUser";
 import { LogFactory, Logger } from "../../util/Logger";
 import { BooruRequest, CredentialsInvalidError } from "../BooruRequest";
 import { favoriteList } from "../favorites/FavoriteSlice";
+import { postListVotes } from "../posts/PostSlice";
 import { RootState } from "../Store";
 import { tagList } from "../tags/TagSlice";
 import { userConfigGet } from "../user_config/UserConfigSlice";
@@ -48,6 +49,7 @@ export const login = createAsyncThunk("auth/login", async (credentials: Credenti
 		thunkApi.dispatch(userConfigGet(null));
 		thunkApi.dispatch(tagList(null));
 		thunkApi.dispatch(favoriteList(null));
+		thunkApi.dispatch(postListVotes(null));
 
 		return response.result;
 	} catch (error: any) {

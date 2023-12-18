@@ -40,10 +40,10 @@ export class SearchFilterOptions {
 	public getContentTypes(): string {
 		const parts: string[] = [];
 		if (this.showImages) {
-			parts.push("image");
+			parts.push("images");
 		}
 		if (this.showVideo) {
-			parts.push("video");
+			parts.push("videos");
 		}
 		if (this.showVr) {
 			parts.push("vr");

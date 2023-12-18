@@ -8,17 +8,17 @@ import LoadingSpinner from "../../../components/LoadingSpinner";
 import TagChipList from "../../../components/TagChipList";
 import TagInput from "../../../components/TagInput";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
-import { postSetTags } from "../../../features/posts/PostSlice";
+import { postSetTags, selectPostState } from "../../../features/posts/PostSlice";
 import { selectTagState, tagList } from "../../../features/tags/TagSlice";
 import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory } from "../../../util/Logger";
 import ImportButton from "./ImportButton";
+import PostActions from "./PostActions";
 
 const logger = LogFactory.create("TagsCard");
 
 export interface TagsCardProps {
 	post: BooruPost;
-	onEditingChanged: (editing: boolean) => void;
 }
 
 const TagsCard = (props: TagsCardProps) => {
@@ -34,8 +34,6 @@ const TagsCard = (props: TagsCardProps) => {
 
 	const updateEditingState = (state: boolean) => {
 		setEditing(state);
-		// tell our parent that we're editing if we're only importing, just so WASD doesn't happen while we're typing
-		props.onEditingChanged(state || isImporting.current);
 	};
 
 	useEffect(() => {
@@ -62,11 +60,7 @@ const TagsCard = (props: TagsCardProps) => {
 				post={props.post}
 				onChange={visible => {
 					isImporting.current = visible;
-					if (visible) {
-						props.onEditingChanged(true);
-					} else {
-						updateEditingState(editing);
-					}
+					updateEditingState(editing);
 				}}
 			/>
 		</>
@@ -114,8 +108,8 @@ const TagsCard = (props: TagsCardProps) => {
 	);
 
 	return (
-		<Card raised={true} className="TagsCard">
-			<div className="TagsCard-header">
+		<Card raised={true} className="PostsCard TagsCard">
+			<div className="PostsCard-header">
 				<CardHeader title="Tags" />
 				<CardActions>{editing ? editTagsButtons : showTagsButtons}</CardActions>
 			</div>

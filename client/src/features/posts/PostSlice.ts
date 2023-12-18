@@ -14,10 +14,12 @@ import PostService, {
 	VoteRequest
 } from "./PostService";
 import { tagUpdateEdit } from "../tags/TagSlice";
+import thunk from "redux-thunk";
 
 const logger: Logger = LogFactory.create("PostSlice");
 
 type PostSearchState = "initial" | "loading" | "ready" | "failed";
+type PostVoteState = "initial" | "loading" | "ready";
 
 type PostNavigateDirection = -1 | 1;
 
@@ -27,6 +29,7 @@ interface PostState {
 	posts: BooruPost[];
 	currentPost: BooruPost | null;
 	votes: { [image_id: string]: number };
+	voteState: PostVoteState;
 }
 
 const setSearchState: CaseReducer<PostState, PayloadAction<PostSearchState>> = (state, action) => {
@@ -35,6 +38,15 @@ const setSearchState: CaseReducer<PostState, PayloadAction<PostSearchState>> = (
 
 const setSearchStateAction = (newState: PostSearchState): PayloadAction<PostSearchState> => ({
 	type: "post/setSearchState",
+	payload: newState
+});
+
+const setVoteState: CaseReducer<PostState, PayloadAction<PostVoteState>> = (state, action) => {
+	state.voteState = action.payload;
+};
+
+const setVoteStateAction = (newState: PostVoteState): PayloadAction<PostVoteState> => ({
+	type: "post/setVoteState",
 	payload: newState
 });
 
@@ -159,6 +171,8 @@ export const postDownload = createAsyncThunk("post/download", async (request: Bo
 
 export const postListVotes = createAsyncThunk("post/list_votes", async (req: null, thunkApi) => {
 	try {
+		thunkApi.dispatch(setVoteStateAction("loading"));
+
 		let result = await PostService.getVotes();
 		if (result.type == "error") {
 			logger.error("error fetching votes", result.message);
@@ -176,6 +190,8 @@ export const postListVotes = createAsyncThunk("post/list_votes", async (req: nul
 
 export const postVote = createAsyncThunk("post/vote", async (req: VoteRequest, thunkApi) => {
 	try {
+		thunkApi.dispatch(setVoteStateAction("loading"));
+
 		let result = await PostService.vote(req);
 		if (result.type == "error") {
 			logger.error("error making vote", result.message);
@@ -203,14 +219,16 @@ const initialState: PostState = {
 	searchState: "initial",
 	posts: [],
 	currentPost: null,
-	votes: {}
+	votes: {},
+	voteState: "initial"
 };
 
 export const PostSlice = createSlice({
 	name: "post",
 	initialState,
 	reducers: {
-		setSearchState
+		setSearchState,
+		setVoteState
 	},
 	extraReducers: builder => {
 		builder.addCase(postList.fulfilled, (state, action) => {
@@ -276,6 +294,7 @@ export const PostSlice = createSlice({
 				let score = Number(k);
 				action.payload[score].forEach(v => (state.votes[v] = score));
 			});
+			state.voteState = "ready";
 		});
 		builder.addCase(postListVotes.rejected, (state, action) => {});
 
@@ -285,6 +304,7 @@ export const PostSlice = createSlice({
 			if (state.currentPost?.id == action.payload.post.id) {
 				state.currentPost.numericScore = action.payload.post.numeric_score;
 			}
+			state.voteState = "ready";
 		});
 		builder.addCase(postVote.rejected, (state, action) => {});
 	}

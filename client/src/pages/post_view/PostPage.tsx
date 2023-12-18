@@ -19,7 +19,7 @@ import { useSwipeable } from "react-swipeable";
 
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
-import { postDirectLink, postViewById, selectPostState } from "../../features/posts/PostSlice";
+import { postDirectLink, postViewById, postVote, selectPostState } from "../../features/posts/PostSlice";
 import i18n from "../../util/Internationalization";
 import { LogFactory, Logger } from "../../util/Logger";
 import { Util } from "../../util/Util";
@@ -30,6 +30,9 @@ import TagsCard from "./components/TagsCard";
 import VideoPost from "./components/VideoPost";
 import VrPost from "./components/VrPost";
 import { BooruPost } from "../../models/BooruPost";
+import PostActions from "./components/PostActions";
+import { favoriteSet, selectFavoriteState } from "../../features/favorites/FavoriteSlice";
+import { VoteRequest } from "../../features/posts/PostService";
 
 const logger: Logger = LogFactory.create("PostPage");
 
@@ -46,10 +49,33 @@ const PostPage = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
 
-	const { searchState, currentPost: _currentPost, cursor } = useAppSelector(selectPostState);
+	const { searchState, currentPost: _currentPost, cursor, votes } = useAppSelector(selectPostState);
+	const { favorites } = useAppSelector(selectFavoriteState);
 
 	const [searchParams] = useSearchParams();
 	const [editing, setEditing] = useState(false);
+
+	// use a dummy post if real post isn't available
+	let currentPost =
+		_currentPost ??
+		new BooruPost({
+			id: "0",
+			width: 0,
+			height: 0,
+			filesize: 0,
+			hash: "",
+			ext: "dummy",
+			mime: "",
+			posted: 0,
+			source: null,
+			owner_id: "",
+			pools: [],
+			numeric_score: 0,
+			tags: []
+		});
+
+	const vote = votes[currentPost.id] ?? 0;
+	const favorite = favorites.includes(currentPost.id);
 
 	// handles navigating left-right based on swipe, keys, or buttons
 	const handleNavigate = (direction: 1 | -1) => {
@@ -58,7 +84,8 @@ const PostPage = () => {
 
 	useEffect(() => {
 		function handleKeyDown(e: KeyboardEvent) {
-			if (editing) {
+			let elem = e.target as HTMLElement;
+			if (elem != null && (elem.tagName == "INPUT" || elem.tagName == "SELECT" || elem.tagName == "TEXTAREA")) {
 				return;
 			}
 
@@ -66,6 +93,12 @@ const PostPage = () => {
 				handleNavigate(-1);
 			} else if (e.key == "ArrowRight" || e.key == "d") {
 				handleNavigate(1);
+			} else if (e.key == "ArrowUp" || e.key == "w") {
+				dispatch(postVote({ post_id: currentPost.id, action: vote == 1 ? "clear" : "up" }));
+			} else if (e.key == "ArrowDown" || e.key == "s") {
+				dispatch(postVote({ post_id: currentPost.id, action: vote == -1 ? "clear" : "down" }));
+			} else if (e.key == "f") {
+				dispatch(favoriteSet({ postId: currentPost.id, favorite: !favorite }));
 			}
 		}
 
@@ -110,25 +143,6 @@ const PostPage = () => {
 		}
 	}, [params.postId]);
 
-	// use a dummy post if real post isn't available
-	let currentPost =
-		_currentPost ??
-		new BooruPost({
-			id: "0",
-			width: 0,
-			height: 0,
-			filesize: 0,
-			hash: "",
-			ext: "dummy",
-			mime: "",
-			posted: 0,
-			source: null,
-			owner_id: "",
-			pools: [],
-			numeric_score: 0,
-			tags: []
-		});
-
 	// NO HOOKS BELOW THIS POINT - early returns start here
 	if (searchState == "failed") {
 		return Util.logAndDisplayError(logger, "failed to obtain post", currentPost);
@@ -166,7 +180,8 @@ const PostPage = () => {
 
 	const details = (
 		<Stack spacing={2}>
-			<TagsCard post={currentPost} onEditingChanged={edit => setEditing(edit)} />
+			<PostActions post={currentPost} vote={vote} favorite={favorite} />
+			<TagsCard post={currentPost} />
 			<DetailsCard post={currentPost} />
 		</Stack>
 	);

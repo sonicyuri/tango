@@ -4,7 +4,7 @@
 
 $TagsCardHeaderHeight: 40px;
 
-.TagsCard {
+.PostsCard {
 	.MuiChip-root {
 		margin-right: 4px;
 		margin-bottom: 4px;
@@ -12,7 +12,7 @@ $TagsCardHeaderHeight: 40px;
 		height: 100%;
 	}
 
-	.TagsCard-header {
+	.PostsCard-header {
 		position: relative;
 		height: $TagsCardHeaderHeight;
 		background: #212121;
@@ -47,6 +47,10 @@ $TagsCardHeaderHeight: 40px;
 	}
 
 	.TagsCard-tags {
+		padding: 0 10px 10px 10px;
+	}
+
+	.DetailsCard-rows {
 		padding: 0 10px 10px 10px;
 	}
 
