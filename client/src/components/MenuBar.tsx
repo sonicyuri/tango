@@ -61,6 +61,12 @@ const MenuBar = () => {
 		<MenuItem key="favorites" component={RouterLink} to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
 			Favorites
 		</MenuItem>,
+		<MenuItem key="likes" component={RouterLink} to={Util.makePostsLink("upvoted_by=" + user?.username, 1)}>
+			Likes
+		</MenuItem>,
+		<MenuItem key="dislikes" component={RouterLink} to={Util.makePostsLink("downvoted_by=" + user?.username, 1)}>
+			Dislikes
+		</MenuItem>,
 		<MenuItem key="settings" disabled>
 			Settings
 		</MenuItem>
