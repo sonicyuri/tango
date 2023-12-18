@@ -109,13 +109,20 @@ export const postDirectLink = createAsyncThunk("post/direct_link", async (reques
 		thunkApi.dispatch(setSearchStateAction("loading"));
 		const cursor = new PostSearchCursor(request.query, request.page || 1);
 
-		await cursor.loadAndSetCurrentPostById(request.postId);
+		let response = await PostService.getPostById(request.postId);
+		if (response.type == "error") {
+			logger.error("error fetching post", response.message);
+			thunkApi.dispatch(notify("Direct link lookup failed - " + response.message, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+
+		const thisImage = new BooruPost(response.result);
+
+		await cursor.storeOrUpdatePost(thisImage);
+
+		await cursor.setCurrentPostById(request.postId);
 
 		const posts = await cursor.getPostsAtCursor();
-
-		// if we have context we've probably already loaded the image info from the above query
-		// if not, do another lookup for it
-		let thisImage: BooruPost = await cursor.getPostAtCursor();
 
 		return {
 			posts,
