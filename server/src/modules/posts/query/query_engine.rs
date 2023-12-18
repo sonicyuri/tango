@@ -1,14 +1,15 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use actix_web::web::Query;
 use itertools::Itertools;
 use num::clamp;
 use num::traits::clamp_min;
 use sqlx::query::QueryAs;
-use sqlx::{MySql, MySqlPool};
+use sqlx::{pool, MySql, MySqlPool};
 
 use super::model::{PostQueryResult, QueryResult};
 use crate::error::{api_error, ApiError, ApiErrorType};
+use crate::modules::pools::model::{PoolModel, PoolResponse};
 use crate::modules::posts::model::PostResponse;
 
 use super::super::model::PostModel;
@@ -19,7 +20,11 @@ use super::query_object::QueryObject;
 pub struct QueryEngine {}
 
 impl QueryEngine {
-    pub async fn run(db: &MySqlPool, query: ImageQuery) -> Result<QueryResult, ApiError> {
+    pub async fn run(
+        db: &MySqlPool,
+        query: ImageQuery,
+        user_id: i32,
+    ) -> Result<QueryResult, ApiError> {
         let query_object = QueryEngine::build_query(
             db,
             &query.tag_conditions,
@@ -40,6 +45,7 @@ impl QueryEngine {
         let count = QueryEngine::count_images(db, &query).await?;
 
         let mut safe_results: Vec<PostQueryResult> = Vec::new();
+        let mut pool_ids: HashSet<i32> = HashSet::new();
 
         if results.len() > 0 {
             // find pools and tags for the results in bulk instead of doing two queries per
@@ -66,10 +72,11 @@ impl QueryEngine {
             }
 
             let pool_query = format!(
-                "SELECT image_id, pool_id FROM pool_images WHERE image_id IN ({})",
+                "SELECT pi.image_id, pi.pool_id FROM pool_images AS pi LEFT JOIN pools AS p ON p.id = pi.pool_id WHERE pi.image_id IN ({}) AND (p.public = 1 OR p.user_id = ?)",
                 post_ids_str
             );
             let pool_results = sqlx::query_as::<_, (i32, i32)>(pool_query.as_str())
+                .bind(user_id)
                 .fetch_all(db)
                 .await?;
 
@@ -77,6 +84,7 @@ impl QueryEngine {
                 let v = post_pools_map.get_mut(&post_id);
                 if let Some(v) = v {
                     v.push(pool_id);
+                    pool_ids.insert(pool_id);
                 }
             }
 
@@ -87,8 +95,36 @@ impl QueryEngine {
             }
         }
 
+        let mut pools: Vec<PoolResponse> = Vec::new();
+
+        // fetch information for all the pools we referenced to include them in the results
+        if pool_ids.len() > 0 {
+            // we look up pools in bulk so we need to store the different parts separately
+            let mut pools_map: HashMap<i32, PoolModel> = HashMap::new();
+
+            let pool_ids_str = pool_ids.iter().map(|id| id.to_string()).join(",");
+            let pool_info_query = format!("SELECT * FROM pools WHERE id IN ({})", pool_ids_str);
+
+            let pool_info_results = sqlx::query_as::<_, PoolModel>(pool_info_query.as_str())
+                .fetch_all(db)
+                .await?;
+
+            for pool_info in pool_info_results {
+                pools.push(PoolResponse {
+                    id: pool_info.id,
+                    owner_id: pool_info.user_id,
+                    public: pool_info.public == 1,
+                    title: pool_info.title,
+                    description: pool_info.description,
+                    date: pool_info.date,
+                    posts: None,
+                });
+            }
+        }
+
         Ok(QueryResult {
             posts: safe_results,
+            pools,
             offset: query.offset,
             total_results: count,
         })

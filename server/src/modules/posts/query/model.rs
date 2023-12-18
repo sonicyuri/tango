@@ -2,7 +2,10 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::MySqlPool;
 
-use crate::{error::ApiError, modules::posts::model::PostModel};
+use crate::{
+    error::ApiError,
+    modules::{pools::model::PoolResponse, posts::model::PostModel},
+};
 
 use super::parser::ContentFilter;
 
@@ -48,8 +51,15 @@ impl PostQueryResult {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct VoteResponse {
+    pub post_id: i32,
+    pub vote: i8,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct QueryResult {
     pub posts: Vec<PostQueryResult>,
+    pub pools: Vec<PoolResponse>,
     pub offset: i32,
     pub total_results: i32,
 }
@@ -59,5 +69,5 @@ pub struct PostListSchema {
     pub query: Option<String>,
     pub offset: Option<i32>,
     pub limit: Option<i32>,
-    pub filter: Option<ContentFilter>,
+    pub filter: Option<String>,
 }
