@@ -8,8 +8,9 @@ use futures::{Future, TryStreamExt};
 use itertools::Itertools;
 
 use super::query::alias_resolver::TagAliasResolver;
-use super::schema::{PostDeleteSchema, PostVoteSchema};
+use super::schema::{PostDeleteSchema, PostInfoSchema, PostVoteSchema};
 use crate::error::api_error_owned;
+use crate::modules::posts::query::model::PostQueryResult;
 use crate::modules::users::middleware::get_user;
 use crate::{
     error::{api_error, api_success, ApiError, ApiErrorType},
@@ -22,6 +23,26 @@ use crate::{
     },
     AppState,
 };
+
+#[get("/info", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn post_info_handler(
+    data: web::Data<AppState>,
+    body: web::Query<PostInfoSchema>,
+) -> Result<HttpResponse, ApiError> {
+    let result = sqlx::query_as!(PostModel, "SELECT * FROM images WHERE id = ?", body.id)
+        .fetch_one(&data.db)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => {
+                api_error(ApiErrorType::InvalidRequest, "Couldn't find post")
+            }
+            e => e.into(),
+        })?;
+
+    let response = PostQueryResult::from_model_query(result, &data.db).await?;
+
+    Ok(api_success(response))
+}
 
 #[get("/vote", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn post_list_votes_handler(
