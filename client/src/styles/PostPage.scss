@@ -1,4 +1,5 @@
 /** @format */
+@use "./Variables.scss";
 
 .ImagePage {
 	padding: 1em;
@@ -23,10 +24,13 @@
 	background-size: contain;
 }
 
+.PostPage {
+	padding: 0 10px 0 10px;
+}
+
 .PostPage-content {
 	display: flex;
 	position: relative;
-	padding: 0 10px 0 10px;
 
 	.PostPage-listener {
 		width: 100%;
@@ -41,5 +45,16 @@
 	.ImagePost,
 	.FlashPost {
 		display: flex;
+	}
+}
+
+.PostActions {
+	button {
+		flex-grow: 1;
+	}
+
+	button.PostActionsButton--Active {
+		background: Variables.$PrimaryColor;
+		color: #ffffff;
 	}
 }

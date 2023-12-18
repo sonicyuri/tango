@@ -23,48 +23,21 @@ const DetailsCard = (props: DetailsCardProps) => {
 	// set up detail rows
 	const genericDetailRow = (body: string) => <Typography variant="body1">{body}</Typography>;
 
-	const handleDownload = () => {
-		dispatch(postDownload(props.post));
-	};
-	const downloadLink = (
-		<MuiLink onClick={handleDownload} underline="none" style={{ cursor: "pointer" }}>
-			Download File
-		</MuiLink>
-	);
-
-	const isFavorite = favorites.indexOf(props.post.id) !== -1;
-
-	const handleFavorite = () => {
-		dispatch(favoriteSet({ postId: props.post.id, favorite: !isFavorite }));
-	};
-
-	const favoriteText = isFavorite ? "Unfavorite" : "Favorite";
-
-	const favoriteButton = (
-		<Button
-			variant={isFavorite ? "outlined" : "contained"}
-			onClick={handleFavorite}
-			disabled={favoriteState != "ready"}>
-			{favoriteState == "ready" ? favoriteText : <LoadingSpinner />}
-		</Button>
-	);
-
 	const detailsRows: { title?: string; body: JSX.Element }[] = [
-		{ body: favoriteButton },
-
 		{ title: "Date posted", body: genericDetailRow(Util.formatDate(props.post.postedAt)) },
 		{ title: "File size", body: genericDetailRow(Util.formatBytes(props.post.fileSize)) },
-		{ title: "Score", body: genericDetailRow(props.post.numericScore.toString()) },
-		{ body: downloadLink }
+		{ title: "Score", body: genericDetailRow(props.post.numericScore.toString()) }
 	];
 
 	return (
-		<Card raised={true} className="PostPage-details">
-			<CardHeader title="Details" />
+		<Card raised={true} className="PostsCard DetailsCard">
+			<div className="PostsCard-header">
+				<CardHeader title="Details" />
+			</div>
 			<CardContent>
-				<Stack spacing={2}>
+				<Stack spacing={2} className="DetailsCard-rows">
 					{detailsRows.map((d, k) => (
-						<div className="PostPage-details-row" key={"row-" + k}>
+						<div className="DetailsCard-row" key={"row-" + k}>
 							{d.title ? (
 								<Typography variant="subtitle2" key={"title-" + d.title}>
 									{d.title}
