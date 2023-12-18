@@ -41,14 +41,12 @@ export type ListVoteResponse =
 
 export type VoteResponse = { type: "success"; result: ShimmiePost } | { type: "error"; message: string };
 
-class PostService {
-	static async getPostById(id: string): Promise<BooruPost | null> {
-		return BooruRequest.runQueryJsonV2("/api/shimmie/get_image/" + id).then(v => {
-			if (Object.keys(v).length == 0) {
-				return null;
-			}
+export type PostInfoResponse = { type: "success"; result: ShimmiePost } | { type: "error"; message: string };
 
-			return new BooruPost(v as ShimmiePost);
+class PostService {
+	static async getPostById(id: string): Promise<PostInfoResponse> {
+		return BooruRequest.runQueryJsonV2("/post/info?id=" + id).then(v => {
+			return v as PostInfoResponse;
 		});
 	}
 

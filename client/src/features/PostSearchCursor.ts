@@ -261,13 +261,16 @@ export class PostSearchCursor {
 			return this.runningPagePromises[page];
 		}
 
-		const newPromise = BooruRequest.runQueryVersioned("v2", "/post/list", "POST", {
+		let params = Util.objectToUrlParams({
 			query: this.query || "",
 			offset: (page - 1) * PageSize,
 			limit: PageSize,
-			filter: SearchFilterOptions.instance.getMap()
-		})
-			.then(r => r.json())
+			filter: SearchFilterOptions.instance.getContentTypes()
+		});
+
+		let url = "/post/list?" + params.toString();
+
+		const newPromise = BooruRequest.runQueryJsonV2(url)
 			.then(j => {
 				const res = j as PostListResponse;
 				if (res.type == "error") {
