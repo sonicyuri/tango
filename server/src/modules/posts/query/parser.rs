@@ -162,7 +162,6 @@ impl ImageQuery {
 			"favorited_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf LEFT JOIN users AS u ON uf.user_id = u.id WHERE uf.image_id = images.id AND u.name = ?) > 0", value)), false => None },
 			"favorited_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf WHERE uf.image_id = images.id AND uf.user_id = ?) > 0", value)), false => None },
 
-
 			_ => None,
         }
     }
