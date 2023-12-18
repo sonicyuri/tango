@@ -91,7 +91,7 @@ impl QueryEngine {
             for post in results {
                 let tags = post_tags_map.remove(&post.id).unwrap_or(Vec::new());
                 let pools = post_pools_map.remove(&post.id).unwrap_or(Vec::new());
-                safe_results.push(PostQueryResult::from_model(post, tags, pools).await?);
+                safe_results.push(PostQueryResult::from_model(post, tags, pools)?);
             }
         }
 

@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use sqlx;
+use sqlx::{self, MySqlPool};
+
+use crate::error::ApiError;
 
 #[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
 #[allow(non_snake_case)]

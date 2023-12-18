@@ -16,3 +16,8 @@ pub struct PostEditSchema {
 pub struct PostDeleteSchema {
     pub post_id: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PostInfoSchema {
+    pub id: String,
+}
