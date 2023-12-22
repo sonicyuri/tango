@@ -31,7 +31,7 @@ pub struct BooruConfig {
     pub thumb_width: u32,
     pub thumb_height: u32,
     pub thumb_fit: ThumbnailFit,
-    pub login_signup_enabled: bool,
+    pub signup_requires_invite: bool,
 }
 
 impl BooruConfig {
@@ -82,10 +82,10 @@ impl BooruConfig {
                 .unwrap_or(&"".to_owned())
                 .clone()
                 .into(),
-            login_signup_enabled: config
-                .get("login_signup_enabled")
+            signup_requires_invite: config
+                .get("signup_requires_invite")
                 .and_then(|s| Some(s == "Y"))
-                .unwrap_or(false),
+                .unwrap_or(true),
         }
     }
 }

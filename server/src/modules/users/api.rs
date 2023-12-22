@@ -1,18 +1,16 @@
 use super::model::{
-    filter_db_record, AuthTokenResponse, UserLoginResponse, UserModel, UserModelResponse,
-    UserRefreshResponse,
+    filter_db_record, AuthTokenResponse, UserLoginResponse, UserModel, UserRefreshResponse,
 };
-use super::schema::{UserLoginSchema, UserRefreshSchema};
+use super::schema::{UserLoginSchema, UserRefreshSchema, UserSignupSchema};
 
 use super::middleware::{get_user, AuthFactory};
 use super::util::{check_user, get_basic_auth_header, validate_auth_token, AuthTokenKind};
 use crate::error::{api_error, api_success, ApiError, ApiErrorType};
+use crate::modules::users::util::hash_password;
 use crate::AppState;
-use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use log::error;
-use serde::Serialize;
 use serde_json::json;
-use sqlx::MySqlPool;
 
 use super::util;
 
@@ -108,4 +106,76 @@ async fn user_refresh_handler(
         access: new_token,
         user: filter_db_record(&user),
     }))
+}
+
+#[post("/signup")]
+pub async fn user_signup_handler(
+    body: web::Json<UserSignupSchema>,
+    data: web::Data<AppState>,
+) -> Result<HttpResponse, ApiError> {
+    let code = body
+        .invite_code
+        .as_ref()
+        .and_then(|s| Some(s.clone()))
+        .unwrap_or("".to_owned());
+
+    let transaction = data.db.begin().await?;
+
+    if data.booru_config.signup_requires_invite {
+        let (count,) = sqlx::query_as::<_, (i32,)>(
+            "SELECT COUNT(*) FROM user_invites WHERE invite_code = ? AND redeemed = 0",
+        )
+        .bind(code.clone())
+        .fetch_one(&data.db)
+        .await?;
+
+        if count < 1 {
+            return Err(api_error(
+                ApiErrorType::InvalidRequest,
+                "Invalid invite code",
+            ));
+        }
+    }
+
+    let (count,) = sqlx::query_as::<_, (i32,)>("SELECT COUNT(*) FROM users WHERE name = ?")
+        .bind(body.username.as_str())
+        .fetch_one(&data.db)
+        .await?;
+
+    if count > 0 {
+        return Err(api_error(
+            ApiErrorType::InvalidRequest,
+            "Username already taken",
+        ));
+    }
+
+    let hash = hash_password(body.password.as_str())?;
+
+    sqlx::query("INSERT INTO users (`name`, `pass`, `email`) VALUES(?, ?, ?)")
+        .bind(body.username.as_str())
+        .bind(hash)
+        .bind(body.email.as_ref().and_then(|s| Some(s.clone())))
+        .execute(&data.db)
+        .await?;
+
+    if data.booru_config.signup_requires_invite {
+        sqlx::query(
+            "UPDATE user_invites SET redeemed = 1, redeemed_time = NOW() WHERE invite_code = ?",
+        )
+        .bind(code)
+        .execute(&data.db)
+        .await?;
+    }
+
+    let user = sqlx::query_as!(
+        UserModel,
+        r#"SELECT * FROM users WHERE name = ?"#,
+        body.username
+    )
+    .fetch_one(&data.db)
+    .await?;
+
+    transaction.commit().await?;
+
+    Ok(api_success(filter_db_record(&user)))
 }
