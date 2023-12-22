@@ -80,6 +80,12 @@ async fn main() -> Result<(), Error> {
 
     let port: i64 = config.get_int("port").unwrap_or(8121);
 
+    modules::users::init_db(&pool).await.unwrap();
+    modules::tags::init_db(&pool).await.unwrap();
+    modules::posts::init_db(&pool).await.unwrap();
+    modules::favorites::init_db(&pool).await.unwrap();
+    modules::pools::init_db(&pool).await.unwrap();
+
     let storage = AppStorage::new(&config).await;
     let booru_config = BooruConfig::new(&pool.clone()).await;
 
