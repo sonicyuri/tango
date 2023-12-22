@@ -38,6 +38,16 @@ export interface Credentials {
 	remember_me: boolean;
 }
 
+export interface SignupRequest
+{
+	username: string;
+	password: string;
+	email: string | null;
+	invite_code: string | null;
+}
+
+export type SignupResponse = { type: "success"; result: User } | { type: "error"; message: string };
+
 export type AuthResponse = { type: "success"; result: User } | { type: "error"; message: string } | { type: "reset" };
 
 const logger = LogFactory.create("AuthService");
@@ -124,6 +134,11 @@ class AuthService {
 		LocalSettings.refreshToken.clear();
 		LocalSettings.refreshTokenExpire.clear();
 		LocalSettings.username.clear();
+	}
+
+	static async signup(request: SignupRequest): Promise<SignupResponse>
+	{
+		return BooruRequest.runQueryVersioned("v2", "/user/signup", "POST", request).then(res => res.json()).then(r => r as SignupResponse);
 	}
 }
 

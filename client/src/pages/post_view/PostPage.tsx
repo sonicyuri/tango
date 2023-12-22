@@ -212,11 +212,17 @@ const PostPage = () => {
 			<div className="PageHeader PostPage-header">
 				{breadcrumbs}
 				<ButtonGroup variant="contained" aria-label="prev/next post">
-					<Button onClick={() => handleNavigate(-1)} disabled={!(cursor?.canMove(-1) || false)}>
+					<Button
+						onClick={() => handleNavigate(-1)}
+						disabled={!(cursor?.canMove(-1) || false)}
+						title="Previous Post (A, ←)">
 						<ArrowBackIcon />
 					</Button>
 					<Button disabled>Post {currentPost.id}</Button>
-					<Button onClick={() => handleNavigate(1)} disabled={!(cursor?.canMove(1) || false)}>
+					<Button
+						onClick={() => handleNavigate(1)}
+						disabled={!(cursor?.canMove(1) || false)}
+						title="Next Post (D, →)">
 						<ArrowForwardIcon />
 					</Button>
 				</ButtonGroup>

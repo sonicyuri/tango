@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -12,7 +12,7 @@ pub struct UserInviteModel {
     pub creator_id: i32,
     pub invite_code: String,
     pub redeemed: bool,
-    pub redeemed_time: Option<NaiveDateTime>,
+    pub redeemed_time: Option<DateTime<Utc>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

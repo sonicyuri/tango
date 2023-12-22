@@ -9,6 +9,7 @@ import tagAliasReducer from "./tags/TagAliasSlice";
 import favoriteReducer from "./favorites/FavoriteSlice";
 import importReducer from "./import/ImportSlice";
 import userConfigReducer from "./user_config/UserConfigSlice";
+import inviteReducer from "./invites/InviteSlice";
 
 export const Store = configureStore({
 	reducer: {
@@ -19,7 +20,8 @@ export const Store = configureStore({
 		favorite: favoriteReducer,
 		tag_alias: tagAliasReducer,
 		import: importReducer,
-		user_config: userConfigReducer
+		user_config: userConfigReducer,
+		invite: inviteReducer
 	},
 	middleware: getDefaultMiddleware =>
 		getDefaultMiddleware({
