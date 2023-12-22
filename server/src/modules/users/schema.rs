@@ -11,3 +11,16 @@ pub struct UserLoginSchema {
 pub struct UserRefreshSchema {
     pub refresh_token: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserInviteSchema {
+    pub uses: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserSignupSchema {
+    pub username: String,
+    pub password: String,
+    pub email: Option<String>,
+    pub invite_code: Option<String>,
+}
