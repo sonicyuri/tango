@@ -31,11 +31,24 @@ pub struct BooruConfig {
     pub thumb_width: u32,
     pub thumb_height: u32,
     pub thumb_fit: ThumbnailFit,
+    pub login_signup_enabled: bool,
 }
 
 impl BooruConfig {
     // Creates a new BooruConfig using the config table in the database
     pub async fn new(db: &MySqlPool) -> BooruConfig {
+        // init the config table if we don't hve one yet
+        sqlx::query(
+            "CREATE TABLE IF NOT EXISTS `config` (
+			`name` varchar(128) NOT NULL,
+			`value` text DEFAULT NULL,
+			PRIMARY KEY (`name`)
+		  )",
+        )
+        .execute(db)
+        .await
+        .expect("Failed to create config table");
+
         let results: Vec<(String, String)> =
             sqlx::query_as::<_, (String, Option<String>)>(r"SELECT name, value FROM config")
                 .fetch_all(db)
@@ -69,6 +82,10 @@ impl BooruConfig {
                 .unwrap_or(&"".to_owned())
                 .clone()
                 .into(),
+            login_signup_enabled: config
+                .get("login_signup_enabled")
+                .and_then(|s| Some(s == "Y"))
+                .unwrap_or(false),
         }
     }
 }

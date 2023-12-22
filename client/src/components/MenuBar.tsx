@@ -19,6 +19,17 @@ import SearchBox from "./SearchBox";
 import { SearchFilters } from "./SearchFilters";
 import SideBar from "./SideBar";
 
+import ListItemText from "@mui/material/ListItemText";
+import ListItemIcon from "@mui/material/ListItemIcon";
+
+import PersonIcon from "@mui/icons-material/Person";
+import StarIcon from "@mui/icons-material/Star";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import SettingsIcon from "@mui/icons-material/Settings";
+import LogoutIcon from "@mui/icons-material/Logout";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+
 const logger = LogFactory.create("MenuBar");
 
 const MenuBar = () => {
@@ -56,33 +67,54 @@ const MenuBar = () => {
 
 	const menuItems = [
 		<MenuItem key="profile" component={RouterLink} to="/user/profile">
-			Profile
+			<ListItemIcon>
+				<PersonIcon fontSize="small" />
+			</ListItemIcon>
+			<ListItemText>Profile</ListItemText>
 		</MenuItem>,
 		<MenuItem key="favorites" component={RouterLink} to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
-			Favorites
+			<ListItemIcon>
+				<StarIcon fontSize="small" />
+			</ListItemIcon>
+			<ListItemText>Favorites</ListItemText>
 		</MenuItem>,
 		<MenuItem key="likes" component={RouterLink} to={Util.makePostsLink("upvoted_by=" + user?.username, 1)}>
-			Likes
+			<ListItemIcon>
+				<ThumbUpIcon fontSize="small" />
+			</ListItemIcon>
+			<ListItemText>Likes</ListItemText>
 		</MenuItem>,
 		<MenuItem key="dislikes" component={RouterLink} to={Util.makePostsLink("downvoted_by=" + user?.username, 1)}>
-			Dislikes
+			<ListItemIcon>
+				<ThumbDownIcon fontSize="small" />
+			</ListItemIcon>
+			<ListItemText>Dislikes</ListItemText>
 		</MenuItem>,
 		<MenuItem key="settings" disabled>
-			Settings
+			<ListItemIcon>
+				<SettingsIcon fontSize="small" />
+			</ListItemIcon>
+			<ListItemText>Settings</ListItemText>
 		</MenuItem>
 	];
 
 	if (user && UserClass.canClass(user.class, "manage_admintools")) {
 		menuItems.push(
 			<MenuItem key="admin" component={RouterLink} to="/admin">
-				Admin
+				<ListItemIcon>
+					<AdminPanelSettingsIcon fontSize="small" />
+				</ListItemIcon>
+				<ListItemText>Admin</ListItemText>
 			</MenuItem>
 		);
 	}
 
 	menuItems.push(
 		<MenuItem key="logout" onClick={handleLogout}>
-			Log Out
+			<ListItemIcon>
+				<LogoutIcon fontSize="small" />
+			</ListItemIcon>
+			<ListItemText>Log Out</ListItemText>
 		</MenuItem>
 	);
 
