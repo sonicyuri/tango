@@ -26,6 +26,10 @@ pub fn standardize_php_hash(hash: String) -> String {
     hash.replace("$2y$", "$2a$")
 }
 
+pub fn phpize_bcrypt_hash(hash: String) -> String {
+    hash.replace("$2b$", "$2y$")
+}
+
 #[derive(Debug, PartialEq)]
 pub enum AuthTokenKind {
     Access,
@@ -168,6 +172,18 @@ pub fn check_password(user: &UserModel, plaintext: &str) -> Result<bool, ApiErro
             "Password hashing went wrong somehow",
         )
     })
+}
+
+pub fn hash_password(password: &str) -> Result<String, ApiError> {
+    bcrypt::hash(password, 10)
+        .and_then(|h| Ok(phpize_bcrypt_hash(h)))
+        .map_err(|e| {
+            error!("Bcrypt error: {:?}", e);
+            api_error(
+                ApiErrorType::ServerError,
+                "Password hashing went wrong somehow",
+            )
+        })
 }
 
 pub fn get_basic_auth_header(req: &HttpRequest) -> Option<(String, String)> {
