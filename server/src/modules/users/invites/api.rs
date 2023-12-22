@@ -13,14 +13,13 @@ use crate::{
     AppState,
 };
 
-use super::model::{UserInviteModel, UserInviteResponse, UserListInvitesResponse};
+use super::model::{UserInviteModel, UserListInvitesResponse};
 
 async fn get_user_invites(db: &MySqlPool, user_id: i32) -> Result<Vec<UserInviteModel>, ApiError> {
-    let models = sqlx::query_as!(
-        UserInviteModel,
-        "SELECT id, creator_id, invite_code, redeemed as `redeemed: _`, redeemed_time FROM user_invites WHERE creator_id = ?",
-        user_id
+    let models = sqlx::query_as::<_, UserInviteModel>(
+        "SELECT id, creator_id, invite_code, redeemed, redeemed_time FROM user_invites WHERE creator_id = ?"
     )
+	.bind(user_id)
     .fetch_all(db)
     .await?;
 
