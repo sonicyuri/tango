@@ -45,7 +45,7 @@ const PostActions = (props: PostActionsProps) => {
 		<ButtonGroup className="PostActions">
 			<Button
 				className={props.vote == 1 ? "PostActionsButton--Active" : ""}
-				title={props.vote == 1 ? "Remove Vote" : "Upvote Post"}
+				title={props.vote == 1 ? "Remove Vote (W, ↑)" : "Upvote Post (W, ↑)"}
 				onClick={() => handleVote(1)}>
 				{voteLoading == "loading" ? (
 					<LoadingSpinner />
@@ -57,7 +57,7 @@ const PostActions = (props: PostActionsProps) => {
 			</Button>
 			<Button
 				className={props.vote == -1 ? "PostActionsButton--Active" : ""}
-				title={props.vote == -1 ? "Remote Vote" : "Downvote Post"}
+				title={props.vote == -1 ? "Remove Vote (S, ↓)" : "Downvote Post (S, ↓)"}
 				onClick={() => handleVote(-1)}>
 				{voteLoading == "loading" ? (
 					<LoadingSpinner />
@@ -69,7 +69,7 @@ const PostActions = (props: PostActionsProps) => {
 			</Button>
 			<Button
 				className={props.favorite ? "PostActionsButton--Active" : ""}
-				title={props.favorite ? "Unfavorite" : "Favorite"}
+				title={props.favorite ? "Unfavorite (F)" : "Favorite (F)"}
 				onClick={handleFavorite}>
 				{favoriteLoading == "loading" ? <LoadingSpinner /> : props.favorite ? <StarIcon /> : <StarBorderIcon />}
 			</Button>

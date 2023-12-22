@@ -90,7 +90,7 @@ const MenuBar = () => {
 			</ListItemIcon>
 			<ListItemText>Dislikes</ListItemText>
 		</MenuItem>,
-		<MenuItem key="settings" disabled>
+		<MenuItem key="settings" component={RouterLink} to="/user/settings">
 			<ListItemIcon>
 				<SettingsIcon fontSize="small" />
 			</ListItemIcon>

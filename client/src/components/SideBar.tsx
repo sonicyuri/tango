@@ -3,7 +3,9 @@ import { Home, Tag } from "@mui/icons-material";
 import { Box, Drawer } from "@mui/material";
 import React, { ReactElement } from "react";
 
-import OptionsList from "./OptionsList";
+import OptionsList, { OptionsListItem } from "./OptionsList";
+
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 export interface SideBarProps {
 	open: boolean;
@@ -11,7 +13,7 @@ export interface SideBarProps {
 }
 
 export default function SideBar(props: SideBarProps) {
-	const menuItems: { icon: ReactElement; text: string; url: string }[] = [
+	const menuItems: OptionsListItem[] = [
 		{
 			icon: <Home />,
 			text: "Home",
@@ -21,6 +23,14 @@ export default function SideBar(props: SideBarProps) {
 			icon: <Tag />,
 			text: "Tags",
 			url: "/tags/list"
+		},
+		{
+			type: "separator"
+		},
+		{
+			icon: <GitHubIcon />,
+			text: "View on GitHub",
+			url: "https://github.com/azrogers/tango"
 		}
 	];
 
