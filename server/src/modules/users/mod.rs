@@ -5,6 +5,7 @@ use crate::error::ApiError;
 
 mod api;
 mod config;
+mod invites;
 pub mod middleware;
 mod model;
 mod schema;
@@ -16,8 +17,10 @@ pub fn scope() -> Scope {
         .service(api::user_info_handler)
         .service(api::user_refresh_handler)
         .service(api::user_nginx_callback_handler)
+        .service(api::user_signup_handler)
         .service(config::api::user_config_get_handler)
         .service(config::api::user_config_set_handler)
+        .service(invites::scope())
 }
 
 pub async fn init_db(db: &MySqlPool) -> Result<(), ApiError> {
@@ -49,6 +52,22 @@ pub async fn init_db(db: &MySqlPool) -> Result<(), ApiError> {
     )
     .execute(db)
     .await?;
+
+    sqlx::query(
+		"CREATE TABLE IF NOT EXISTS `user_invites` (
+			`id` int(11) NOT NULL AUTO_INCREMENT,
+			`creator_id` int(11) NOT NULL DEFAULT 0,
+			`invite_code` varchar(10) NOT NULL,
+			`redeemed` tinyint(1) NOT NULL DEFAULT 0,
+			`redeemed_time` datetime DEFAULT NULL,
+			PRIMARY KEY (`id`),
+			UNIQUE KEY `invite_code` (`invite_code`),
+			KEY `creator_id_fk` (`creator_id`),
+			CONSTRAINT `creator_id_fk` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+		  )"
+	)
+	.execute(db)
+	.await?;
 
     Ok(())
 }
