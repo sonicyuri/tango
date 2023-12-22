@@ -128,7 +128,7 @@ export class Util {
 
 	static objectToUrlParams<T>(body: T): URLSearchParams {
 		const params = new URLSearchParams();
-		for (const k of Object.keys(body)) {
+		for (const k of Object.keys(body as any)) {
 			params.append(k, (body as any)[k]);
 		}
 
