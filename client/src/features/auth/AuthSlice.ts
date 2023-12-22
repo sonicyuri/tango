@@ -10,7 +10,7 @@ import { postListVotes } from "../posts/PostSlice";
 import { RootState } from "../Store";
 import { tagList } from "../tags/TagSlice";
 import { userConfigGet } from "../user_config/UserConfigSlice";
-import AuthService, { Credentials } from "./AuthService";
+import AuthService, { Credentials, SignupRequest } from "./AuthService";
 
 const logger: Logger = LogFactory.create("AuthSlice");
 
@@ -82,6 +82,7 @@ export const refresh = createAsyncThunk("auth/refresh", async (refreshToken: str
 		thunkApi.dispatch(userConfigGet(null));
 		thunkApi.dispatch(tagList(null));
 		thunkApi.dispatch(favoriteList(null));
+		thunkApi.dispatch(postListVotes(null));
 
 		return response.result;
 	} catch (error: any) {
@@ -117,6 +118,7 @@ export const loginToken = createAsyncThunk(
 			thunkApi.dispatch(userConfigGet(null));
 			thunkApi.dispatch(tagList(null));
 			thunkApi.dispatch(favoriteList(null));
+			thunkApi.dispatch(postListVotes(null));
 
 			return response.result;
 		} catch (error: any) {
@@ -131,6 +133,27 @@ export const loginToken = createAsyncThunk(
 		}
 	}
 );
+
+export const signup = createAsyncThunk("auth/signup", async (credentials: SignupRequest, thunkApi) => {
+	try {
+		thunkApi.dispatch(setLoginStateAction("loading"));
+
+		const response = await AuthService.signup(credentials);
+		if (response.type == "error") {
+			thunkApi.dispatch(notify("Signup failed - " + response.message, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+
+		thunkApi.dispatch(notify("Signup successful! You may now log in", "success"));
+
+		return response.result;
+	} catch (error: any) {
+		logger.error("error signing up", error);
+		thunkApi.dispatch(notify("Signup failed - unknown error", "error"));
+
+		return thunkApi.rejectWithValue({});
+	}
+});
 
 const logoutReducer: CaseReducer<AuthState, PayloadAction<void>> = (state, action) => {
 	AuthService.logout();
@@ -185,6 +208,12 @@ export const AuthSlice = createSlice({
 		builder.addCase(refresh.rejected, (state, action) => {
 			state.isLoggedIn = false;
 			state.user = null;
+			state.loginState = "failed";
+		});
+		builder.addCase(signup.fulfilled, (state, action) => {
+			state.loginState = "success";
+		});
+		builder.addCase(signup.rejected, (state, action) => {
 			state.loginState = "failed";
 		});
 	}

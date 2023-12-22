@@ -11,14 +11,21 @@ import ImportPage from "./pages/import/ImportPage";
 import ListPage from "./pages/ListPage";
 import PostPage from "./pages/post_view/PostPage";
 import RootPage from "./pages/RootPage";
+import SignupPage from "./pages/SignupPage";
 import TagsListPage from "./pages/tags_list/TagsListPage";
 import ProfilePage from "./pages/user/ProfilePage";
+import SettingsPage from "./pages/user/SettingsPage";
 
 const App = () => {
 	const dispatch = useAppDispatch();
 	const notifications = useAppSelector(state => state.notifications);
 
 	const router = createBrowserRouter([
+		{
+			path: "/signup",
+			element: <SignupPage />,
+			errorElement: <ErrorPage />
+		},
 		{
 			path: "/",
 			element: <RootPage />,
@@ -31,6 +38,10 @@ const App = () => {
 				{
 					path: "/user/profile",
 					element: <ProfilePage />
+				},
+				{
+					path: "/user/settings",
+					element: <SettingsPage />
 				},
 				{
 					path: "/admin",

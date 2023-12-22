@@ -1,6 +1,4 @@
 /** @format */
-import moment from "moment-timezone";
-
 export type ShimmieClass = "base" | "ghost" | "anonymous" | "user" | "hellbanned" | "admin";
 
 export interface ShimmieUser {
@@ -22,7 +20,7 @@ class BooruUser {
 	private joindate: string;
 
 	public get joinedAt(): Date {
-		return moment.tz(this.joindate, "YYYY-MM-DD HH:mm:ss", "UTC").toDate();
+		return new Date(this.joindate);
 	}
 
 	constructor(obj: ShimmieUser) {

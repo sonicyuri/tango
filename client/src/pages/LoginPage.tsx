@@ -21,6 +21,8 @@ import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import i18n from "../util/Internationalization";
 import { LocalSettings } from "../util/LocalSettings";
 
+import { Link as RouterLink } from "react-router-dom";
+
 const LoginPage = () => {
 	const dispatch = useAppDispatch();
 	const { loginState } = useAppSelector(selectAuthState);
@@ -115,6 +117,9 @@ const LoginPage = () => {
 					</FormGroup>
 					<Button color="primary" variant="contained" fullWidth type="submit">
 						{loginState == "loading" ? <LoadingSpinner /> : <span>Login</span>}
+					</Button>
+					<Button color="primary" variant="outlined" fullWidth component={RouterLink} to="/signup">
+						Create Account
 					</Button>
 				</Stack>
 			</form>
