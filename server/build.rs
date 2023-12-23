@@ -1,0 +1,11 @@
+use std::error::Error;
+use vergen::*;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    EmitBuilder::builder()
+        .all_build()
+        .all_cargo()
+        .all_git()
+        .emit()?;
+    Ok(())
+}
