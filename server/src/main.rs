@@ -23,6 +23,7 @@ mod error;
 mod modules;
 mod storage;
 mod util;
+mod version;
 
 pub struct AppState {
     db: MySqlPool,
@@ -41,7 +42,8 @@ fn configure(conf: &mut web::ServiceConfig) {
         .service(modules::favorites::scope())
         .service(modules::tags::scope())
         .service(modules::import::scope())
-        .service(modules::posts::scope());
+        .service(modules::posts::scope())
+        .service(modules::system::scope());
 
     conf.service(scope)
         .default_service(web::route().to(not_found));
