@@ -1,7 +1,6 @@
 /** @format */
 
 import React from "react";
-import ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 import "./index.scss";
 import App from "./App";
@@ -9,7 +8,6 @@ import { Provider } from "react-redux";
 import { Store } from "./features/Store";
 import { setUpNotifications } from "reapop";
 import theme, { BodyFonts } from "./MuiTheme";
-import { Util } from "./util/Util";
 import { LogFactory } from "./util/Logger";
 import { ThemeProvider } from "@emotion/react";
 
