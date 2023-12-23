@@ -3,16 +3,15 @@ use actix_web::HttpResponse;
 use config::Config;
 use sqlx::ConnectOptions;
 use std::io::{Error, ErrorKind};
-use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::Arc;
 use storage::AppStorage;
 
 use actix_web::middleware::Logger;
-use actix_web::{http::header, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
-use error::{api_error, api_error_owned, ApiErrorType};
-use log::{error, info, trace, warn};
+use error::{api_error_owned, ApiErrorType};
+use log::{error, info};
 use sqlx::mysql::{MySqlConnectOptions, MySqlPool, MySqlPoolOptions};
 use util::error_response;
 
@@ -56,7 +55,7 @@ async fn main() -> Result<(), Error> {
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let mut connection_options = MySqlConnectOptions::from_str(database_url.as_str())
-        .map_err(|e| Error::new(ErrorKind::InvalidData, "Failed to parse DATABASE_URL"))?;
+        .map_err(|_| Error::new(ErrorKind::InvalidData, "Failed to parse DATABASE_URL"))?;
     connection_options = connection_options.log_statements(log::LevelFilter::Info);
 
     let pool = match MySqlPoolOptions::new()

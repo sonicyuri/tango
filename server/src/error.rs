@@ -10,13 +10,11 @@ use serde_json::json;
 
 #[derive(Debug, Clone)]
 pub enum ApiErrorType {
-    Unauthorized,
     Forbidden,
     AuthorizationFailed,
     InvalidRequest,
     ServerError,
     OperationFailed,
-    NotFound,
 }
 
 #[derive(Debug, Display, Error, Clone)]
@@ -76,9 +74,7 @@ impl actix_web::error::ResponseError for ApiError {
             ApiErrorType::InvalidRequest => StatusCode::BAD_REQUEST,
             ApiErrorType::ServerError => StatusCode::INTERNAL_SERVER_ERROR,
             ApiErrorType::Forbidden => StatusCode::FORBIDDEN,
-            ApiErrorType::Unauthorized => StatusCode::UNAUTHORIZED,
             ApiErrorType::OperationFailed => StatusCode::OK,
-            ApiErrorType::NotFound => StatusCode::NOT_FOUND,
         }
     }
 }

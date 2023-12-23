@@ -15,11 +15,11 @@ impl From<String> for ThumbnailFit {
     fn from(value: String) -> Self {
         match value.as_str() {
             // default to fit
-            _ => ThumbnailFit::Fit,
             "Fit Blur" => ThumbnailFit::FitBlur,
             "Fit Blur Tall, Fill Wide" => ThumbnailFit::FitBlurPortrait,
             "Fill" => ThumbnailFit::Fill,
             "Stretch" => ThumbnailFit::Stretch,
+            _ => ThumbnailFit::Fit,
         }
     }
 }
@@ -55,7 +55,7 @@ impl BooruConfig {
                 .await
                 .expect("Failed to obtain config from database")
                 .iter()
-                .filter(|(name, value)| value.is_some())
+                .filter(|(_, value)| value.is_some())
                 .map(|(name, value)| (name.clone(), value.as_ref().unwrap().clone()))
                 .collect();
         let config: HashMap<String, String> = HashMap::from_iter(results);

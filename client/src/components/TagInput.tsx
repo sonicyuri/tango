@@ -1,15 +1,16 @@
 /** @format */
 import styled from "@emotion/styled";
-import { Autocomplete, Box, Chip, createFilterOptions, FilterOptionsState, TextField, Typography } from "@mui/material";
+import { Autocomplete, autocompleteClasses, Box, Chip, createFilterOptions, FilterOptionsState, Popper, TextField, Typography } from "@mui/material";
 import React from "react";
 import { matchSorter } from "match-sorter";
 import { useNavigate } from "react-router-dom";
+import { VariableSizeList, ListChildComponentProps } from "react-window";
 
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
-import { BooruTag } from "../models/BooruTag";
+import { BooruTag, BooruTagCategory } from "../models/BooruTag";
 import { LogFactory } from "../util/Logger";
-import { Util } from "../util/Util";
+import { Util } from "../util/Util"; 
 
 const logger = LogFactory.create("TagInput");
 
@@ -18,6 +19,97 @@ const UnpaddedFilledInput = styled(TextField)({
 		paddingTop: 0
 	}
 });
+
+const LISTBOX_PADDING = 8;
+
+function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: string]: number })
+{
+	return (props: ListChildComponentProps) => {
+		const { data, index, style } = props;
+		const dataSet = data[index];
+		const tag = dataSet[1];
+		const category = BooruTag.getCategory(tag, categories);
+
+		const inlineStyle = {
+			...style,
+			top: (style.top as number) + LISTBOX_PADDING,
+		};
+  
+		return (
+			<Box component="li" {...dataSet[0]} style={inlineStyle}>
+				<Typography variant="subtitle1" color={category?.color}>
+					{Util.formatTag(tag)}&nbsp;
+				</Typography>
+				<Typography variant="body2">{tagFrequencies[tag]}</Typography>
+			</Box>
+		);
+	}
+}
+
+const OuterElementContext = React.createContext({});
+
+const OuterElementType = React.forwardRef<HTMLDivElement>((props, ref) => {
+  const outerProps = React.useContext(OuterElementContext);
+  return <div ref={ref} {...props} {...outerProps} />;
+});
+
+function useResetCache(data: any) {
+	const ref = React.useRef<VariableSizeList>(null);
+	React.useEffect(() => {
+	  if (ref.current != null) {
+		ref.current.resetAfterIndex(0, true);
+	  }
+	}, [data]);
+	return ref;
+  }
+
+const ListboxComponent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>(function ListBoxComponent(props, ref)
+{
+	const { children, ...other } = props;
+	const { categories, tagFrequencies } = useAppSelector(selectTagState);
+
+	const itemData: React.ReactElement[] = [];
+	(children as React.ReactElement[]).forEach(
+		(item: React.ReactElement & { children?: React.ReactElement[] }) => {
+		  itemData.push(item);
+		  itemData.push(...(item.children || []));
+		},
+	);
+
+	const itemSize = 36;
+	const height = itemData.length * itemSize;
+
+	const gridRef = useResetCache(itemData.length);
+
+	return (
+		<div ref={ref}>
+			<OuterElementContext.Provider value={other}>
+				<VariableSizeList
+					itemData={itemData}
+					height={height + 2 * LISTBOX_PADDING}
+					width="100%"
+					ref={gridRef}
+					outerElementType={OuterElementType}
+					innerElementType="ul"
+					itemSize={(index: number) => itemSize}
+					overscanCount={35}
+					itemCount={itemData.length}>
+					{renderRow(categories, tagFrequencies)}
+				</VariableSizeList>
+			</OuterElementContext.Provider>
+		</div>
+	)
+});
+
+const StyledPopper = styled(Popper)({
+	[`& .${autocompleteClasses.listbox}`]: {
+	  boxSizing: 'border-box',
+	  '& ul': {
+		padding: 0,
+		margin: 0,
+	  },
+	},
+  });
 
 export interface TagInputProps {
 	values: string[];
@@ -103,6 +195,8 @@ const TagInput = (props: TagInputProps) => {
 				}
 				freeSolo
 				disableClearable={variant == "edit"}
+				PopperComponent={StyledPopper}
+				ListboxComponent={ListboxComponent}
 				renderTags={(value: readonly string[], getTagProps) => {
 					return value.map((tag: string, index: number) => (
 						// eslint-disable-next-line react/jsx-key
@@ -122,18 +216,7 @@ const TagInput = (props: TagInputProps) => {
 						placeholder="Search"
 					/>
 				)}
-				renderOption={(props, option) => {
-					const category = BooruTag.getCategory(option, categories);
-
-					return (
-						<Box component="li" {...props}>
-							<Typography variant="subtitle1" color={category?.color}>
-								{Util.formatTag(option)}&nbsp;
-							</Typography>
-							<Typography variant="body2">{tagFrequencies[option]}</Typography>
-						</Box>
-					);
-				}}
+				renderOption={(props, option, state) => [props, option, state.index] as React.ReactNode}
 				onSubmit={props.onSubmit}
 			/>
 		</div>
