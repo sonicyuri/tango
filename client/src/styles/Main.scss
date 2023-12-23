@@ -56,3 +56,14 @@ h3 {
 	margin-bottom: 10px;
 	height: 10px;
 }
+
+.TagInput {
+	position: relative;
+
+	.TagInput-SettingsButton {
+		position: absolute;
+		top: 0;
+		right: 0;
+		height: 100%;
+	}
+}

@@ -1,10 +1,11 @@
 /** @format */
 import styled from "@emotion/styled";
-import { Autocomplete, autocompleteClasses, Box, Chip, createFilterOptions, FilterOptionsState, Popper, TextField, Typography } from "@mui/material";
-import React from "react";
+import { Autocomplete, autocompleteClasses, Box, Chip, createFilterOptions, FilterOptionsState, IconButton, Popover, Popper, TextField, Typography } from "@mui/material";
+import React, { useMemo, useState } from "react";
 import { matchSorter } from "match-sorter";
 import { useNavigate } from "react-router-dom";
 import { VariableSizeList, ListChildComponentProps } from "react-window";
+import TuneIcon from '@mui/icons-material/Tune';
 
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
@@ -13,6 +14,7 @@ import { LogFactory } from "../util/Logger";
 import { Util } from "../util/Util"; 
 
 const logger = LogFactory.create("TagInput");
+const enableOptions = false;
 
 const UnpaddedFilledInput = styled(TextField)({
 	"& .MuiFilledInput-root": {
@@ -28,7 +30,8 @@ function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: strin
 		const { data, index, style } = props;
 		const dataSet = data[index];
 		const tag = dataSet[1];
-		const category = BooruTag.getCategory(tag, categories);
+		const category = useMemo(() => BooruTag.getCategory(tag, categories), [tag]);
+		const formattedTag = useMemo(() => Util.formatTag(tag), [tag]);
 
 		const inlineStyle = {
 			...style,
@@ -38,7 +41,7 @@ function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: strin
 		return (
 			<Box component="li" {...dataSet[0]} style={inlineStyle}>
 				<Typography variant="subtitle1" color={category?.color}>
-					{Util.formatTag(tag)}&nbsp;
+					{formattedTag}&nbsp;
 				</Typography>
 				<Typography variant="body2">{tagFrequencies[tag]}</Typography>
 			</Box>
@@ -92,7 +95,7 @@ const ListboxComponent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<H
 					outerElementType={OuterElementType}
 					innerElementType="ul"
 					itemSize={(index: number) => itemSize}
-					overscanCount={35}
+					overscanCount={100}
 					itemCount={itemData.length}>
 					{renderRow(categories, tagFrequencies)}
 				</VariableSizeList>
@@ -120,17 +123,19 @@ export interface TagInputProps {
 }
 
 const TagInput = (props: TagInputProps) => {
-	const dispatch = useAppDispatch();
-	const navigate = useNavigate();
+	const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
 	const { tags, categories, tagFrequencies } = useAppSelector(selectTagState);
-	const tagsCopy = tags
-		.slice()
-		.map(t => new BooruTag(t.tag, tagFrequencies[t.tag] || 0))
-		.sort((a, b) => b.frequency - a.frequency);
 
 	const existingTags: { [tag: string]: boolean } = {};
 	props.values.forEach(t => (existingTags[t] = true));
+
+	const options = useMemo(() => tags
+		.slice()
+		.map(t => new BooruTag(t.tag, tagFrequencies[t.tag] || 0))
+		.sort((a, b) => b.frequency - a.frequency)
+		.filter(t => !existingTags[t.tag])
+		.map(t => t.tag), [tags])
 
 	const filterOptions = (options: string[], { inputValue }: FilterOptionsState<string>): string[] => {
 		const sanitizeInput = inputValue.trim().replace(/\s+/g, "_");
@@ -177,6 +182,29 @@ const TagInput = (props: TagInputProps) => {
 			  });
 	};
 
+	const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleClose = () => {
+		setAnchorEl(null);
+	};
+
+	const open = Boolean(anchorEl);
+
+	const optionsMenu =	(
+		<>
+			<Popover
+				open={open}
+				anchorEl={anchorEl}
+				onClose={handleClose}
+				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+				transformOrigin={{ vertical: "top", horizontal: "left" }}>
+				
+			</Popover>
+		</>
+	);
+
 	const variant = props.variant ?? "search";
 
 	return (
@@ -188,15 +216,13 @@ const TagInput = (props: TagInputProps) => {
 			<Autocomplete
 				multiple
 				filterOptions={filterOptions}
-				options={tagsCopy.filter(t => !existingTags[t.tag]).map(t => t.tag)}
+				options={options}
 				value={props.values}
 				onChange={(_: any, values: readonly string[]) =>
 					props.onValuesChange(values.map(v => v.trim().replace(/\s+/g, "_")))
 				}
 				freeSolo
 				disableClearable={variant == "edit"}
-				PopperComponent={StyledPopper}
-				ListboxComponent={ListboxComponent}
 				renderTags={(value: readonly string[], getTagProps) => {
 					return value.map((tag: string, index: number) => (
 						// eslint-disable-next-line react/jsx-key
@@ -210,15 +236,39 @@ const TagInput = (props: TagInputProps) => {
 					));
 				}}
 				renderInput={params => (
-					<UnpaddedFilledInput
-						{...params}
-						variant={variant == "search" ? "filled" : "outlined"}
-						placeholder="Search"
-					/>
+					<>
+						<UnpaddedFilledInput
+							{...params}
+							variant={variant == "search" ? "filled" : "outlined"}
+							placeholder="Search"
+						/>
+						
+						<div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}></div>
+						{variant == "search" && enableOptions ? <IconButton onClick={handleClick} className="TagInput-SettingsButton">
+							<TuneIcon />
+						</IconButton> : <></>}
+					</>
 				)}
-				renderOption={(props, option, state) => [props, option, state.index] as React.ReactNode}
+				renderOption={(props, option, state) =>
+				{
+					//[props, option, state.index] as React.ReactNode
+								
+					const tag = option;
+					const category = BooruTag.getCategory(tag, categories);
+					const formattedTag = Util.formatTag(tag);
+
+					return (
+						<Box component="li" {...props}>
+							<Typography variant="subtitle1" color={category?.color}>
+								{formattedTag}&nbsp;
+							</Typography>
+							<Typography variant="body2">{tagFrequencies[tag]}</Typography>
+						</Box>
+					);
+				}}
 				onSubmit={props.onSubmit}
 			/>
+			{optionsMenu}
 		</div>
 	);
 };
