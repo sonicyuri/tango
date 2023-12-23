@@ -160,7 +160,7 @@ pub async fn user_signup_handler(
 
     if data.booru_config.signup_requires_invite {
         sqlx::query(
-            "UPDATE user_invites SET redeemed = 1, redeemed_time = NOW() WHERE invite_code = ?",
+            "UPDATE user_invites SET redeemed = 1, redeemed_time = CURRENT_TIMESTAMP WHERE invite_code = ?",
         )
         .bind(code)
         .execute(&data.db)

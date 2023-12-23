@@ -59,7 +59,7 @@ pub async fn init_db(db: &MySqlPool) -> Result<(), ApiError> {
 			`creator_id` int(11) NOT NULL DEFAULT 0,
 			`invite_code` varchar(10) NOT NULL,
 			`redeemed` tinyint(1) NOT NULL DEFAULT 0,
-			`redeemed_time` timestamp DEFAULT NULL,
+			`redeemed_time` timestamp NULL 	DEFAULT NULL,
 			PRIMARY KEY (`id`),
 			UNIQUE KEY `invite_code` (`invite_code`),
 			KEY `creator_id_fk` (`creator_id`),
