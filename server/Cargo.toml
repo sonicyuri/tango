@@ -10,16 +10,16 @@ vergen =  {version = "8.2.6", features = ["build", "cargo", "git", "gitcl", "rus
 [dependencies]
 actix-multipart = "0.6.1"
 actix-web = "4.4.0"
-async-process = "2.0.0"
-async-trait = "0.1.74"
-base64 = "0.21.4"
+async-process = "2.0.1"
+async-trait = "0.1.75"
+base64 = "0.21.5"
 bcrypt = "0.15.0"
 bs58 = "0.5.0"
 chrono = { version = "0.4.31", features = ["serde"] }
-config = "0.13.3"
+config = "0.13.4"
 derive_more = "0.99.17"
 dotenv = "0.15.0"
-futures = "0.3.28"
+futures = "0.3.29"
 image = "0.24.7"
 itertools = "0.12.0"
 jsonwebtoken = "9.2.0"
@@ -27,15 +27,15 @@ log = "0.4.20"
 log4rs = "1.2.0"
 md5 = "0.7.0"
 num = "0.4.1"
-once_cell = "1.18.0"
+once_cell = "1.19.0"
 parse-size = "1.0.0"
 rand = "0.8.5"
-regex = "1.10.1"
-reqwest = { version = "0.11.22", features = ["multipart"] }
+regex = "1.10.2"
+reqwest = { version = "0.11.23", features = ["multipart"] }
 rust-s3 = "0.33.0"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
-sqlx = { version = "0.7.2", features = ["runtime-tokio", "tls-native-tls", "mysql", "macros", "chrono"] }
+serde = { version = "1.0.193", features = ["derive"] }
+serde_json = "1.0.108"
+sqlx = { version = "0.7.3", features = ["runtime-tokio", "tls-native-tls", "mysql", "macros", "chrono"] }
 substring = "1.4.5"
 tempfile = "3.8.1"
-uuid = { version = "1.4.1", features = ["v4"] }
+uuid = { version = "1.6.1", features = ["v4"] }
