@@ -59,6 +59,33 @@ class BooruRequest {
 		});
 	}
 
+	static runUploadQuery(endpoint: string, body: FormData, progressCallback: (percent: number) => void): Promise<any> {
+		const url = EndpointV2Url + endpoint;
+
+		const xhr = new XMLHttpRequest();
+		return new Promise((resolve, reject) => {
+			xhr.upload.addEventListener("progress", event => {
+				if (event.lengthComputable) {
+					progressCallback(event.loaded / event.total);
+				}
+			});
+			xhr.addEventListener("loadend", () => {
+				if (xhr.readyState === 4 && xhr.status === 200) {
+					resolve(JSON.parse(xhr.responseText));
+				} else {
+					if (xhr.status == 403 || xhr.status == 401) {
+						return reject(new CredentialsInvalidError("Credentials rejected!"));
+					}
+
+					reject("HTTP status code: " + xhr.status);
+				}
+			});
+			xhr.open("POST", url, true);
+			xhr.setRequestHeader("Authorization", this.authHeader || "");
+			xhr.send(body);
+		});
+	}
+
 	static runQuery(url: string, method: string, body: RequestBody): Promise<Response> {
 		return this.runQueryVersioned("v1", url, method, body);
 	}
