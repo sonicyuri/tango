@@ -25,15 +25,13 @@ const container = document.getElementById("root");
 if (container) {
 	const root = createRoot(container);
 	root.render(
-		<React.StrictMode>
-			<Provider store={Store}>
-				<ThemeProvider theme={theme}>
-					<div style={{ fontFamily: BodyFonts }}>
-						<App />
-					</div>
-				</ThemeProvider>
-			</Provider>
-		</React.StrictMode>
+		<Provider store={Store}>
+			<ThemeProvider theme={theme}>
+				<div style={{ fontFamily: BodyFonts }}>
+					<App />
+				</div>
+			</ThemeProvider>
+		</Provider>
 	);
 } else {
 	logger.error("no container to put react app in?");

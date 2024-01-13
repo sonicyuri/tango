@@ -1,17 +1,29 @@
 /** @format */
 import styled from "@emotion/styled";
-import { Autocomplete, autocompleteClasses, Box, Chip, createFilterOptions, FilterOptionsState, IconButton, Popover, Popper, TextField, Typography } from "@mui/material";
+import {
+	Autocomplete,
+	autocompleteClasses,
+	Box,
+	Chip,
+	createFilterOptions,
+	FilterOptionsState,
+	IconButton,
+	Popover,
+	Popper,
+	TextField,
+	Typography
+} from "@mui/material";
 import React, { useMemo, useState } from "react";
 import { matchSorter } from "match-sorter";
 import { useNavigate } from "react-router-dom";
 import { VariableSizeList, ListChildComponentProps } from "react-window";
-import TuneIcon from '@mui/icons-material/Tune';
+import TuneIcon from "@mui/icons-material/Tune";
 
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag, BooruTagCategory } from "../models/BooruTag";
 import { LogFactory } from "../util/Logger";
-import { Util } from "../util/Util"; 
+import { Util } from "../util/Util";
 
 const logger = LogFactory.create("TagInput");
 const enableOptions = false;
@@ -24,8 +36,7 @@ const UnpaddedFilledInput = styled(TextField)({
 
 const LISTBOX_PADDING = 8;
 
-function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: string]: number })
-{
+function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: string]: number }) {
 	return (props: ListChildComponentProps) => {
 		const { data, index, style } = props;
 		const dataSet = data[index];
@@ -35,9 +46,9 @@ function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: strin
 
 		const inlineStyle = {
 			...style,
-			top: (style.top as number) + LISTBOX_PADDING,
+			top: (style.top as number) + LISTBOX_PADDING
 		};
-  
+
 		return (
 			<Box component="li" {...dataSet[0]} style={inlineStyle}>
 				<Typography variant="subtitle1" color={category?.color}>
@@ -46,73 +57,72 @@ function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: strin
 				<Typography variant="body2">{tagFrequencies[tag]}</Typography>
 			</Box>
 		);
-	}
+	};
 }
 
 const OuterElementContext = React.createContext({});
 
 const OuterElementType = React.forwardRef<HTMLDivElement>((props, ref) => {
-  const outerProps = React.useContext(OuterElementContext);
-  return <div ref={ref} {...props} {...outerProps} />;
+	const outerProps = React.useContext(OuterElementContext);
+	return <div ref={ref} {...props} {...outerProps} />;
 });
 
 function useResetCache(data: any) {
 	const ref = React.useRef<VariableSizeList>(null);
 	React.useEffect(() => {
-	  if (ref.current != null) {
-		ref.current.resetAfterIndex(0, true);
-	  }
+		if (ref.current != null) {
+			ref.current.resetAfterIndex(0, true);
+		}
 	}, [data]);
 	return ref;
-  }
+}
 
-const ListboxComponent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>(function ListBoxComponent(props, ref)
-{
-	const { children, ...other } = props;
-	const { categories, tagFrequencies } = useAppSelector(selectTagState);
+const ListboxComponent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>(
+	function ListBoxComponent(props, ref) {
+		const { children, ...other } = props;
+		const { categories, tagFrequencies } = useAppSelector(selectTagState);
 
-	const itemData: React.ReactElement[] = [];
-	(children as React.ReactElement[]).forEach(
-		(item: React.ReactElement & { children?: React.ReactElement[] }) => {
-		  itemData.push(item);
-		  itemData.push(...(item.children || []));
-		},
-	);
+		const itemData: React.ReactElement[] = [];
+		(children as React.ReactElement[]).forEach((item: React.ReactElement & { children?: React.ReactElement[] }) => {
+			itemData.push(item);
+			itemData.push(...(item.children || []));
+		});
 
-	const itemSize = 36;
-	const height = itemData.length * itemSize;
+		const itemSize = 36;
+		const height = itemData.length * itemSize;
 
-	const gridRef = useResetCache(itemData.length);
+		const gridRef = useResetCache(itemData.length);
 
-	return (
-		<div ref={ref}>
-			<OuterElementContext.Provider value={other}>
-				<VariableSizeList
-					itemData={itemData}
-					height={height + 2 * LISTBOX_PADDING}
-					width="100%"
-					ref={gridRef}
-					outerElementType={OuterElementType}
-					innerElementType="ul"
-					itemSize={(index: number) => itemSize}
-					overscanCount={100}
-					itemCount={itemData.length}>
-					{renderRow(categories, tagFrequencies)}
-				</VariableSizeList>
-			</OuterElementContext.Provider>
-		</div>
-	)
-});
+		return (
+			<div ref={ref}>
+				<OuterElementContext.Provider value={other}>
+					<VariableSizeList
+						itemData={itemData}
+						height={height + 2 * LISTBOX_PADDING}
+						width="100%"
+						ref={gridRef}
+						outerElementType={OuterElementType}
+						innerElementType="ul"
+						itemSize={(index: number) => itemSize}
+						overscanCount={100}
+						itemCount={itemData.length}>
+						{renderRow(categories, tagFrequencies)}
+					</VariableSizeList>
+				</OuterElementContext.Provider>
+			</div>
+		);
+	}
+);
 
 const StyledPopper = styled(Popper)({
 	[`& .${autocompleteClasses.listbox}`]: {
-	  boxSizing: 'border-box',
-	  '& ul': {
-		padding: 0,
-		margin: 0,
-	  },
-	},
-  });
+		boxSizing: "border-box",
+		"& ul": {
+			padding: 0,
+			margin: 0
+		}
+	}
+});
 
 export interface TagInputProps {
 	values: string[];
@@ -130,12 +140,16 @@ const TagInput = (props: TagInputProps) => {
 	const existingTags: { [tag: string]: boolean } = {};
 	props.values.forEach(t => (existingTags[t] = true));
 
-	const options = useMemo(() => tags
-		.slice()
-		.map(t => new BooruTag(t.tag, tagFrequencies[t.tag] || 0))
-		.sort((a, b) => b.frequency - a.frequency)
-		.filter(t => !existingTags[t.tag])
-		.map(t => t.tag), [tags])
+	const options = useMemo(
+		() =>
+			tags
+				.slice()
+				.map(t => new BooruTag(t.tag, tagFrequencies[t.tag] || 0))
+				.sort((a, b) => b.frequency - a.frequency)
+				.filter(t => !existingTags[t.tag])
+				.map(t => t.tag),
+		[tags]
+	);
 
 	const filterOptions = (options: string[], { inputValue }: FilterOptionsState<string>): string[] => {
 		const sanitizeInput = inputValue.trim().replace(/\s+/g, "_");
@@ -179,7 +193,7 @@ const TagInput = (props: TagInputProps) => {
 
 							return tagBFreq - tagAFreq;
 						})
-			  });
+				});
 	};
 
 	const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -192,16 +206,14 @@ const TagInput = (props: TagInputProps) => {
 
 	const open = Boolean(anchorEl);
 
-	const optionsMenu =	(
+	const optionsMenu = (
 		<>
 			<Popover
 				open={open}
 				anchorEl={anchorEl}
 				onClose={handleClose}
 				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-				transformOrigin={{ vertical: "top", horizontal: "left" }}>
-				
-			</Popover>
+				transformOrigin={{ vertical: "top", horizontal: "left" }}></Popover>
 		</>
 	);
 
@@ -240,19 +252,30 @@ const TagInput = (props: TagInputProps) => {
 						<UnpaddedFilledInput
 							{...params}
 							variant={variant == "search" ? "filled" : "outlined"}
-							placeholder="Search"
+							placeholder={variant == "search" ? "Search" : "Select tags"}
 						/>
-						
-						<div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}></div>
-						{variant == "search" && enableOptions ? <IconButton onClick={handleClick} className="TagInput-SettingsButton">
-							<TuneIcon />
-						</IconButton> : <></>}
+
+						<div
+							style={{
+								position: "absolute",
+								top: 0,
+								left: 0,
+								width: "100%",
+								height: "100%",
+								pointerEvents: "none"
+							}}></div>
+						{variant == "search" && enableOptions ? (
+							<IconButton onClick={handleClick} className="TagInput-SettingsButton">
+								<TuneIcon />
+							</IconButton>
+						) : (
+							<></>
+						)}
 					</>
 				)}
-				renderOption={(props, option, state) =>
-				{
+				renderOption={(props, option, state) => {
 					//[props, option, state.index] as React.ReactNode
-								
+
 					const tag = option;
 					const category = BooruTag.getCategory(tag, categories);
 					const formattedTag = Util.formatTag(tag);
