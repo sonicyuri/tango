@@ -5,7 +5,8 @@ import React, { ReactElement } from "react";
 
 import OptionsList, { OptionsListItem } from "./OptionsList";
 
-import GitHubIcon from '@mui/icons-material/GitHub';
+import GitHubIcon from "@mui/icons-material/GitHub";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
 
 export interface SideBarProps {
 	open: boolean;
@@ -23,6 +24,11 @@ export default function SideBar(props: SideBarProps) {
 			icon: <Tag />,
 			text: "Tags",
 			url: "/tags/list"
+		},
+		{
+			icon: <FileUploadIcon />,
+			text: "Upload",
+			url: "/posts/new"
 		},
 		{
 			type: "separator"

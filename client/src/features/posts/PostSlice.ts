@@ -11,6 +11,7 @@ import PostService, {
 	PostGetRequest,
 	PostListRequest,
 	PostSetTagsRequest,
+	PostUploadRequest,
 	VoteRequest
 } from "./PostService";
 import { tagUpdateEdit } from "../tags/TagSlice";
@@ -20,6 +21,7 @@ const logger: Logger = LogFactory.create("PostSlice");
 
 type PostSearchState = "initial" | "loading" | "ready" | "failed";
 type PostVoteState = "initial" | "loading" | "ready";
+type PostUploadState = "initial" | "uploading" | "done" | "failed";
 
 type PostNavigateDirection = -1 | 1;
 
@@ -30,6 +32,8 @@ interface PostState {
 	currentPost: BooruPost | null;
 	votes: { [image_id: string]: number };
 	voteState: PostVoteState;
+	uploadProgress: number;
+	uploadState: PostUploadState;
 }
 
 const setSearchState: CaseReducer<PostState, PayloadAction<PostSearchState>> = (state, action) => {
@@ -47,6 +51,24 @@ const setVoteState: CaseReducer<PostState, PayloadAction<PostVoteState>> = (stat
 
 const setVoteStateAction = (newState: PostVoteState): PayloadAction<PostVoteState> => ({
 	type: "post/setVoteState",
+	payload: newState
+});
+
+const setUploadState: CaseReducer<PostState, PayloadAction<PostUploadState>> = (state, action) => {
+	state.uploadState = action.payload;
+};
+
+const setUploadStateAction = (newState: PostUploadState): PayloadAction<PostUploadState> => ({
+	type: "post/setUploadState",
+	payload: newState
+});
+
+const setUploadProgress: CaseReducer<PostState, PayloadAction<number>> = (state, action) => {
+	state.uploadProgress = action.payload;
+};
+
+const setUploadProgressAction = (newState: number): PayloadAction<number> => ({
+	type: "post/setUploadProgress",
 	payload: newState
 });
 
@@ -221,13 +243,36 @@ export const postVote = createAsyncThunk("post/vote", async (req: VoteRequest, t
 	}
 });
 
+export const postUpload = createAsyncThunk("post/upload", async (req: PostUploadRequest, thunkApi) => {
+	try {
+		thunkApi.dispatch(setUploadStateAction("uploading"));
+		thunkApi.dispatch(setUploadProgressAction(0.0));
+
+		let result = await PostService.upload(req, progress => thunkApi.dispatch(setUploadProgressAction(progress)));
+
+		if (result.type == "error") {
+			logger.error("error uploading post", result.message);
+			thunkApi.dispatch(notify("Error uploading post: " + result.message, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+
+		return result.result;
+	} catch (error: any) {
+		logger.error("error uploading post", error);
+		thunkApi.dispatch(notify("Error uploading post", "error"));
+		return thunkApi.rejectWithValue({});
+	}
+});
+
 const initialState: PostState = {
 	cursor: null,
 	searchState: "initial",
 	posts: [],
 	currentPost: null,
 	votes: {},
-	voteState: "initial"
+	voteState: "initial",
+	uploadProgress: 0.0,
+	uploadState: "initial"
 };
 
 export const PostSlice = createSlice({
@@ -235,7 +280,9 @@ export const PostSlice = createSlice({
 	initialState,
 	reducers: {
 		setSearchState,
-		setVoteState
+		setVoteState,
+		setUploadState,
+		setUploadProgress
 	},
 	extraReducers: builder => {
 		builder.addCase(postList.fulfilled, (state, action) => {
@@ -314,6 +361,20 @@ export const PostSlice = createSlice({
 			state.voteState = "ready";
 		});
 		builder.addCase(postVote.rejected, (state, action) => {});
+
+		builder.addCase(postUpload.fulfilled, (state, action) => {
+			state.uploadState = "done";
+			state.uploadProgress = 1.0;
+			Object.keys(action.payload.posts).forEach(k => {
+				let post = action.payload.posts[k];
+				state.cursor?.storeOrUpdatePost(new BooruPost(post));
+			});
+		});
+
+		builder.addCase(postUpload.rejected, (state, action) => {
+			state.uploadState = "failed";
+			state.uploadProgress = 0.0;
+		});
 	}
 });
 

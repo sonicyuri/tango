@@ -13,6 +13,7 @@ import PostPage from "./pages/post_view/PostPage";
 import RootPage from "./pages/RootPage";
 import SignupPage from "./pages/SignupPage";
 import TagsListPage from "./pages/tags_list/TagsListPage";
+import UploadPage from "./pages/upload/UploadPage";
 import ProfilePage from "./pages/user/ProfilePage";
 import SettingsPage from "./pages/user/SettingsPage";
 
@@ -31,6 +32,10 @@ const App = () => {
 			element: <RootPage />,
 			errorElement: <ErrorPage />,
 			children: [
+				{
+					path: "/posts/new",
+					element: <UploadPage />
+				},
 				{
 					path: "/import",
 					element: <ImportPage />
