@@ -220,7 +220,7 @@ const UploadPage = () => {
 	const progressBody = (
 		<div className="Upload-Progress">
 			<Typography>Uploading {files.length} files</Typography>
-			<LinearProgress variant="determinate" value={uploadProgress} />
+			<LinearProgress variant="determinate" value={uploadProgress * 100.0} />
 		</div>
 	);
 

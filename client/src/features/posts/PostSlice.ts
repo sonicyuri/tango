@@ -16,6 +16,7 @@ import PostService, {
 } from "./PostService";
 import { tagUpdateEdit } from "../tags/TagSlice";
 import thunk from "redux-thunk";
+import { LocalSettings } from "../../util/LocalSettings";
 
 const logger: Logger = LogFactory.create("PostSlice");
 
@@ -77,8 +78,15 @@ export const postList = createAsyncThunk("post/list", async (request: PostListRe
 	try {
 		thunkApi.dispatch(setSearchStateAction("loading"));
 
-		const cursor = new PostSearchCursor(request.query, request.page, 0);
-		const posts = await cursor.getPostsAtCursor();
+		const state: PostState = (thunkApi.getState() as any).post;
+		let cursor = state.cursor;
+		if (state.cursor != null && state.cursor.currentQuery == request.query) {
+			state.cursor.setOffset(request.offset);
+		} else {
+			cursor = new PostSearchCursor(request.query, LocalSettings.pageSize.value || 0, request.offset);
+		}
+
+		const posts = await cursor?.getPostsAtCursor();
 
 		return {
 			cursor,
@@ -99,7 +107,7 @@ export const postListRefresh = createAsyncThunk("post/list_refresh", async (requ
 			return thunkApi.rejectWithValue({});
 		}
 
-		state.cursor.preload;
+		state.cursor.reload();
 		const posts = await state.cursor.getPostsAtCursor();
 		return { posts };
 	} catch (error: any) {
@@ -287,7 +295,7 @@ export const PostSlice = createSlice({
 	extraReducers: builder => {
 		builder.addCase(postList.fulfilled, (state, action) => {
 			state.cursor = action.payload.cursor;
-			state.posts = action.payload.posts;
+			state.posts = action.payload.posts || [];
 			state.searchState = "ready";
 		});
 		builder.addCase(postList.rejected, (state, action) => {
@@ -354,7 +362,7 @@ export const PostSlice = createSlice({
 
 		builder.addCase(postVote.fulfilled, (state, action) => {
 			state.votes[action.payload.post.id] = action.payload.score;
-			state.cursor?.updatePostScore(new BooruPost(action.payload.post));
+			state.cursor?.storeOrUpdatePost(new BooruPost(action.payload.post));
 			if (state.currentPost?.id == action.payload.post.id) {
 				state.currentPost.numericScore = action.payload.post.numeric_score;
 			}
