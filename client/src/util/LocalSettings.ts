@@ -35,6 +35,19 @@ class Setting<Type> {
 	}
 }
 
+class SettingWithDefault<Type> extends Setting<Type> {
+	private defaultValue: Type;
+
+	public get value(): Type {
+		return super.value || this.defaultValue;
+	}
+
+	constructor(id: string, defaultValue: Type) {
+		super(id);
+		this.defaultValue = defaultValue;
+	}
+}
+
 class LocalSettings {
 	public static username: Setting<string> = new Setting<string>("auth:username");
 	public static accessToken: Setting<string> = new Setting<string>("token:access");
@@ -44,6 +57,8 @@ class LocalSettings {
 	public static searchFilterOptions: Setting<SearchFilterOptions> = new Setting<SearchFilterOptions>(
 		"settings:search_filter"
 	);
+	// todo: set default based on server setting
+	public static pageSize: SettingWithDefault<number> = new SettingWithDefault<number>("setting:page_size", 48);
 }
 
 export { Setting, LocalSettings };

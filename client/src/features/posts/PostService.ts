@@ -6,7 +6,7 @@ import { BooruRequest } from "../BooruRequest";
 
 export interface PostListRequest {
 	query: string | null;
-	page: number;
+	offset: number;
 }
 
 export interface PostGetRequest {

@@ -12,6 +12,7 @@ import { BooruPost } from "../models/BooruPost";
 import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
+import { LocalSettings } from "../util/LocalSettings";
 
 const logger: Logger = LogFactory.create("ListPage");
 
@@ -46,7 +47,10 @@ const ListPage = () => {
 	});
 
 	useEffect(() => {
-		const currentPage = Number(params.page) || 1;
+		const currentOffset =
+			params.page === undefined
+				? Number(params.offset || 0)
+				: (Number(params.page) - 1) * LocalSettings.pageSize.value;
 		const query = searchParams.get("q");
 
 		document.title =
@@ -55,7 +59,7 @@ const ListPage = () => {
 		dispatch(
 			postList({
 				query: query,
-				page: currentPage
+				offset: currentOffset
 			})
 		);
 	}, [searchParams.get("q"), params.page]);
@@ -96,7 +100,7 @@ const ListPage = () => {
 					color="primary"
 					key={key}
 					count={cursor?.pageCount}
-					page={cursor.cursorPosition[0]}
+					page={cursor.page}
 					onChange={onPageChange}
 				/>
 			</Box>
@@ -140,16 +144,7 @@ const ListPage = () => {
 					);
 				})}
 			</Grid>
-			<div className="ListPage-footer">
-				{renderPagination("pg-bottom")}
-				{cursor.hiddenCount > 0 ? (
-					<Typography variant="body2" style={{ lineHeight: "33px" }}>
-						{cursor.hiddenCount} additional posts hidden based on your filter settings
-					</Typography>
-				) : (
-					<></>
-				)}
-			</div>
+			<div className="ListPage-footer">{renderPagination("pg-bottom")}</div>
 			<Backdrop open={searchState == "loading"}>
 				<div>
 					<LoadingSpinner />
