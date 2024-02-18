@@ -102,12 +102,6 @@ class BooruRequest {
 		return this.runQueryVersioned("v2", url, "GET", undefined).then(res => res.json());
 	}
 
-	static searchPosts(query: string | null, page = 1): PostSearchCursor {
-		const cursor = new PostSearchCursor(query);
-		cursor.setCursorPosition(Math.max(page, 1), 0);
-		return cursor;
-	}
-
 	private static getRequestBody(body: RequestBody, version: "v1" | "v2"): URLSearchParams | string | undefined {
 		if (body == undefined) {
 			return undefined;
