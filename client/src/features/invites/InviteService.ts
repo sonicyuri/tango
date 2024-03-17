@@ -1,8 +1,8 @@
 /** @format */
+import { ApiResponse } from "../ApiResponse";
 import { BooruRequest } from "../BooruRequest";
 
-interface InviteModel
-{
+interface InviteModel {
 	id: string;
 	creator_id: string;
 	invite_code: string;
@@ -10,17 +10,17 @@ interface InviteModel
 	redeemed_time: string;
 }
 
-export interface InviteResponse
-{
+export interface InviteResponse {
 	id: string;
 	creator_id: string;
 	invite_code: string;
 	redeemed: boolean;
-	redeemed_time: Date
+	redeemed_time: Date;
 }
 
-function convertModel(model: InviteModel): InviteResponse
-{
+type InviteListResponse = { invites: InviteModel[] };
+
+function convertModel(model: InviteModel): InviteResponse {
 	return {
 		id: String(model.id),
 		creator_id: String(model.creator_id),
@@ -30,57 +30,29 @@ function convertModel(model: InviteModel): InviteResponse
 	};
 }
 
-type InviteListResult = { type: "success"; result: { invites: InviteModel[] } } | { type: "error"; message: string };
-export type InviteListResponse = { type: "success"; result: InviteResponse[] } | { type: "error"; message: string };
-
-class InviteService
-{
-	static list(): Promise<InviteListResponse>
-	{
-		return BooruRequest.runQueryJsonV2("/user/invite/list").then(r =>
-		{
-			let result = r as InviteListResult;
-			if (result.type == "success")
-			{
-				return { type: "success", result: result.result.invites.map(convertModel) };
-			}
-			else
-			{
-				return { type: "error", message: result.message };
-			}
-		});
+class InviteService {
+	static list(): Promise<ApiResponse<InviteResponse[]>> {
+		return BooruRequest.queryResult<InviteListResponse>(
+			"/user/invite/list"
+		).then(response => response.map(val => val.invites.map(convertModel)));
 	}
 
-	static create(): Promise<InviteListResponse>
-	{
-		return BooruRequest.runQueryVersioned("v2", "/user/invite/new", "POST", {}).then(r => r.json()).then(r =>
-		{
-			let result = r as InviteListResult;
-			if (result.type == "success")
-			{
-				return { type: "success", result: result.result.invites.map(convertModel) };
-			}
-			else
-			{
-				return { type: "error", message: result.message };
-			}
-		});
+	static create(): Promise<ApiResponse<InviteResponse[]>> {
+		return BooruRequest.queryResultAdvanced<InviteListResponse>(
+			"/user/invite/new",
+			"POST",
+			{}
+		).then(response => response.map(val => val.invites.map(convertModel)));
 	}
 
-	static delete(invite_id: string): Promise<InviteListResponse>
-	{
-		return BooruRequest.runQueryVersioned("v2", "/user/invite/delete", "POST", { invite_id: Number(invite_id) }).then(r => r.json()).then(r =>
-		{
-			let result = r as InviteListResult;
-			if (result.type == "success")
+	static delete(invite_id: string): Promise<ApiResponse<InviteResponse[]>> {
+		return BooruRequest.queryResultAdvanced<InviteListResponse>(
+			"/user/invite/delete",
+			"POST",
 			{
-				return { type: "success", result: result.result.invites.map(convertModel) };
+				invite_id: Number(invite_id)
 			}
-			else
-			{
-				return { type: "error", message: result.message };
-			}
-		});
+		).then(response => response.map(val => val.invites.map(convertModel)));
 	}
 }
 
