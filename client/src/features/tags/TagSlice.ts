@@ -1,5 +1,11 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
+import {
+	CaseReducer,
+	createAsyncThunk,
+	createSlice,
+	PayloadAction,
+	Reducer
+} from "@reduxjs/toolkit";
 import moment from "moment";
 import { notify } from "reapop";
 import { BooruPost } from "../../models/BooruPost";
@@ -28,31 +34,39 @@ interface TagState {
 	tagInfoLoadingStates: { [tag: string]: TagInfoState };
 }
 
-const setTagInfoStateReducer: CaseReducer<TagState, PayloadAction<TagInfoRequest>> = (state, action) => {
+const setTagInfoStateReducer: CaseReducer<
+	TagState,
+	PayloadAction<TagInfoRequest>
+> = (state, action) => {
 	state.tagInfoLoadingStates[action.payload.tag] = action.payload.state;
 };
 
-const setTagInfoState = (newState: TagInfoRequest): PayloadAction<TagInfoRequest> => ({
+const setTagInfoState = (
+	newState: TagInfoRequest
+): PayloadAction<TagInfoRequest> => ({
 	type: "tag/setTagInfoState",
 	payload: newState
 });
 
-export const tagList = createAsyncThunk("tag/list", async (_: null, thunkApi) => {
-	try {
-		const result = await TagService.getTags();
-		if (result.type == "error") {
-			logger.error("error listing tags", result.message);
+export const tagList = createAsyncThunk(
+	"tag/list",
+	async (_: null, thunkApi) => {
+		try {
+			const result = await TagService.getTags();
+			if (result.type == "error") {
+				logger.error("error listing tags", result.message);
+				thunkApi.dispatch(notify("failed to obtain tags", "error"));
+				return thunkApi.rejectWithValue({});
+			}
+
+			return result.result;
+		} catch (error: any) {
+			logger.error("error listing tags", error);
 			thunkApi.dispatch(notify("failed to obtain tags", "error"));
 			return thunkApi.rejectWithValue({});
 		}
-
-		return result.result;
-	} catch (error: any) {
-		logger.error("error listing tags", error);
-		thunkApi.dispatch(notify("failed to obtain tags", "error"));
-		return thunkApi.rejectWithValue({});
 	}
-});
+);
 
 interface TagUpdateEditRequest {
 	prevTags: string[];
@@ -60,41 +74,52 @@ interface TagUpdateEditRequest {
 	post: BooruPost;
 }
 
-export const tagUpdateEdit = createAsyncThunk("tag/update_edit", async (req: TagUpdateEditRequest, thunkApi) => {
-	const state: TagState = (thunkApi.getState() as any).tag;
+export const tagUpdateEdit = createAsyncThunk(
+	"tag/update_edit",
+	async (req: TagUpdateEditRequest, thunkApi) => {
+		const state: TagState = (thunkApi.getState() as any).tag;
 
-	const realm = req.post.tags.indexOf("vr") != -1 ? "vr" : req.post.mimeType.startsWith("image") ? "image" : "video";
+		const realm =
+			req.post.tags.indexOf("vr") != -1
+				? "vr"
+				: req.post.mimeType.startsWith("image")
+					? "image"
+					: "video";
 
-	if (moment().isAfter(state.nextTagRequest)) {
-		thunkApi.dispatch(tagList(null));
-		return { prevTags: [], newTags: [], realm };
+		if (moment().isAfter(state.nextTagRequest)) {
+			thunkApi.dispatch(tagList(null));
+			return { prevTags: [], newTags: [], realm };
+		}
+
+		return {
+			prevTags: req.prevTags,
+			newTags: req.newTags,
+			realm
+		};
 	}
+);
 
-	return {
-		prevTags: req.prevTags,
-		newTags: req.newTags,
-		realm
-	};
-});
+export const tagInfoGet = createAsyncThunk(
+	"tag/get_info",
+	async (tag: string, thunkApi) => {
+		try {
+			thunkApi.dispatch(setTagInfoState({ tag, state: "loading" }));
 
-export const tagInfoGet = createAsyncThunk("tag/get_info", async (tag: string, thunkApi) => {
-	try {
-		thunkApi.dispatch(setTagInfoState({ tag, state: "loading" }));
+			const result = await TagService.getTagInfo(tag);
+			if (result.type == "error") {
+				logger.error("error getting tag info", result.message);
+				thunkApi.dispatch(notify("failed to obtain tag info", "error"));
+				return thunkApi.rejectWithValue({ tag });
+			}
 
-		const result = await TagService.getTagInfo(tag);
-		if (result.type == "error") {
-			logger.error("error getting tag info", result.message);
+			return { tag, info: result.result };
+		} catch (error: any) {
+			logger.error("error getting tag info", error);
 			thunkApi.dispatch(notify("failed to obtain tag info", "error"));
 			return thunkApi.rejectWithValue({ tag });
 		}
-
-		return { tag, info: result.result };
-	} catch (error: any) {
-		logger.error("error getting tag info", error);
-		thunkApi.dispatch(notify("failed to obtain tag info", "error"));
-		return thunkApi.rejectWithValue({ tag });
 	}
-});
+);
 
 const initialState: TagState = {
 	tags: [],

@@ -14,12 +14,22 @@ import {
 import { useTheme } from "@mui/system";
 import Grid from "@mui/material/Unstable_Grid2";
 import React, { useEffect, useState } from "react";
-import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+	Link as RouterLink,
+	useNavigate,
+	useParams,
+	useSearchParams
+} from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
-import { postDirectLink, postViewById, postVote, selectPostState } from "../../features/posts/PostSlice";
+import {
+	postDirectLink,
+	postViewById,
+	postVote,
+	selectPostState
+} from "../../features/posts/PostSlice";
 import i18n from "../../util/Internationalization";
 import { LogFactory, Logger } from "../../util/Logger";
 import { Util } from "../../util/Util";
@@ -30,7 +40,10 @@ import TagsCard from "./components/TagsCard";
 import VideoPost from "./components/VideoPost";
 import { BooruPost } from "../../models/BooruPost";
 import PostActions from "./components/PostActions";
-import { favoriteSet, selectFavoriteState } from "../../features/favorites/FavoriteSlice";
+import {
+	favoriteSet,
+	selectFavoriteState
+} from "../../features/favorites/FavoriteSlice";
 import { VoteRequest } from "../../features/posts/PostService";
 
 const logger: Logger = LogFactory.create("PostPage");
@@ -48,7 +61,12 @@ const PostPage = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
 
-	const { searchState, currentPost: _currentPost, cursor, votes } = useAppSelector(selectPostState);
+	const {
+		searchState,
+		currentPost: _currentPost,
+		cursor,
+		votes
+	} = useAppSelector(selectPostState);
 	const { favorites } = useAppSelector(selectFavoriteState);
 
 	const [searchParams] = useSearchParams();
@@ -74,7 +92,7 @@ const PostPage = () => {
 		});
 
 	const vote = votes[currentPost.id] ?? 0;
-	const favorite = favorites.includes(currentPost.id);
+	const favorite = favorites.value.includes(currentPost.id);
 
 	// handles navigating left-right based on swipe, keys, or buttons
 	const handleNavigate = (direction: 1 | -1) => {
@@ -84,7 +102,12 @@ const PostPage = () => {
 	useEffect(() => {
 		function handleKeyDown(e: KeyboardEvent) {
 			let elem = e.target as HTMLElement;
-			if (elem != null && (elem.tagName == "INPUT" || elem.tagName == "SELECT" || elem.tagName == "TEXTAREA")) {
+			if (
+				elem != null &&
+				(elem.tagName == "INPUT" ||
+					elem.tagName == "SELECT" ||
+					elem.tagName == "TEXTAREA")
+			) {
 				return;
 			}
 
@@ -93,11 +116,23 @@ const PostPage = () => {
 			} else if (e.key == "ArrowRight" || e.key == "d") {
 				handleNavigate(1);
 			} else if (e.key == "ArrowUp" || e.key == "w") {
-				dispatch(postVote({ post_id: currentPost.id, action: vote == 1 ? "clear" : "up" }));
+				dispatch(
+					postVote({
+						post_id: currentPost.id,
+						action: vote == 1 ? "clear" : "up"
+					})
+				);
 			} else if (e.key == "ArrowDown" || e.key == "s") {
-				dispatch(postVote({ post_id: currentPost.id, action: vote == -1 ? "clear" : "down" }));
+				dispatch(
+					postVote({
+						post_id: currentPost.id,
+						action: vote == -1 ? "clear" : "down"
+					})
+				);
 			} else if (e.key == "f") {
-				dispatch(favoriteSet({ postId: currentPost.id, favorite: !favorite }));
+				dispatch(
+					favoriteSet({ postId: currentPost.id, favorite: !favorite })
+				);
 			}
 		}
 
@@ -144,7 +179,11 @@ const PostPage = () => {
 
 	// NO HOOKS BELOW THIS POINT - early returns start here
 	if (searchState == "failed") {
-		return Util.logAndDisplayError(logger, "failed to obtain post", currentPost);
+		return Util.logAndDisplayError(
+			logger,
+			"failed to obtain post",
+			currentPost
+		);
 	}
 
 	// choose which component to use based on extension
@@ -162,7 +201,11 @@ const PostPage = () => {
 	} else if (FlashExtensions.indexOf(currentPost.extension) != -1) {
 		postContent = <FlashPost post={currentPost} />;
 	} else {
-		postContent = Util.logAndDisplayError(logger, "unsupported extension {currentPost.extension}", currentPost);
+		postContent = Util.logAndDisplayError(
+			logger,
+			"unsupported extension {currentPost.extension}",
+			currentPost
+		);
 	}
 
 	// the section of the page containing the post itself
@@ -183,10 +226,18 @@ const PostPage = () => {
 	const postsUrl = cursor?.makePostsLink() || "/posts";
 	const breadcrumbs = (
 		<Breadcrumbs aria-label="breadcrumb">
-			<MuiLink underline="hover" color="inherit" component={RouterLink} to="/">
+			<MuiLink
+				underline="hover"
+				color="inherit"
+				component={RouterLink}
+				to="/">
 				{i18n.t("siteTitle")}
 			</MuiLink>
-			<MuiLink underline="hover" color="inherit" component={RouterLink} to={postsUrl}>
+			<MuiLink
+				underline="hover"
+				color="inherit"
+				component={RouterLink}
+				to={postsUrl}>
 				Posts
 			</MuiLink>
 			<Typography color="text.primary">Post {currentPost.id}</Typography>
@@ -227,7 +278,9 @@ const PostPage = () => {
 					</Button>
 				</ButtonGroup>
 			</div>
-			<div className="PostPage-contents">{useMobileLayout ? mobileLayout : desktopLayout}</div>
+			<div className="PostPage-contents">
+				{useMobileLayout ? mobileLayout : desktopLayout}
+			</div>
 		</Box>
 	);
 };

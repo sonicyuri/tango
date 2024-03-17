@@ -12,8 +12,15 @@ import DownloadIcon from "@mui/icons-material/Download";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import { BooruPost } from "../../../models/BooruPost";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
-import { postDownload, postVote, selectPostState } from "../../../features/posts/PostSlice";
-import { favoriteSet, selectFavoriteState } from "../../../features/favorites/FavoriteSlice";
+import {
+	postDownload,
+	postVote,
+	selectPostState
+} from "../../../features/posts/PostSlice";
+import {
+	favoriteSet,
+	selectFavoriteState
+} from "../../../features/favorites/FavoriteSlice";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 
 interface PostActionsProps {
@@ -25,7 +32,7 @@ interface PostActionsProps {
 const PostActions = (props: PostActionsProps) => {
 	const dispatch = useAppDispatch();
 
-	const { loadingState: favoriteLoading } = useAppSelector(selectFavoriteState);
+	const { favorites } = useAppSelector(selectFavoriteState);
 	const { voteState: voteLoading } = useAppSelector(selectPostState);
 
 	const handleDownload = () => {
@@ -33,11 +40,14 @@ const PostActions = (props: PostActionsProps) => {
 	};
 
 	const handleFavorite = () => {
-		dispatch(favoriteSet({ postId: props.post.id, favorite: !props.favorite }));
+		dispatch(
+			favoriteSet({ postId: props.post.id, favorite: !props.favorite })
+		);
 	};
 
 	const handleVote = (score: number) => {
-		let action: "up" | "down" | "clear" = score == props.vote ? "clear" : score == -1 ? "down" : "up";
+		let action: "up" | "down" | "clear" =
+			score == props.vote ? "clear" : score == -1 ? "down" : "up";
 		dispatch(postVote({ post_id: props.post.id, action }));
 	};
 
@@ -45,7 +55,11 @@ const PostActions = (props: PostActionsProps) => {
 		<ButtonGroup className="PostActions">
 			<Button
 				className={props.vote == 1 ? "PostActionsButton--Active" : ""}
-				title={props.vote == 1 ? "Remove Vote (W, ↑)" : "Upvote Post (W, ↑)"}
+				title={
+					props.vote == 1
+						? "Remove Vote (W, ↑)"
+						: "Upvote Post (W, ↑)"
+				}
 				onClick={() => handleVote(1)}>
 				{voteLoading == "loading" ? (
 					<LoadingSpinner />
@@ -57,7 +71,11 @@ const PostActions = (props: PostActionsProps) => {
 			</Button>
 			<Button
 				className={props.vote == -1 ? "PostActionsButton--Active" : ""}
-				title={props.vote == -1 ? "Remove Vote (S, ↓)" : "Downvote Post (S, ↓)"}
+				title={
+					props.vote == -1
+						? "Remove Vote (S, ↓)"
+						: "Downvote Post (S, ↓)"
+				}
 				onClick={() => handleVote(-1)}>
 				{voteLoading == "loading" ? (
 					<LoadingSpinner />
@@ -71,7 +89,13 @@ const PostActions = (props: PostActionsProps) => {
 				className={props.favorite ? "PostActionsButton--Active" : ""}
 				title={props.favorite ? "Unfavorite (F)" : "Favorite (F)"}
 				onClick={handleFavorite}>
-				{favoriteLoading == "loading" ? <LoadingSpinner /> : props.favorite ? <StarIcon /> : <StarBorderIcon />}
+				{!favorites.ready() ? (
+					<LoadingSpinner />
+				) : props.favorite ? (
+					<StarIcon />
+				) : (
+					<StarBorderIcon />
+				)}
 			</Button>
 			<Button title="Download" onClick={handleDownload}>
 				<DownloadIcon />
