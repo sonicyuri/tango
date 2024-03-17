@@ -4,7 +4,7 @@ import { notify } from "reapop";
 import { ApiResponse, HandleableErrorType } from "../features/ApiResponse";
 import i18n from "./Internationalization";
 import { LogFactory, Logger } from "./Logger";
-import { Result } from "./Functional";
+import { Result } from "./Result";
 
 export interface UIErrorFactoryOptions {
 	errorObject?: any;

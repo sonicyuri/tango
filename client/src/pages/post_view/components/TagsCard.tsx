@@ -1,5 +1,11 @@
 /** @format */
-import { Button, Card, CardActions, CardContent, CardHeader } from "@mui/material";
+import {
+	Button,
+	Card,
+	CardActions,
+	CardContent,
+	CardHeader
+} from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoadingOverlay from "../../../components/LoadingOverlay";
@@ -8,7 +14,10 @@ import LoadingSpinner from "../../../components/LoadingSpinner";
 import TagChipList from "../../../components/TagChipList";
 import TagInput from "../../../components/TagInput";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
-import { postSetTags, selectPostState } from "../../../features/posts/PostSlice";
+import {
+	postSetTags,
+	selectPostState
+} from "../../../features/posts/PostSlice";
 import { selectTagState, tagList } from "../../../features/tags/TagSlice";
 import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory } from "../../../util/Logger";
@@ -78,7 +87,11 @@ const TagsCard = (props: TagsCardProps) => {
 			.unwrap()
 			.then(() => {
 				// new tags! we gotta re-fetch the tags list
-				if (tempTags.filter(t => tags.find(t2 => t2.tag == t) === undefined).length > 0) {
+				if (
+					tempTags.filter(
+						t => tags.value.find(t2 => t2.tag == t) === undefined
+					).length > 0
+				) {
 					dispatch(tagList(null));
 				}
 
@@ -88,7 +101,12 @@ const TagsCard = (props: TagsCardProps) => {
 	};
 
 	const editTags = (
-		<TagInput values={tempTags} variant="edit" onValuesChange={values => setTempTags(values)} onSubmit={onSubmit} />
+		<TagInput
+			values={tempTags}
+			variant="edit"
+			onValuesChange={values => setTempTags(values)}
+			onSubmit={onSubmit}
+		/>
 	);
 
 	const editTagsButtons = (
@@ -111,7 +129,9 @@ const TagsCard = (props: TagsCardProps) => {
 		<Card raised={true} className="PostsCard TagsCard">
 			<div className="PostsCard-header">
 				<CardHeader title="Tags" />
-				<CardActions>{editing ? editTagsButtons : showTagsButtons}</CardActions>
+				<CardActions>
+					{editing ? editTagsButtons : showTagsButtons}
+				</CardActions>
 			</div>
 			<CardContent style={{ position: "relative" }}>
 				<LoadingOverlay isLoading={loading} />

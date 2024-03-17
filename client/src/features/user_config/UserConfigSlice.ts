@@ -5,49 +5,40 @@ import { notify } from "reapop";
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
 import UserConfigService, { UserConfig } from "./UserConfigService";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
+import { StaticUIErrorFactory, UIErrorFactory } from "../../util/UIError";
 
 const logger: Logger = LogFactory.create("UserConfigSlice");
+const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
+	"UserConfigSlice"
+);
+
+const configValue = new AsyncValue<UserConfig>("user_config", "config", {});
 
 interface UserConfigState {
-	config: UserConfig;
+	config: StoredAsyncValue<UserConfig>;
 }
 
-export const userConfigGet = createAsyncThunk("user_config/get", async (_: null, thunkApi) => {
-	try {
-		let result = await UserConfigService.get();
-		if (result.type == "error") {
-			logger.error("error fetching config", result.message);
-			thunkApi.dispatch(notify("Error fetching user config: " + result.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
+export const userConfigGet = configValue.addAsyncAction(
+	"user_config/get",
+	(_: null) =>
+		errorFactory.wrapErrorOnly(
+			UserConfigService.get(),
+			"modules.user_config.errors.get"
+		)
+);
 
-		return result.result;
-	} catch (error: any) {
-		logger.error("error fetching config", error);
-		thunkApi.dispatch(notify("Error fetching user config", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const userConfigSet = createAsyncThunk("user_config/set", async (config: UserConfig, thunkApi) => {
-	try {
-		let result = await UserConfigService.set(config);
-		if (result.type == "error") {
-			logger.error("error setting config", result.message);
-			thunkApi.dispatch(notify("Error setting user config: " + result.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-
-		return result.result;
-	} catch (error: any) {
-		logger.error("error setting config", error);
-		thunkApi.dispatch(notify("Error setting user config", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
+export const userConfigSet = configValue.addAsyncAction(
+	"user_config/set",
+	(config: UserConfig) =>
+		errorFactory.wrapErrorOnly(
+			UserConfigService.set(config),
+			"modules.user_config.errors.set"
+		)
+);
 
 const initialState: UserConfigState = {
-	config: {}
+	config: configValue.storedValue
 };
 
 export const UserConfigSlice = createSlice({
@@ -55,16 +46,7 @@ export const UserConfigSlice = createSlice({
 	initialState,
 	reducers: {},
 	extraReducers: builder => {
-		builder.addCase(userConfigGet.fulfilled, (state, action) => {
-			state.config = action.payload;
-		});
-		builder.addCase(userConfigGet.rejected, (state, action) => {});
-
-		builder.addCase(userConfigSet.fulfilled, (state, action) => {
-			state.config = action.payload;
-		});
-
-		builder.addCase(userConfigSet.rejected, (state, action) => {});
+		configValue.setupReducers(builder);
 	}
 });
 

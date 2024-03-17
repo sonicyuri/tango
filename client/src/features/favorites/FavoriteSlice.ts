@@ -18,7 +18,7 @@ import {
 	UIErrorFactory
 } from "../../util/UIError";
 import { ApiResponseError } from "../ApiResponse";
-import { Result } from "../../util/Functional";
+import { Result } from "../../util/Result";
 
 const logger: Logger = LogFactory.create("FavoriteSlice");
 const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
@@ -33,7 +33,7 @@ interface FavoriteState {
 	favorites: StoredAsyncValue<string[]>;
 }
 
-export const favoriteList = favoritesValue.addAction(
+export const favoriteList = favoritesValue.addAsyncAction(
 	"favorite/list",
 	(_: null) =>
 		errorFactory.wrapErrorOnly(
@@ -42,7 +42,7 @@ export const favoriteList = favoritesValue.addAction(
 		)
 );
 
-export const favoriteSet = favoritesValue.addAction(
+export const favoriteSet = favoritesValue.addAsyncAction(
 	"favorite/set",
 	(request: { postId: string; favorite: boolean }) =>
 		errorFactory.wrapErrorOnly(
@@ -60,7 +60,7 @@ export const FavoriteSlice = createSlice({
 	initialState,
 	reducers: {},
 	extraReducers: builder => {
-		favoritesValue.addReducers(builder);
+		favoritesValue.setupReducers(builder);
 	}
 });
 
