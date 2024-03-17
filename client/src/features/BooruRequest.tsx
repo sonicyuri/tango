@@ -5,6 +5,11 @@ import getTangoConfig from "../TangoConfig";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
 import { PostSearchCursor } from "./PostSearchCursor";
+import {
+	ApiResponse,
+	CredentialsFailedErrorResponse,
+	RawApiResponse
+} from "./ApiResponse";
 
 const TangoConfig = getTangoConfig();
 const EndpointV1Url = TangoConfig.endpoints.v1;
@@ -28,6 +33,46 @@ class BooruRequest {
 		this.authHeader = accessToken ? "Bearer " + accessToken : "";
 	}
 
+	static queryResult<T>(endpoint: string): Promise<ApiResponse<T>> {
+		return this.queryResultAdvanced(endpoint, "GET");
+	}
+
+	static queryResultAdvanced<T>(
+		endpoint: string,
+		method: "GET" | "POST",
+		body?: RequestBody
+	): Promise<ApiResponse<T>> {
+		const url = EndpointV2Url + endpoint;
+
+		const headers = new Headers();
+		headers.append("Authorization", this.authHeader || "");
+		headers.append("Content-Type", "application/json");
+
+		const requestBody = BooruRequest.getRequestBody(body, "v2");
+
+		return fetch(url, {
+			method: method,
+			headers: headers,
+			body: requestBody
+		})
+			.then(res => {
+				if (res.status == 403 || res.status == 401) {
+					return Promise.reject(
+						new CredentialsFailedErrorResponse(
+							endpoint,
+							requestBody
+						)
+					);
+				}
+
+				return res.json();
+			})
+			.then(res => {
+				const rawResult = res as RawApiResponse<T>;
+				return ApiResponse.fromRaw(rawResult, endpoint, requestBody);
+			});
+	}
+
 	/**
 	 * Runs a query to the given endpoint with the given method and body.
 	 * V1 targets the original Shimmie API
@@ -39,7 +84,8 @@ class BooruRequest {
 		method: string,
 		body: RequestBody = undefined
 	): Promise<Response> {
-		const url = (version == "v1" ? EndpointV1Url : EndpointV2Url) + endpoint;
+		const url =
+			(version == "v1" ? EndpointV1Url : EndpointV2Url) + endpoint;
 
 		const headers = new Headers();
 		headers.append("Authorization", this.authHeader || "");
@@ -52,14 +98,20 @@ class BooruRequest {
 			body: BooruRequest.getRequestBody(body, version)
 		}).then(res => {
 			if (res.status == 403 || res.status == 401) {
-				return Promise.reject(new CredentialsInvalidError("Credentials rejected!"));
+				return Promise.reject(
+					new CredentialsInvalidError("Credentials rejected!")
+				);
 			}
 
 			return res;
 		});
 	}
 
-	static runUploadQuery(endpoint: string, body: FormData, progressCallback: (percent: number) => void): Promise<any> {
+	static runUploadQuery(
+		endpoint: string,
+		body: FormData,
+		progressCallback: (percent: number) => void
+	): Promise<any> {
 		const url = EndpointV2Url + endpoint;
 
 		const xhr = new XMLHttpRequest();
@@ -74,7 +126,9 @@ class BooruRequest {
 					resolve(JSON.parse(xhr.responseText));
 				} else {
 					if (xhr.status == 403 || xhr.status == 401) {
-						return reject(new CredentialsInvalidError("Credentials rejected!"));
+						return reject(
+							new CredentialsInvalidError("Credentials rejected!")
+						);
 					}
 
 					reject("HTTP status code: " + xhr.status);
@@ -86,7 +140,11 @@ class BooruRequest {
 		});
 	}
 
-	static runQuery(url: string, method: string, body: RequestBody): Promise<Response> {
+	static runQuery(
+		url: string,
+		method: string,
+		body: RequestBody
+	): Promise<Response> {
 		return this.runQueryVersioned("v1", url, method, body);
 	}
 
@@ -99,10 +157,15 @@ class BooruRequest {
 	}
 
 	static runQueryJsonV2(url: string): Promise<any> {
-		return this.runQueryVersioned("v2", url, "GET", undefined).then(res => res.json());
+		return this.runQueryVersioned("v2", url, "GET", undefined).then(res =>
+			res.json()
+		);
 	}
 
-	private static getRequestBody(body: RequestBody, version: "v1" | "v2"): URLSearchParams | string | undefined {
+	private static getRequestBody(
+		body: RequestBody,
+		version: "v1" | "v2"
+	): URLSearchParams | string | undefined {
 		if (body == undefined) {
 			return undefined;
 		}
