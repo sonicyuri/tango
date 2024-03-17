@@ -1,97 +1,66 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
+import {
+	CaseReducer,
+	createAsyncThunk,
+	createSlice,
+	PayloadAction,
+	Reducer
+} from "@reduxjs/toolkit";
 import { notify } from "reapop";
 
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
 import FavoriteService from "./FavoriteService";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
+import {
+	StaticUIErrorFactory,
+	UIError,
+	UIErrorFactory
+} from "../../util/UIError";
+import { ApiResponseError } from "../ApiResponse";
+import { Result } from "../../util/Functional";
 
 const logger: Logger = LogFactory.create("FavoriteSlice");
+const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
+	"FavoriteSlice"
+);
 
 type FavoriteLoadingState = "initial" | "loading" | "ready";
 
+const favoritesValue = new AsyncValue<string[]>("favorite", "favorites", []);
+
 interface FavoriteState {
-	favorites: string[];
-	loadingState: FavoriteLoadingState;
+	favorites: StoredAsyncValue<string[]>;
 }
 
-const setLoadingState: CaseReducer<FavoriteState, PayloadAction<FavoriteLoadingState>> = (state, action) => {
-	state.loadingState = action.payload;
-};
+export const favoriteList = favoritesValue.addAction(
+	"favorite/list",
+	(_: null) =>
+		errorFactory.wrapErrorOnly(
+			FavoriteService.getFavorites(),
+			"modules.favorites.errors.list"
+		)
+);
 
-const setLoadingStateAction = (newState: FavoriteLoadingState): PayloadAction<FavoriteLoadingState> => ({
-	type: "favorite/setLoadingState",
-	payload: newState
-});
-
-export const favoriteList = createAsyncThunk("favorite/list", async (_: null, thunkApi) => {
-	try {
-		thunkApi.dispatch(setLoadingStateAction("loading"));
-
-		const res = await FavoriteService.getFavorites();
-		if (res.type == "success") {
-			return { favorites: res.result };
-		} else {
-			logger.error("error listing favorites", res.message);
-			thunkApi.dispatch(notify("Error listing favorites: " + res.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-	} catch (error: any) {
-		logger.error("error listing favorites", error);
-		thunkApi.dispatch(notify("Error listing favorites", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const favoriteSet = createAsyncThunk(
+export const favoriteSet = favoritesValue.addAction(
 	"favorite/set",
-	async (request: { postId: string; favorite: boolean }, thunkApi) => {
-		try {
-			thunkApi.dispatch(setLoadingStateAction("loading"));
-
-			const res = await FavoriteService.setFavorite(request.postId, request.favorite);
-			if (res.type == "success") {
-				return { favorites: res.result };
-			} else {
-				logger.error("error setting favorite", res.message);
-				thunkApi.dispatch(notify("Failed to set favorite: " + res.message, "error"));
-				return thunkApi.rejectWithValue({});
-			}
-		} catch (error: any) {
-			logger.error("error setting favorite", error);
-			thunkApi.dispatch(notify("Failed to set favorite", "error"));
-			return thunkApi.rejectWithValue({});
-		}
-	}
+	(request: { postId: string; favorite: boolean }) =>
+		errorFactory.wrapErrorOnly(
+			FavoriteService.setFavorite(request.postId, request.favorite),
+			"modules.favorites.errors.set"
+		)
 );
 
 const initialState: FavoriteState = {
-	favorites: [],
-	loadingState: "initial"
+	favorites: favoritesValue.storedValue
 };
 
 export const FavoriteSlice = createSlice({
 	name: "favorite",
 	initialState,
-	reducers: {
-		setLoadingState
-	},
+	reducers: {},
 	extraReducers: builder => {
-		builder.addCase(favoriteList.fulfilled, (state, action) => {
-			state.favorites = action.payload.favorites;
-			state.loadingState = "ready";
-		});
-		builder.addCase(favoriteList.rejected, (state, action) => {
-			state.loadingState = "initial";
-		});
-
-		builder.addCase(favoriteSet.fulfilled, (state, action) => {
-			state.favorites = action.payload.favorites;
-			state.loadingState = "ready";
-		});
-		builder.addCase(favoriteSet.rejected, (state, action) => {
-			state.loadingState = "initial";
-		});
+		favoritesValue.addReducers(builder);
 	}
 });
 
