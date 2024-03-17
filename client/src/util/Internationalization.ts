@@ -20,6 +20,13 @@ i18n.init({
 							set: "Failed to set favorite."
 						}
 					},
+					invites: {
+						errors: {
+							list: "Failed to obtain invites.",
+							create: "Failed to create invite.",
+							delete: "Failed to delete invite."
+						}
+					},
 					tags: {
 						errors: {
 							list: "Failed to obtain tags.",

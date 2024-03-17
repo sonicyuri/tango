@@ -1,128 +1,68 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
+import {
+	CaseReducer,
+	createAsyncThunk,
+	createSlice,
+	PayloadAction,
+	Reducer
+} from "@reduxjs/toolkit";
 import { notify } from "reapop";
 
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
 import InviteService from "./InviteService";
 import FavoriteService, { InviteResponse } from "./InviteService";
+import { StaticUIErrorFactory } from "../../util/UIError";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
 
 const logger: Logger = LogFactory.create("InviteSlice");
-
-type InviteLoadingState = "initial" | "loading" | "ready";
-
-interface InviteState {
-	invites: InviteResponse[];
-	loadingState: InviteLoadingState;
-}
-
-const setLoadingState: CaseReducer<InviteState, PayloadAction<InviteLoadingState>> = (state, action) => {
-	state.loadingState = action.payload;
-};
-
-const setLoadingStateAction = (newState: InviteLoadingState): PayloadAction<InviteLoadingState> => ({
-	type: "invite/setLoadingState",
-	payload: newState
-});
-
-export const inviteList = createAsyncThunk("invite/list", async (_: null, thunkApi) => {
-	try {
-		thunkApi.dispatch(setLoadingStateAction("loading"));
-
-		const res = await InviteService.list();
-		if (res.type == "success") {
-			return { invites: res.result };
-		} else {
-			logger.error("error listing invites", res.message);
-			thunkApi.dispatch(notify("Error listing invites: " + res.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-	} catch (error: any) {
-		logger.error("error listing invites", error);
-		thunkApi.dispatch(notify("Error listing invites", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const inviteCreate = createAsyncThunk(
-	"invite/create",
-	async (request: null, thunkApi) => {
-		try {
-			thunkApi.dispatch(setLoadingStateAction("loading"));
-
-			const res = await InviteService.create();
-			if (res.type == "success") {
-				return { invites: res.result };
-			} else {
-				logger.error("error creating invite", res.message);
-				thunkApi.dispatch(notify("Failed to create invite: " + res.message, "error"));
-				return thunkApi.rejectWithValue({});
-			}
-		} catch (error: any) {
-			logger.error("error creating invite", error);
-			thunkApi.dispatch(notify("Failed to create invite", "error"));
-			return thunkApi.rejectWithValue({});
-		}
-	}
+const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
+	"InviteSlice"
 );
 
-export const inviteDelete = createAsyncThunk(
-	"invite/delete",
-	async (invite_id: string, thunkApi) => {
-		try {
-			thunkApi.dispatch(setLoadingStateAction("loading"));
+const invitesValue = new AsyncValue<InviteResponse[]>("invite", "invites", []);
 
-			const res = await InviteService.delete(invite_id);
-			if (res.type == "success") {
-				return { invites: res.result };
-			} else {
-				logger.error("error deleting invite", res.message);
-				thunkApi.dispatch(notify("Failed to delete invite: " + res.message, "error"));
-				return thunkApi.rejectWithValue({});
-			}
-		} catch (error: any) {
-			logger.error("error deleting invite", error);
-			thunkApi.dispatch(notify("Failed to delete invite", "error"));
-			return thunkApi.rejectWithValue({});
-		}
-	}
+interface InviteState {
+	invites: StoredAsyncValue<InviteResponse[]>;
+}
+
+export const inviteList = invitesValue.addAsyncAction(
+	"invite/list",
+	(_: null) =>
+		errorFactory.wrapErrorOnly(
+			InviteService.list(),
+			"modules.invites.errors.list"
+		)
+);
+
+export const inviteCreate = invitesValue.addAsyncAction(
+	"invite/create",
+	(_: null) =>
+		errorFactory.wrapErrorOnly(
+			InviteService.create(),
+			"modules.invites.errors.create"
+		)
+);
+
+export const inviteDelete = invitesValue.addAsyncAction(
+	"invite/delete",
+	(invite_id: string) =>
+		errorFactory.wrapErrorOnly(
+			InviteService.delete(invite_id),
+			"modules.invites.errors.delete"
+		)
 );
 
 const initialState: InviteState = {
-	invites: [],
-	loadingState: "initial"
+	invites: invitesValue.storedValue
 };
 
 export const InviteSlice = createSlice({
 	name: "invite",
 	initialState,
-	reducers: {
-		setLoadingState
-	},
+	reducers: {},
 	extraReducers: builder => {
-		builder.addCase(inviteList.fulfilled, (state, action) => {
-			state.invites = action.payload.invites;
-			state.loadingState = "ready";
-		});
-		builder.addCase(inviteList.rejected, (state, action) => {
-			state.loadingState = "initial";
-		});
-
-		builder.addCase(inviteCreate.fulfilled, (state, action) => {
-			state.invites = action.payload.invites;
-			state.loadingState = "ready";
-		});
-		builder.addCase(inviteCreate.rejected, (state, action) => {
-			state.loadingState = "initial";
-		});
-
-		builder.addCase(inviteDelete.fulfilled, (state, action) => {
-			state.invites = action.payload.invites;
-			state.loadingState = "ready";
-		});
-		builder.addCase(inviteDelete.rejected, (state, action) => {
-			state.loadingState = "initial";
-		});
+		invitesValue.setupReducers(builder);
 	}
 });
 
