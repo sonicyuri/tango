@@ -19,6 +19,18 @@ i18n.init({
 							list: "Couldn't obtain favorites from server.",
 							set: "Failed to set favorite."
 						}
+					},
+					tags: {
+						errors: {
+							list: "Failed to obtain tags.",
+							info: "Failed to obtain tag info."
+						}
+					},
+					user_config: {
+						errors: {
+							get: "Failed to get user config.",
+							set: "Failed to set user config."
+						}
 					}
 				}
 			}

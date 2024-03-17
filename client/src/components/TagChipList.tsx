@@ -24,7 +24,7 @@ const TagChipList = (props: TagChipListProps) => {
 	const categorylessTags: string[] = [];
 
 	props.tags.forEach(t => {
-		const cat = BooruTag.getCategory(t, categories);
+		const cat = BooruTag.getCategory(t, categories.value);
 		if (cat != null) {
 			postCategories[cat.id] = cat;
 			categoryTags[cat.id] = categoryTags[cat.id] || [];
@@ -37,7 +37,9 @@ const TagChipList = (props: TagChipListProps) => {
 	// filter out tags
 	const ignoredTags: { [tag: string]: boolean } = {};
 	const populateIgnoredTags = function (arr: string[]) {
-		const tagsInOrder = arr.sort((a, b) => tagFrequencies[b] - tagFrequencies[a]);
+		const tagsInOrder = arr.sort(
+			(a, b) => tagFrequencies.value[b] - tagFrequencies.value[a]
+		);
 		if (tagsInOrder.length > LimitTagsCount) {
 			const tagsToIgnore = tagsInOrder.slice(LimitTagsCount);
 			tagsToIgnore.forEach(t => (ignoredTags[t] = true));
@@ -45,11 +47,16 @@ const TagChipList = (props: TagChipListProps) => {
 	};
 
 	if (limitTags) {
-		Object.keys(categoryTags).forEach(cat => populateIgnoredTags(categoryTags[cat]));
+		Object.keys(categoryTags).forEach(cat =>
+			populateIgnoredTags(categoryTags[cat])
+		);
 		populateIgnoredTags(categorylessTags);
 	}
 
-	const renderTagsList = function (tags: string[], cat: BooruTagCategory | null) {
+	const renderTagsList = function (
+		tags: string[],
+		cat: BooruTagCategory | null
+	) {
 		if (tags.length == 0) {
 			return <></>;
 		}
@@ -58,12 +65,20 @@ const TagChipList = (props: TagChipListProps) => {
 		if (props.orderBy == "alphabetical") {
 			filteredTags.sort();
 		} else if (props.orderBy == "popularity") {
-			filteredTags.sort((a, b) => tagFrequencies[b] - tagFrequencies[a]);
+			filteredTags.sort(
+				(a, b) => tagFrequencies.value[b] - tagFrequencies.value[a]
+			);
 		}
 
 		return (
-			<div className="TagsCard-cat" key={"cat-tags-" + (cat?.id || "default")}>
-				{<Typography variant="subtitle1">{cat?.displayMultiple || "Other"}</Typography>}
+			<div
+				className="TagsCard-cat"
+				key={"cat-tags-" + (cat?.id || "default")}>
+				{
+					<Typography variant="subtitle1">
+						{cat?.displayMultiple || "Other"}
+					</Typography>
+				}
 				{filteredTags.map(t => (
 					<TagChip key={"tc-" + t} tag={t} />
 				))}
@@ -71,7 +86,8 @@ const TagChipList = (props: TagChipListProps) => {
 					<></>
 				) : (
 					<Typography variant="subtitle1">
-						too many tags to show, {tags.length - filteredTags.length} tags hidden
+						too many tags to show,{" "}
+						{tags.length - filteredTags.length} tags hidden
 					</Typography>
 				)}
 			</div>
@@ -83,7 +99,9 @@ const TagChipList = (props: TagChipListProps) => {
 
 	return (
 		<>
-			{categoriesSorted.map(cat => renderTagsList(categoryTags[cat], postCategories[cat]))}
+			{categoriesSorted.map(cat =>
+				renderTagsList(categoryTags[cat], postCategories[cat])
+			)}
 			{renderTagsList(categorylessTags, null)}
 		</>
 	);

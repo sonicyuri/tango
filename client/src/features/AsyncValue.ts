@@ -11,7 +11,7 @@ import {
 } from "@reduxjs/toolkit";
 import { LogFactory, Logger } from "../util/Logger";
 import { AsyncThunkConfig } from "@reduxjs/toolkit/dist/createAsyncThunk";
-import { Result } from "../util/Functional";
+import { Result } from "../util/Result";
 import { UIError, UIErrorFactory, uiError } from "../util/UIError";
 import { ApiResponse, ApiResponseError } from "./ApiResponse";
 
@@ -34,6 +34,14 @@ export class StoredAsyncValue<T> {
 	ready(): boolean {
 		return this.state === AsyncValueState.Completed;
 	}
+
+	valueOrDefault(defaultValue: T) {
+		if (this.ready()) {
+			return this.value;
+		}
+
+		return defaultValue;
+	}
 }
 
 /**
@@ -44,8 +52,15 @@ export class AsyncValue<T> {
 	private errorFactory: UIErrorFactory<AsyncValue<T>>;
 
 	private value: StoredAsyncValue<T>;
-	private actions: AsyncThunk<Result<T, UIError>, any, AsyncThunkConfig>[] =
-		[];
+	private asyncActions: AsyncThunk<
+		Result<T, UIError>,
+		any,
+		AsyncThunkConfig
+	>[] = [];
+	private actions: {
+		name: string;
+		callback: (state: T, payload: any) => Result<T, UIError>;
+	}[] = [];
 	private name: string;
 
 	private stateUpdateAction: ActionCreatorWithPayload<AsyncValueState>;
@@ -71,12 +86,29 @@ export class AsyncValue<T> {
 		);
 	}
 
-	addReducers<StateType>(builder: ActionReducerMapBuilder<StateType>) {
+	setupReducers<StateType>(builder: ActionReducerMapBuilder<StateType>) {
 		builder.addCase(this.stateUpdateAction, (state, action) => {
 			this.setOnReduxState(state, { state: action.payload });
 		});
 
-		this.actions.forEach(action => {
+		this.actions.forEach(({ name, callback }) => {
+			builder.addCase<any, { type: string; payload: any }>(
+				name,
+				(state, action) => {
+					const currentStoredValue: StoredAsyncValue<T> = (
+						state as any
+					)[this.name];
+					callback(
+						currentStoredValue.value,
+						action.payload
+					).ifSuccess(newValue => {
+						this.setOnReduxState(state, { value: newValue });
+					});
+				}
+			);
+		});
+
+		this.asyncActions.forEach(action => {
 			builder.addCase(action.fulfilled, (state, action) => {
 				action.payload.match(
 					val => {
@@ -105,6 +137,18 @@ export class AsyncValue<T> {
 
 	addAction<S>(
 		name: string,
+		callback: (state: T, payload: S) => Result<T, UIError>
+	) {
+		this.actions.push({
+			name,
+			callback
+		});
+
+		return (payload: S) => ({ type: name, payload });
+	}
+
+	addAsyncAction<S>(
+		name: string,
 		callback: (payload: S) => Promise<Result<T, UIError>>
 	) {
 		const action = createAsyncThunk(name, (payload: S, thunkApi) => {
@@ -122,19 +166,44 @@ export class AsyncValue<T> {
 				});
 		});
 
-		this.actions.push(action);
+		this.asyncActions.push(action);
 		return action;
+	}
+
+	/**
+	 * Returns a copy of the given state object with this value's properties decomposed into individual fields.
+	 */
+	decomposeProperties<T extends object, StateType>(
+		state: StateType
+	): StateType & {
+		[Property in keyof T]: StoredAsyncValue<T[Property]>;
+	} {
+		const currentStoredValue: StoredAsyncValue<T> = (state as any)[
+			this.name
+		];
+		const currentStoredObj = currentStoredValue.value as any;
+
+		let newState: any = {};
+		newState = Object.assign(newState, state);
+		Object.keys(currentStoredObj).forEach(k => {
+			newState[k] = new StoredAsyncValue<object>(
+				currentStoredValue.state,
+				currentStoredObj[k]
+			);
+		});
+
+		return newState as any;
 	}
 
 	private setOnReduxState(state: any, newValues: any) {
 		const currentStateObject: StoredAsyncValue<T> = (state as any)[
 			this.name
 		];
-		const newStateObject = new StoredAsyncValue(
+		let newStateObject: any = new StoredAsyncValue(
 			currentStateObject.state,
 			currentStateObject.value
 		);
-		Object.assign(newStateObject, newValues);
+		newStateObject = Object.assign(newStateObject, newValues);
 		(state as any)[this.name] = newStateObject;
 	}
 }
