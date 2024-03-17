@@ -119,4 +119,24 @@ export class Result<ValueType, ErrorType> {
 			func(this.contents.error);
 		}
 	}
+
+	/**
+	 * Casts this result to a new result of a different type, replacing the value
+	 * with the result of func if the result contains a value.
+	 */
+	map<CastType>(
+		func: (val: ValueType) => CastType
+	): Result<CastType, ErrorType> {
+		if (this.contents.type === "value") {
+			return new Result<CastType, ErrorType>({
+				type: "value",
+				value: func(this.contents.value)
+			});
+		}
+
+		return new Result<CastType, ErrorType>({
+			type: "error",
+			error: this.contents.error
+		});
+	}
 }

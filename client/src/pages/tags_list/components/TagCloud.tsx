@@ -9,6 +9,7 @@ import { Util } from "../../../util/Util";
 
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
+import LoadingSpinner from "../../../components/LoadingSpinner";
 
 interface TagCloudProps {
 	tags: string[];
@@ -18,7 +19,13 @@ const TagCloud = (props: TagCloudProps) => {
 	const { categories, tagFrequencies } = useAppSelector(selectTagState);
 	const navigate = useNavigate();
 
-	const words = props.tags.map(t => ({ text: t, value: tagFrequencies[t] })).sort((a, b) => b.value - a.value);
+	if (!categories.ready() || !tagFrequencies.ready()) {
+		return <LoadingSpinner />;
+	}
+
+	const words = props.tags
+		.map(t => ({ text: t, value: tagFrequencies.value[t] }))
+		.sort((a, b) => b.value - a.value);
 
 	return (
 		<div style={{ aspectRatio: 1, textShadow: "#000000 1px 1px 2px" }}>
@@ -32,13 +39,20 @@ const TagCloud = (props: TagCloudProps) => {
 					spiral: "rectangular"
 				}}
 				callbacks={{
-					onWordClick: (word, ev) => navigate(Util.makePostsLink(word.text, 1)),
+					onWordClick: (word, ev) =>
+						navigate(Util.makePostsLink(word.text, 1)),
 					getWordColor: word => {
-						const cat = BooruTag.getCategory(word.text, categories);
+						const cat = BooruTag.getCategory(
+							word.text,
+							categories.value
+						);
 						return cat?.color ?? "#ffffff";
 					},
 
-					getWordTooltip: word => `${word.text}, ${word.value} use${word.value == 1 ? "" : "s"}`
+					getWordTooltip: word =>
+						`${word.text}, ${word.value} use${
+							word.value == 1 ? "" : "s"
+						}`
 				}}
 			/>
 		</div>

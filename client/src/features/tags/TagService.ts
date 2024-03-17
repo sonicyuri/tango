@@ -1,45 +1,57 @@
 /** @format */
-import { BooruTag, BooruTagCategory, ShimmieTagCategory } from "../../models/BooruTag";
+import {
+	BooruTag,
+	BooruTagCategory,
+	ShimmieTagCategory
+} from "../../models/BooruTag";
+import { ApiResponse } from "../ApiResponse";
 import { BooruRequest } from "../BooruRequest";
 
-interface TagListResult {
-	tags: { [tag: string]: number };
+export interface TagListResponse {
+	tags: BooruTag[];
+	tagFrequencies: { [tag: string]: number };
 	categories: BooruTagCategory[];
 }
 
-type TagListResponse = { type: "success"; result: TagListResult } | { type: "error"; message: string };
+interface RawTagListResponse {
+	tags: { [tag: string]: number };
+	categories: ShimmieTagCategory[];
+}
 
-export interface TagInfoResult {
+export interface TagInfoResponse {
 	description: string;
 }
 
-type TagInfoResponse = { type: "success"; result: TagInfoResult } | { type: "error"; message: string };
-
 class TagService {
-	static async getTags(): Promise<TagListResponse> {
-		return BooruRequest.runQueryJsonV2("/tag/list").then(v => {
-			if (v.type == "error") {
-				return v;
-			}
-
-			const tags = v.result.tags;
-			return {
-				type: "success",
-				result: {
-					tags,
-					categories: v.result.categories.map((c: ShimmieTagCategory) => new BooruTagCategory(c))
-				}
-			};
-		});
+	static async getTags(): Promise<ApiResponse<TagListResponse>> {
+		return BooruRequest.queryResult<RawTagListResponse>("/tag/list").then(
+			response =>
+				response.map(val => ({
+					tags: Object.keys(val.tags).map(
+						t => new BooruTag(t, val.tags[t])
+					),
+					tagFrequencies: val.tags,
+					categories: val.categories.map(c => new BooruTagCategory(c))
+				}))
+		);
 	}
 
-	static async getTagInfo(tag: string): Promise<TagInfoResponse> {
-		return BooruRequest.runQueryJsonV2("/tag/info/" + encodeURIComponent(tag));
+	static async getTagInfo(
+		tag: string
+	): Promise<ApiResponse<TagInfoResponse>> {
+		return BooruRequest.queryResult<TagInfoResponse>(
+			"/tag/info/" + encodeURIComponent(tag)
+		);
 	}
 
-	static async setTagInfo(tag: string, newInfo: TagInfoResult): Promise<TagInfoResponse> {
-		return BooruRequest.runQueryVersioned("v2", `/tag/info/${encodeURIComponent(tag)}/edit`, "POST", newInfo).then(
-			v => v.json()
+	static async setTagInfo(
+		tag: string,
+		newInfo: TagInfoResponse
+	): Promise<ApiResponse<TagInfoResponse>> {
+		return BooruRequest.queryResultAdvanced<TagInfoResponse>(
+			`/tag/info/${encodeURIComponent(tag)}/edit`,
+			"POST",
+			newInfo
 		);
 	}
 }

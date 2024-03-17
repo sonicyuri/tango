@@ -1,6 +1,6 @@
 /** @format */
 
-import { Result, ResultContents } from "../util/Functional";
+import { Result, ResultContents } from "../util/Result";
 import i18n from "../util/Internationalization";
 import { LoggedError } from "../util/Logger";
 import {
@@ -89,8 +89,9 @@ export class ApiResponseError {
  * Wraps a response from the Tango API.
  */
 export class ApiResponse<T> extends Result<T, ApiResponseError> {
-	private errorMessage: string | undefined = undefined;
-
+	/**
+	 * Creates an API response from a raw response and metadata.
+	 */
 	static fromRaw<T>(
 		rawResponse: RawApiResponse<T>,
 		endpoint: string,
@@ -128,6 +129,20 @@ export class ApiResponse<T> extends Result<T, ApiResponseError> {
 	 */
 	get handleableType(): HandleableErrorType {
 		return HandleableErrorType.Unhandleable;
+	}
+
+	override map<CastType>(func: (val: T) => CastType): ApiResponse<CastType> {
+		if (this.contents.type === "value") {
+			return new ApiResponse<CastType>({
+				type: "value",
+				value: func(this.contents.value)
+			});
+		}
+
+		return new ApiResponse<CastType>({
+			type: "error",
+			error: this.contents.error
+		});
 	}
 
 	protected constructor(contents: ResultContents<T, ApiResponseError>) {

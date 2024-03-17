@@ -20,29 +20,42 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { postSetTags, selectPostState } from "../../features/posts/PostSlice";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
-import { selectUserConfigState, userConfigSet } from "../../features/user_config/UserConfigSlice";
-import { ImportOptions, UserConfig } from "../../features/user_config/UserConfigService";
+import {
+	selectUserConfigState,
+	userConfigSet
+} from "../../features/user_config/UserConfigSlice";
+import {
+	ImportOptions,
+	UserConfig
+} from "../../features/user_config/UserConfigService";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import { notify } from "reapop";
 
 const ImportPage = () => {
-	const { prepareResponse, lastImportedPost } = useAppSelector(selectImportState);
+	const { prepareResponse, lastImportedPost } =
+		useAppSelector(selectImportState);
 	const { config } = useAppSelector(selectUserConfigState);
 	const { cursor } = useAppSelector(selectPostState);
 	const navigate = useNavigate();
 	const dispatch = useAppDispatch();
 
 	let importOptions =
-		prepareResponse != null && config.import_service_config
-			? config.import_service_config[prepareResponse.service]
+		prepareResponse != null &&
+		config.ready() &&
+		config.value.import_service_config
+			? config.value.import_service_config[prepareResponse.service]
 			: {
 					mappings: {},
 					deleted_tags: []
-			  };
+				};
 
-	const [tagMapping, setTagMapping] = useState<{ [tag: string]: string }>({ ...importOptions.mappings });
-	const [deletedTags, setDeletedTags] = useState<string[]>([...importOptions.deleted_tags]);
+	const [tagMapping, setTagMapping] = useState<{ [tag: string]: string }>({
+		...importOptions.mappings
+	});
+	const [deletedTags, setDeletedTags] = useState<string[]>([
+		...importOptions.deleted_tags
+	]);
 	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
@@ -63,9 +76,12 @@ const ImportPage = () => {
 
 		let newImportOptions: ImportOptions = { ...importOptions };
 		newImportOptions.deleted_tags = deletedTags;
-		newImportOptions.mappings = { ...newImportOptions.mappings, ...tagMapping };
+		newImportOptions.mappings = {
+			...newImportOptions.mappings,
+			...tagMapping
+		};
 
-		let configCopy: UserConfig = { ...config };
+		let configCopy: UserConfig = { ...config.value };
 		let serviceConfigs = { ...configCopy.import_service_config } || {};
 		serviceConfigs[prepareResponse.service] = newImportOptions;
 		configCopy.import_service_config = serviceConfigs;
@@ -102,20 +118,28 @@ const ImportPage = () => {
 
 	let body = <p>No import data!</p>;
 
-	if (prepareResponse != null && lastImportedPost != null) {
+	if (!config.ready()) {
+		body = <LoadingSpinner />;
+	} else if (prepareResponse != null && lastImportedPost != null) {
 		body = (
 			<>
 				<TableContainer sx={{ maxHeight: "90vh" }}>
 					<Table stickyHeader aria-label="aliases table">
 						<TableHead>
 							<TableRow>
-								<TableCell align="left" style={{ minWidth: 200 }}>
+								<TableCell
+									align="left"
+									style={{ minWidth: 200 }}>
 									Imported Tag
 								</TableCell>
-								<TableCell align="left" style={{ minWidth: 200 }}>
+								<TableCell
+									align="left"
+									style={{ minWidth: 200 }}>
 									Mapped Tag
 								</TableCell>
-								<TableCell align="right" style={{ minWidth: 40 }}></TableCell>
+								<TableCell
+									align="right"
+									style={{ minWidth: 40 }}></TableCell>
 							</TableRow>
 						</TableHead>
 						<TableBody>
@@ -123,10 +147,13 @@ const ImportPage = () => {
 								.slice()
 								.sort()
 								.map(oldTag => {
-									const deleted = deletedTags.indexOf(oldTag) != -1;
+									const deleted =
+										deletedTags.indexOf(oldTag) != -1;
 									const classes = ["ImportPage-row"];
 									if (deleted) {
-										classes.push("ImportPage-row--disabled");
+										classes.push(
+											"ImportPage-row--disabled"
+										);
 									}
 
 									const newTag = tagMapping[oldTag] ?? oldTag;
@@ -137,15 +164,20 @@ const ImportPage = () => {
 											tabIndex={-1}
 											key={oldTag}
 											className={classes.join(" ")}>
-											<TableCell align="left">{oldTag}</TableCell>
+											<TableCell align="left">
+												{oldTag}
+											</TableCell>
 											<TableCell align="left">
 												<TextField
 													variant="standard"
 													value={newTag}
 													disabled={deleted}
 													onChange={e => {
-														tagMapping[oldTag] = e.target.value;
-														setTagMapping({ ...tagMapping });
+														tagMapping[oldTag] =
+															e.target.value;
+														setTagMapping({
+															...tagMapping
+														});
 													}}
 												/>
 											</TableCell>
@@ -153,14 +185,27 @@ const ImportPage = () => {
 												<IconButton
 													onClick={() => {
 														if (deleted) {
-															deletedTags.splice(deletedTags.indexOf(oldTag), 1);
+															deletedTags.splice(
+																deletedTags.indexOf(
+																	oldTag
+																),
+																1
+															);
 														} else {
-															deletedTags.push(oldTag);
+															deletedTags.push(
+																oldTag
+															);
 														}
 
-														setDeletedTags([...deletedTags]);
+														setDeletedTags([
+															...deletedTags
+														]);
 													}}>
-													{deleted ? <RestoreFromTrashIcon /> : <DeleteIcon />}
+													{deleted ? (
+														<RestoreFromTrashIcon />
+													) : (
+														<DeleteIcon />
+													)}
 												</IconButton>
 											</TableCell>
 										</TableRow>
@@ -171,13 +216,19 @@ const ImportPage = () => {
 				</TableContainer>
 				<Grid container style={{ paddingTop: "15px" }}>
 					<Grid xs={2}>
-						<Button variant="outlined" style={{ width: "100%" }} onClick={handleCancel}>
+						<Button
+							variant="outlined"
+							style={{ width: "100%" }}
+							onClick={handleCancel}>
 							Cancel
 						</Button>
 					</Grid>
 					<Grid xs={8}></Grid>
 					<Grid xs={2}>
-						<Button variant="contained" style={{ width: "100%" }} onClick={handleSubmit}>
+						<Button
+							variant="contained"
+							style={{ width: "100%" }}
+							onClick={handleSubmit}>
 							Submit
 						</Button>
 					</Grid>

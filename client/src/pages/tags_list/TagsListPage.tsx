@@ -8,6 +8,7 @@ import TagChipList from "../../components/TagChipList";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
 import { selectTagState } from "../../features/tags/TagSlice";
 import TagCloud from "./components/TagCloud";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 interface TagsListProps {
 	tab: "list" | "cloud" | "none";
@@ -16,12 +17,18 @@ interface TagsListProps {
 const TagsListPage = (props: TagsListProps) => {
 	const dispatch = useAppDispatch();
 
-	const { tagFrequencies } = useAppSelector(selectTagState);
+	const { tags } = useAppSelector(selectTagState);
 
 	const [showAll, setShowAll] = useState(false);
 
-	const tagsToShow = Object.keys(tagFrequencies);
-	const tagList = <TagChipList tags={tagsToShow} orderBy="popularity" limitTags={!showAll} />;
+	const tagsToShow = tags.value.map(v => v.tag);
+	const tagList = (
+		<TagChipList
+			tags={tagsToShow}
+			orderBy="popularity"
+			limitTags={!showAll}
+		/>
+	);
 	const tagCloud = <TagCloud tags={tagsToShow} />;
 
 	return (
@@ -33,19 +40,26 @@ const TagsListPage = (props: TagsListProps) => {
 						control={
 							<Switch
 								checked={showAll}
-								onChange={(ev: React.ChangeEvent<HTMLInputElement>, checked: boolean) =>
-									setShowAll(checked)
-								}
+								onChange={(
+									ev: React.ChangeEvent<HTMLInputElement>,
+									checked: boolean
+								) => setShowAll(checked)}
 							/>
 						}
 						label="Show all"
 					/>
 				</FormGroup>
 			}>
-			<Tabs value={props.tab == "cloud" ? 1 : 0} aria-label="tabs list visualization mode">
-				<Tab component={Link} label="List" to="/tags/list" />
-				<Tab component={Link} label="Cloud" to="/tags/cloud" />
-			</Tabs>
+			{tags.ready() ? (
+				<Tabs
+					value={props.tab == "cloud" ? 1 : 0}
+					aria-label="tabs list visualization mode">
+					<Tab component={Link} label="List" to="/tags/list" />
+					<Tab component={Link} label="Cloud" to="/tags/cloud" />
+				</Tabs>
+			) : (
+				<LoadingSpinner />
+			)}
 			{props.tab == "list" ? tagList : tagCloud}
 		</PageContainer>
 	);

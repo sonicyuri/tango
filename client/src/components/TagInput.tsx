@@ -36,12 +36,18 @@ const UnpaddedFilledInput = styled(TextField)({
 
 const LISTBOX_PADDING = 8;
 
-function renderRow(categories: BooruTagCategory[], tagFrequencies: { [tag: string]: number }) {
+function renderRow(
+	categories: BooruTagCategory[],
+	tagFrequencies: { [tag: string]: number }
+) {
 	return (props: ListChildComponentProps) => {
 		const { data, index, style } = props;
 		const dataSet = data[index];
 		const tag = dataSet[1];
-		const category = useMemo(() => BooruTag.getCategory(tag, categories), [tag]);
+		const category = useMemo(
+			() => BooruTag.getCategory(tag, categories),
+			[tag]
+		);
 		const formattedTag = useMemo(() => Util.formatTag(tag), [tag]);
 
 		const inlineStyle = {
@@ -77,42 +83,45 @@ function useResetCache(data: any) {
 	return ref;
 }
 
-const ListboxComponent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLElement>>(
-	function ListBoxComponent(props, ref) {
-		const { children, ...other } = props;
-		const { categories, tagFrequencies } = useAppSelector(selectTagState);
+const ListboxComponent = React.forwardRef<
+	HTMLDivElement,
+	React.HTMLAttributes<HTMLElement>
+>(function ListBoxComponent(props, ref) {
+	const { children, ...other } = props;
+	const { categories, tagFrequencies } = useAppSelector(selectTagState);
 
-		const itemData: React.ReactElement[] = [];
-		(children as React.ReactElement[]).forEach((item: React.ReactElement & { children?: React.ReactElement[] }) => {
+	const itemData: React.ReactElement[] = [];
+	(children as React.ReactElement[]).forEach(
+		(item: React.ReactElement & { children?: React.ReactElement[] }) => {
 			itemData.push(item);
 			itemData.push(...(item.children || []));
-		});
+		}
+	);
 
-		const itemSize = 36;
-		const height = itemData.length * itemSize;
+	const itemSize = 36;
+	const height = itemData.length * itemSize;
 
-		const gridRef = useResetCache(itemData.length);
+	const gridRef = useResetCache(itemData.length);
 
-		return (
-			<div ref={ref}>
-				<OuterElementContext.Provider value={other}>
-					<VariableSizeList
-						itemData={itemData}
-						height={height + 2 * LISTBOX_PADDING}
-						width="100%"
-						ref={gridRef}
-						outerElementType={OuterElementType}
-						innerElementType="ul"
-						itemSize={(index: number) => itemSize}
-						overscanCount={100}
-						itemCount={itemData.length}>
-						{renderRow(categories, tagFrequencies)}
-					</VariableSizeList>
-				</OuterElementContext.Provider>
-			</div>
-		);
-	}
-);
+	return (
+		<div ref={ref}>
+			<OuterElementContext.Provider value={other}>
+				<VariableSizeList
+					itemData={itemData}
+					height={height + 2 * LISTBOX_PADDING}
+					width="100%"
+					ref={gridRef}
+					outerElementType={OuterElementType}
+					innerElementType="ul"
+					itemSize={(index: number) => itemSize}
+					overscanCount={100}
+					itemCount={itemData.length}>
+					{renderRow(categories.value, tagFrequencies.value)}
+				</VariableSizeList>
+			</OuterElementContext.Provider>
+		</div>
+	);
+});
 
 const StyledPopper = styled(Popper)({
 	[`& .${autocompleteClasses.listbox}`]: {
@@ -142,16 +151,19 @@ const TagInput = (props: TagInputProps) => {
 
 	const options = useMemo(
 		() =>
-			tags
+			tags.value
 				.slice()
-				.map(t => new BooruTag(t.tag, tagFrequencies[t.tag] || 0))
+				.map(t => new BooruTag(t.tag, tagFrequencies.value[t.tag] || 0)) // why is this here?
 				.sort((a, b) => b.frequency - a.frequency)
 				.filter(t => !existingTags[t.tag])
 				.map(t => t.tag),
 		[tags]
 	);
 
-	const filterOptions = (options: string[], { inputValue }: FilterOptionsState<string>): string[] => {
+	const filterOptions = (
+		options: string[],
+		{ inputValue }: FilterOptionsState<string>
+	): string[] => {
 		const sanitizeInput = inputValue.trim().replace(/\s+/g, "_");
 
 		return inputValue.trim().length == 0
@@ -160,8 +172,8 @@ const TagInput = (props: TagInputProps) => {
 					threshold: matchSorter.rankings.CONTAINS,
 					sorter: items =>
 						items.sort((a, b) => {
-							let tagAFreq = tagFrequencies[a.item] || 0;
-							let tagBFreq = tagFrequencies[b.item] || 0;
+							let tagAFreq = tagFrequencies.value[a.item] || 0;
+							let tagBFreq = tagFrequencies.value[b.item] || 0;
 
 							const max = Math.max(tagAFreq, tagBFreq);
 							tagAFreq /= max;
@@ -173,22 +185,32 @@ const TagInput = (props: TagInputProps) => {
 								return -1;
 							} else if (
 								a.item.startsWith(sanitizeInput) ||
-								Util.stripTagCategory(a.item).startsWith(sanitizeInput)
+								Util.stripTagCategory(a.item).startsWith(
+									sanitizeInput
+								)
 							) {
 								tagAFreq *= factor;
 							} else {
-								tagAFreq *= a.item.indexOf(sanitizeInput) != -1 ? 1 : 0.5;
+								tagAFreq *=
+									a.item.indexOf(sanitizeInput) != -1
+										? 1
+										: 0.5;
 							}
 
 							if (b.item == sanitizeInput) {
 								return 1;
 							} else if (
 								b.item.startsWith(sanitizeInput) ||
-								Util.stripTagCategory(b.item).startsWith(sanitizeInput)
+								Util.stripTagCategory(b.item).startsWith(
+									sanitizeInput
+								)
 							) {
 								tagBFreq *= factor;
 							} else {
-								tagBFreq *= b.item.indexOf(sanitizeInput) != -1 ? 1 : 0.5;
+								tagBFreq *=
+									b.item.indexOf(sanitizeInput) != -1
+										? 1
+										: 0.5;
 							}
 
 							return tagBFreq - tagAFreq;
@@ -213,7 +235,10 @@ const TagInput = (props: TagInputProps) => {
 				anchorEl={anchorEl}
 				onClose={handleClose}
 				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-				transformOrigin={{ vertical: "top", horizontal: "left" }}></Popover>
+				transformOrigin={{
+					vertical: "top",
+					horizontal: "left"
+				}}></Popover>
 		</>
 	);
 
@@ -231,7 +256,9 @@ const TagInput = (props: TagInputProps) => {
 				options={options}
 				value={props.values}
 				onChange={(_: any, values: readonly string[]) =>
-					props.onValuesChange(values.map(v => v.trim().replace(/\s+/g, "_")))
+					props.onValuesChange(
+						values.map(v => v.trim().replace(/\s+/g, "_"))
+					)
 				}
 				freeSolo
 				disableClearable={variant == "edit"}
@@ -240,7 +267,10 @@ const TagInput = (props: TagInputProps) => {
 						// eslint-disable-next-line react/jsx-key
 						<Chip
 							variant="outlined"
-							label={tag.replace(/_/g, "_" + String.fromCharCode(8203))}
+							label={tag.replace(
+								/_/g,
+								"_" + String.fromCharCode(8203)
+							)}
 							{...getTagProps({
 								index
 							})}
@@ -251,8 +281,12 @@ const TagInput = (props: TagInputProps) => {
 					<>
 						<UnpaddedFilledInput
 							{...params}
-							variant={variant == "search" ? "filled" : "outlined"}
-							placeholder={variant == "search" ? "Search" : "Select tags"}
+							variant={
+								variant == "search" ? "filled" : "outlined"
+							}
+							placeholder={
+								variant == "search" ? "Search" : "Select tags"
+							}
 						/>
 
 						<div
@@ -265,7 +299,9 @@ const TagInput = (props: TagInputProps) => {
 								pointerEvents: "none"
 							}}></div>
 						{variant == "search" && enableOptions ? (
-							<IconButton onClick={handleClick} className="TagInput-SettingsButton">
+							<IconButton
+								onClick={handleClick}
+								className="TagInput-SettingsButton">
 								<TuneIcon />
 							</IconButton>
 						) : (
@@ -277,15 +313,22 @@ const TagInput = (props: TagInputProps) => {
 					//[props, option, state.index] as React.ReactNode
 
 					const tag = option;
-					const category = BooruTag.getCategory(tag, categories);
+					const category = BooruTag.getCategory(
+						tag,
+						categories.value
+					);
 					const formattedTag = Util.formatTag(tag);
 
 					return (
 						<Box component="li" {...props}>
-							<Typography variant="subtitle1" color={category?.color}>
+							<Typography
+								variant="subtitle1"
+								color={category?.color}>
 								{formattedTag}&nbsp;
 							</Typography>
-							<Typography variant="body2">{tagFrequencies[tag]}</Typography>
+							<Typography variant="body2">
+								{tagFrequencies.value[tag]}
+							</Typography>
 						</Box>
 					);
 				}}
