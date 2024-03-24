@@ -45,6 +45,7 @@ import {
 	selectFavoriteState
 } from "../../features/favorites/FavoriteSlice";
 import { VoteRequest } from "../../features/posts/PostService";
+import { ContentCache } from "../../features/ContentCache";
 
 const logger: Logger = LogFactory.create("PostPage");
 
@@ -90,6 +91,8 @@ const PostPage = () => {
 			numeric_score: 0,
 			tags: []
 		});
+
+	ContentCache.currentScreen = "view";
 
 	const vote = votes.ready() ? votes.value[currentPost.id] ?? 0 : 0;
 	const favorite = favorites.value.includes(currentPost.id);

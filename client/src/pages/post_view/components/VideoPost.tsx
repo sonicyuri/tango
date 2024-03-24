@@ -5,6 +5,8 @@ import { SwipeableHandlers } from "react-swipeable";
 import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory } from "../../../util/Logger";
 import { Util } from "../../../util/Util";
+import { ContentLoader } from "../../../components/ContentLoader";
+import { ContentCache } from "../../../features/ContentCache";
 
 const logger = LogFactory.create("VideoPost");
 
@@ -17,7 +19,11 @@ const VideoPost = (props: VideoPostProps) => {
 	const videoElem = useRef<HTMLVideoElement>(null);
 
 	if (props.post.extension != "mp4" && props.post.extension != "webm") {
-		return Util.logAndDisplayError(logger, `unsupported extension ${props.post.extension}`, props.post);
+		return Util.logAndDisplayError(
+			logger,
+			`unsupported extension ${props.post.extension}`,
+			props.post
+		);
 	}
 
 	const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {
@@ -36,19 +42,35 @@ const VideoPost = (props: VideoPostProps) => {
 
 	return (
 		<>
-			{Util.isTouchDevice() ? (
-				<div className="PostPage-listener" {...props.swipe} onClick={handleClick} />
-			) : (
-				<></>
-			)}
-			<div className="VideoPost">
-				<video loop autoPlay controls ref={videoElem}>
-					<source
-						src={props.post.videoUrl}
-						type={props.post.extension == "mp4" ? "video/mp4" : "video/webm"}
-					/>
-				</video>
-			</div>
+			<ContentLoader
+				get={() => ContentCache.get(props.post)}
+				post={props.post}
+				render={dataUrl => (
+					<>
+						{Util.isTouchDevice() ? (
+							<div
+								className="PostPage-listener"
+								{...props.swipe}
+								onClick={handleClick}
+							/>
+						) : (
+							<></>
+						)}
+						<div className="VideoPost">
+							<video loop autoPlay controls ref={videoElem}>
+								<source
+									src={dataUrl}
+									type={
+										props.post.extension == "mp4"
+											? "video/mp4"
+											: "video/webm"
+									}
+								/>
+							</video>
+						</div>
+					</>
+				)}
+			/>
 		</>
 	);
 };

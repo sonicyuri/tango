@@ -57,7 +57,11 @@ const InviteList = () => {
 				</TableHead>
 				<TableBody>
 					{invites.ready() ? (
-						<LoadingSpinner />
+						<TableRow>
+							<TableCell>
+								<LoadingSpinner />
+							</TableCell>
+						</TableRow>
 					) : (
 						invites.value.map(invite => {
 							return (

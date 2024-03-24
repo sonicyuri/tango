@@ -1,6 +1,13 @@
 /** @format */
 @use "./Variables.scss";
 
+.ContentLoader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(136, 136, 136, 0.25);
+}
+
 .ImagePage {
 	padding: 1em;
 }

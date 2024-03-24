@@ -1,9 +1,22 @@
 /** @format */
-import { Backdrop, Box, Breadcrumbs, Link as MuiLink, Pagination, Typography, useMediaQuery } from "@mui/material";
+import {
+	Backdrop,
+	Box,
+	Breadcrumbs,
+	Link as MuiLink,
+	Pagination,
+	Typography,
+	useMediaQuery
+} from "@mui/material";
 import { useTheme } from "@mui/system";
 import Grid from "@mui/material/Unstable_Grid2";
 import React, { useEffect, useState } from "react";
-import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+	Link as RouterLink,
+	useNavigate,
+	useParams,
+	useSearchParams
+} from "react-router-dom";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
@@ -13,6 +26,7 @@ import i18n from "../util/Internationalization";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
 import { LocalSettings } from "../util/LocalSettings";
+import { ContentCache } from "../features/ContentCache";
 
 const logger: Logger = LogFactory.create("ListPage");
 
@@ -29,7 +43,9 @@ const ListPage = () => {
 	const { searchState, posts, cursor } = useAppSelector(selectPostState);
 
 	// base the number of columns on the width of the screen
-	const [numColumns, setNumColumns] = useState(Math.floor(window.innerWidth / TargetImageWidth));
+	const [numColumns, setNumColumns] = useState(
+		Math.floor(window.innerWidth / TargetImageWidth)
+	);
 
 	const canDisplayTopPagination = useMediaQuery(theme.breakpoints.up("sm"));
 
@@ -54,7 +70,9 @@ const ListPage = () => {
 		const query = searchParams.get("q");
 
 		document.title =
-			(query?.trim() || "").length > 0 ? Util.formatTitle(query?.trim() || "") : Util.formatTitle("Index");
+			(query?.trim() || "").length > 0
+				? Util.formatTitle(query?.trim() || "")
+				: Util.formatTitle("Index");
 
 		dispatch(
 			postList({
@@ -67,11 +85,18 @@ const ListPage = () => {
 	if (searchState == "initial") {
 		return <></>;
 	} else if (searchState == "failed") {
-		return Util.logAndDisplayError(logger, "search failed", cursor?.currentQuery, cursor?.cursorPosition);
+		return Util.logAndDisplayError(
+			logger,
+			"search failed",
+			cursor?.currentQuery,
+			cursor?.cursorPosition
+		);
 	} else if (cursor == null) {
 		logger.log("cursor is null (expected if just initializing)");
 		return <></>;
 	}
+
+	ContentCache.currentScreen = "list";
 
 	const onPostClicked = (post: BooruPost, index: number) => {
 		navigate(cursor.makePostLink(post));
@@ -109,7 +134,11 @@ const ListPage = () => {
 
 	const breadcrumbs = (
 		<Breadcrumbs aria-label="breadcrumb" className="ListPage-breadcrumbs">
-			<MuiLink underline="hover" color="inherit" component={RouterLink} to="/">
+			<MuiLink
+				underline="hover"
+				color="inherit"
+				component={RouterLink}
+				to="/">
 				{i18n.t("siteTitle")}
 			</MuiLink>
 			<Typography color="text.primary">Posts</Typography>
@@ -130,11 +159,16 @@ const ListPage = () => {
 				}}>
 				{posts.map((post, idx) => {
 					return (
-						<Grid className="ListPage-grid" key={"post-" + post.hash} xs={12 / numColumns}>
+						<Grid
+							className="ListPage-grid"
+							key={"post-" + post.hash}
+							xs={12 / numColumns}>
 							<a
 								href={cursor.makePostLink(post)}
 								className="ListPage-grid-item"
-								style={{ backgroundImage: `url(${post.thumbUrl})` }}
+								style={{
+									backgroundImage: `url(${post.thumbUrl})`
+								}}
 								onClick={e => {
 									e.preventDefault();
 									onPostClicked(post, idx);
@@ -144,7 +178,9 @@ const ListPage = () => {
 					);
 				})}
 			</Grid>
-			<div className="ListPage-footer">{renderPagination("pg-bottom")}</div>
+			<div className="ListPage-footer">
+				{renderPagination("pg-bottom")}
+			</div>
 			<Backdrop open={searchState == "loading"}>
 				<div>
 					<LoadingSpinner />

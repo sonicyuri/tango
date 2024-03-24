@@ -10,6 +10,7 @@ import { setUpNotifications } from "reapop";
 import theme, { BodyFonts } from "./MuiTheme";
 import { LogFactory } from "./util/Logger";
 import { ThemeProvider } from "@emotion/react";
+import { ContentCache } from "./features/ContentCache";
 
 const logger = LogFactory.create("index");
 
@@ -36,3 +37,13 @@ if (container) {
 } else {
 	logger.error("no container to put react app in?");
 }
+
+declare global {
+	interface Window {
+		tango: {
+			content: ContentCache;
+		};
+	}
+}
+
+window.tango = { content: ContentCache };

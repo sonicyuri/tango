@@ -3,6 +3,7 @@
 import { BooruPost, ShimmiePost } from "../models/BooruPost";
 import { LocalSettings } from "../util/LocalSettings";
 import { Util } from "../util/Util";
+import { ContentCache } from "./ContentCache";
 import { SparsePostArray } from "./SparsePostArray";
 
 interface PostListResult {
@@ -10,10 +11,6 @@ interface PostListResult {
 	offset: number;
 	total_results: number;
 }
-
-type PostListResponse =
-	| { type: "error"; message: string }
-	| { type: "success"; result: PostListResult };
 
 // how many posts from the edges before we preload the next page
 const PagePostPreloadThreshold = 5;
@@ -85,6 +82,7 @@ export class PostSearchCursor {
 	public setOffset(val: number) {
 		this.offset = val;
 		this.preloadOffset(this.offset);
+		this.updateContentCache();
 		const pageCountOffset = Math.floor(this.offset / this.currentPageSize);
 		const pageItemsOffset = pageCountOffset * this.currentPageSize;
 		const prevPage = (pageCountOffset - 1) * this.currentPageSize;
@@ -154,11 +152,12 @@ export class PostSearchCursor {
 	 * Returns the posts on the current page the cursor is pointing at.
 	 */
 	public getPostsAtCursor(): Promise<BooruPost[]> {
-		return this.posts.getRange(
-			this.getPageStartOffset(this.offset),
-			this.pageSize,
-			true
-		);
+		return this.posts
+			.getRange(this.getPageStartOffset(this.offset), this.pageSize, true)
+			.then(posts => {
+				this.updateContentCache();
+				return posts;
+			});
 	}
 
 	/**
@@ -238,6 +237,8 @@ export class PostSearchCursor {
 		if (!this.posts.hasIndex(this.offset)) {
 			this.offset = this.posts.length - 1;
 		}
+
+		this.updateContentCache();
 	}
 
 	private preloadOffset(offset: number): void {
@@ -248,5 +249,24 @@ export class PostSearchCursor {
 
 	private getPageStartOffset(offset: number): number {
 		return Math.floor(offset / this.currentPageSize) * this.currentPageSize;
+	}
+
+	private updateContentCache() {
+		const startIndex = Math.max(
+			Math.floor(this.offset - this.currentPageSize / 2),
+			0
+		);
+
+		const endIndex = Math.min(
+			startIndex + this.currentPageSize,
+			this.posts.length - 1
+		);
+
+		for (let i = startIndex; i <= endIndex; i++) {
+			const post = this.posts.getAtIndex(i);
+			if (post !== null) {
+				ContentCache.preload([post]);
+			}
+		}
 	}
 }
