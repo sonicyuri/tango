@@ -48,7 +48,7 @@ import { VoteRequest } from "../../features/posts/PostService";
 
 const logger: Logger = LogFactory.create("PostPage");
 
-const ImageExtensions = ["png", "jpg", "jpeg", "gif"];
+const ImageExtensions = ["png", "jpg", "jpeg", "gif", "webp"];
 const VideoExtensions = ["webm", "mp4", "ogv", "flv"];
 const FlashExtensions = ["swf"];
 
@@ -91,7 +91,7 @@ const PostPage = () => {
 			tags: []
 		});
 
-	const vote = votes[currentPost.id] ?? 0;
+	const vote = votes.ready() ? votes.value[currentPost.id] ?? 0 : 0;
 	const favorite = favorites.value.includes(currentPost.id);
 
 	// handles navigating left-right based on swipe, keys, or buttons
@@ -171,7 +171,7 @@ const PostPage = () => {
 				postDirectLink({
 					postId: params.postId || "1",
 					query: searchParams.get("q"),
-					page: Number(searchParams.get("page") || "1") || 1
+					offset: Number(searchParams.get("offset") || "0") || 0
 				})
 			);
 		}
@@ -183,6 +183,14 @@ const PostPage = () => {
 			logger,
 			"failed to obtain post",
 			currentPost
+		);
+	}
+
+	if (!currentPost) {
+		return Util.logAndDisplayError(
+			logger,
+			`currentPost is ${currentPost} even though searchState is ${searchState} - something's going wrong`,
+			{ currentPost, cursor }
 		);
 	}
 
