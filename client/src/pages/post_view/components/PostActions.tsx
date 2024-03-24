@@ -33,7 +33,7 @@ const PostActions = (props: PostActionsProps) => {
 	const dispatch = useAppDispatch();
 
 	const { favorites } = useAppSelector(selectFavoriteState);
-	const { voteState: voteLoading } = useAppSelector(selectPostState);
+	const { votes } = useAppSelector(selectPostState);
 
 	const handleDownload = () => {
 		dispatch(postDownload(props.post));
@@ -61,7 +61,7 @@ const PostActions = (props: PostActionsProps) => {
 						: "Upvote Post (W, ↑)"
 				}
 				onClick={() => handleVote(1)}>
-				{voteLoading == "loading" ? (
+				{!votes.ready() ? (
 					<LoadingSpinner />
 				) : props.vote == -1 ? (
 					<ThumbUpOffAltIcon />
@@ -77,7 +77,7 @@ const PostActions = (props: PostActionsProps) => {
 						: "Downvote Post (S, ↓)"
 				}
 				onClick={() => handleVote(-1)}>
-				{voteLoading == "loading" ? (
+				{!votes.ready() ? (
 					<LoadingSpinner />
 				) : props.vote == 1 ? (
 					<ThumbDownOffAltIcon />

@@ -27,10 +27,18 @@ i18n.init({
 							delete: "Failed to delete invite."
 						}
 					},
+					posts: {
+						errors: {
+							listVotes:
+								"Failed to obtain the current user's votes.",
+							vote: "Failed to vote."
+						}
+					},
 					tags: {
 						errors: {
 							list: "Failed to obtain tags.",
-							info: "Failed to obtain tag info."
+							info: "Failed to obtain tag info.",
+							listAliases: "Failed to obtain tag aliases."
 						}
 					},
 					user_config: {

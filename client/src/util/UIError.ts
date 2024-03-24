@@ -57,14 +57,14 @@ export class UIErrorFactory<T> {
 		return UIError.create(formattedMessage, userMsg);
 	}
 
-	wrapError<ValueType>(
+	wrapError<ValueType, SuccessType>(
 		promise: Promise<ApiResponse<ValueType>>,
 		userKey: string,
-		onSuccess: (val: ValueType) => Promise<Result<ValueType, UIError>>
+		onSuccess: (val: ValueType) => Promise<Result<SuccessType, UIError>>
 	) {
 		return promise.then(response =>
 			response.matchPromise(onSuccess, err =>
-				err.toResultPromise<T, ValueType>(this, i18n.t(userKey))
+				err.toResultPromise<T, SuccessType>(this, i18n.t(userKey))
 			)
 		);
 	}

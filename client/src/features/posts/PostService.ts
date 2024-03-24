@@ -2,6 +2,7 @@
 
 import { ShimmiePool } from "../../models/BooruPool";
 import { BooruPost, ShimmiePost } from "../../models/BooruPost";
+import { ApiResponse } from "../ApiResponse";
 import { BooruRequest } from "../BooruRequest";
 
 export interface PostListRequest {
@@ -21,7 +22,7 @@ export interface PostGetByIdRequest {
 export interface PostDirectLinkRequest {
 	postId: string;
 	query: string | null;
-	page: number | null;
+	offset: number | null;
 }
 
 export interface PostSetTagsRequest {
@@ -29,7 +30,9 @@ export interface PostSetTagsRequest {
 	tags: string[];
 }
 
-export type PostUploadFile = { type: "url"; value: string } | { type: "file"; value: File };
+export type PostUploadFile =
+	| { type: "url"; value: string }
+	| { type: "file"; value: File };
 
 export interface PostUploadPool {
 	title: string;
@@ -48,22 +51,24 @@ export interface PostUploadResult {
 	posts: { [hash: string]: ShimmiePost };
 }
 
-export type PostUploadResponse = { type: "success"; result: PostUploadResult } | { type: "error"; message: string };
+export type PostUploadResponse =
+	| { type: "success"; result: PostUploadResult }
+	| { type: "error"; message: string };
 
-export type PostSetTagsResponse = { type: "success"; result: ShimmiePost } | { type: "error"; message: string };
+export type PostSetTagsResponse =
+	| { type: "success"; result: ShimmiePost }
+	| { type: "error"; message: string };
 
 export interface VoteRequest {
 	post_id: string;
 	action: "up" | "down" | "clear";
 }
 
-export type ListVoteResponse =
-	| { type: "success"; result: { [score: number]: string[] } }
+export type PostVotesMap = { [image_id: string]: number };
+
+export type PostInfoResponse =
+	| { type: "success"; result: ShimmiePost }
 	| { type: "error"; message: string };
-
-export type VoteResponse = { type: "success"; result: ShimmiePost } | { type: "error"; message: string };
-
-export type PostInfoResponse = { type: "success"; result: ShimmiePost } | { type: "error"; message: string };
 
 class PostService {
 	static async getPostById(id: string): Promise<PostInfoResponse> {
@@ -72,21 +77,45 @@ class PostService {
 		});
 	}
 
-	static setPostTags(post: BooruPost, newTags: string[]): Promise<PostSetTagsResponse> {
-		return BooruRequest.runQueryVersioned("v2", "/post/edit", "POST", { post_id: post.id, tags: newTags }).then(
-			res => res.json()
+	static setPostTags(
+		post: BooruPost,
+		newTags: string[]
+	): Promise<PostSetTagsResponse> {
+		return BooruRequest.runQueryVersioned("v2", "/post/edit", "POST", {
+			post_id: post.id,
+			tags: newTags
+		}).then(res => res.json());
+	}
+
+	static getVotes(): Promise<ApiResponse<PostVotesMap>> {
+		return BooruRequest.queryResult<{ [vote: string]: string[] }>(
+			"/post/vote"
+		).then(response =>
+			response.map(val => {
+				let votes: PostVotesMap = {};
+				Object.keys(val).forEach(score => {
+					const num = Number(score);
+					val[score].forEach(id => {
+						votes[id] = num;
+					});
+				});
+				return votes;
+			})
 		);
 	}
 
-	static getVotes(): Promise<ListVoteResponse> {
-		return BooruRequest.runQueryJsonV2("/post/vote");
+	static vote(req: VoteRequest): Promise<ApiResponse<ShimmiePost>> {
+		return BooruRequest.queryResultAdvanced<ShimmiePost>(
+			"/post/vote",
+			"POST",
+			req
+		);
 	}
 
-	static vote(req: VoteRequest): Promise<VoteResponse> {
-		return BooruRequest.runQueryVersioned("v2", "/post/vote", "POST", req).then(v => v.json());
-	}
-
-	static upload(req: PostUploadRequest, progressCallback: (progress: number) => void): Promise<PostUploadResponse> {
+	static upload(
+		req: PostUploadRequest,
+		progressCallback: (progress: number) => void
+	): Promise<PostUploadResponse> {
 		const form = new FormData();
 
 		let posts: {

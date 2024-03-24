@@ -44,6 +44,11 @@ export class StoredAsyncValue<T> {
 	}
 }
 
+type AsyncActionType<T, ReturnType> = {
+	thunk: AsyncThunk<Result<ReturnType, UIError>, any, AsyncThunkConfig>;
+	reducer: (self: T, state: any, val: ReturnType) => Result<T, UIError>;
+};
+
 /**
  * A value in a Redux store that might still be loading.
  */
@@ -52,11 +57,7 @@ export class AsyncValue<T> {
 	private errorFactory: UIErrorFactory<AsyncValue<T>>;
 
 	private value: StoredAsyncValue<T>;
-	private asyncActions: AsyncThunk<
-		Result<T, UIError>,
-		any,
-		AsyncThunkConfig
-	>[] = [];
+	private asyncActions: AsyncActionType<T, any>[] = [];
 	private actions: {
 		name: string;
 		callback: (state: T, payload: any) => Result<T, UIError>;
@@ -109,13 +110,23 @@ export class AsyncValue<T> {
 		});
 
 		this.asyncActions.forEach(action => {
-			builder.addCase(action.fulfilled, (state, action) => {
-				action.payload.match(
+			builder.addCase(action.thunk.fulfilled, (state, { payload }) => {
+				payload.match(
 					val => {
-						this.setOnReduxState(state, {
-							value: val,
-							state: AsyncValueState.Completed
-						});
+						const thisValue = (state as any)[this.name].value as T;
+						action.reducer(thisValue, state as any, val).match(
+							val => {
+								this.setOnReduxState(state, {
+									state: AsyncValueState.Completed,
+									value: val
+								});
+							},
+							err => {
+								this.setOnReduxState(state, {
+									state: AsyncValueState.Failed
+								});
+							}
+						);
 					},
 					err => {
 						this.setOnReduxState(state, {
@@ -125,7 +136,7 @@ export class AsyncValue<T> {
 				);
 			});
 
-			builder.addCase(action.rejected, (state, action) => {
+			builder.addCase(action.thunk.rejected, (state, action) => {
 				this.logger.error(
 					`Action ${action.type} rejected unexpectedly`,
 					action
@@ -147,11 +158,16 @@ export class AsyncValue<T> {
 		return (payload: S) => ({ type: name, payload });
 	}
 
-	addAsyncAction<S>(
+	addAsyncAction<S, StateType, ReturnType>(
 		name: string,
-		callback: (payload: S) => Promise<Result<T, UIError>>
+		callback: (payload: S) => Promise<Result<ReturnType, UIError>>,
+		customReducer?: (
+			self: T,
+			state: StateType,
+			result: ReturnType
+		) => Result<T, UIError>
 	) {
-		const action = createAsyncThunk(name, (payload: S, thunkApi) => {
+		const thunk = createAsyncThunk(name, (payload: S, thunkApi) => {
 			thunkApi.dispatch(this.stateUpdateAction(AsyncValueState.Loading));
 
 			return callback(payload)
@@ -160,14 +176,22 @@ export class AsyncValue<T> {
 					return value;
 				})
 				.catch(err => {
-					return Result.failure<T, UIError>(
+					return Result.failure<ReturnType, UIError>(
 						this.errorFactory.castOrCreateUnknown(err)
 					);
 				});
 		});
 
+		const action: AsyncActionType<T, ReturnType> = {
+			thunk,
+			reducer:
+				customReducer ??
+				((self, state, val) => Result.success(val as any as T))
+		};
+
 		this.asyncActions.push(action);
-		return action;
+
+		return thunk;
 	}
 
 	/**

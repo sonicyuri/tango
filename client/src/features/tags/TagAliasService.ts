@@ -1,14 +1,14 @@
 /** @format */
-import { BooruTag, BooruTagCategory, ShimmieTagCategory } from "../../models/BooruTag";
+import { ApiResponse } from "../ApiResponse";
 import { BooruRequest } from "../BooruRequest";
 
-type TagAliasListResponse =
-	| { type: "success"; result: { [oldTag: string]: string } }
-	| { type: "error"; message: string };
+export type TagAliasListResponse = { [oldTag: string]: string };
 
 class TagAliasService {
-	static async getTagAliases(): Promise<TagAliasListResponse> {
-		return BooruRequest.runQueryJsonV2("/tag/alias/list");
+	static async getTagAliases(): Promise<ApiResponse<TagAliasListResponse>> {
+		return BooruRequest.queryResult<TagAliasListResponse>(
+			"/tag/alias/list"
+		);
 	}
 }
 

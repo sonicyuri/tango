@@ -1,8 +1,13 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+	CaseReducer,
+	createAsyncThunk,
+	createSlice,
+	PayloadAction
+} from "@reduxjs/toolkit";
 import { notify } from "reapop";
 
-import { BooruPost } from "../../models/BooruPost";
+import { BooruPost, ShimmiePost } from "../../models/BooruPost";
 import { PostSearchCursor } from "../PostSearchCursor";
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
@@ -12,17 +17,25 @@ import PostService, {
 	PostListRequest,
 	PostSetTagsRequest,
 	PostUploadRequest,
+	PostVotesMap,
 	VoteRequest
 } from "./PostService";
 import { tagUpdateEdit } from "../tags/TagSlice";
 import thunk from "redux-thunk";
 import { LocalSettings } from "../../util/LocalSettings";
+import { StaticUIErrorFactory, UIError } from "../../util/UIError";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
+import { Result } from "../../util/Result";
 
 const logger: Logger = LogFactory.create("PostSlice");
+const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
+	"PostSlice"
+);
 
 type PostSearchState = "initial" | "loading" | "ready" | "failed";
-type PostVoteState = "initial" | "loading" | "ready";
 type PostUploadState = "initial" | "uploading" | "done" | "failed";
+
+const postVotesValue = new AsyncValue<PostVotesMap>("post", "votes", {});
 
 type PostNavigateDirection = -1 | 1;
 
@@ -31,40 +44,43 @@ interface PostState {
 	searchState: PostSearchState;
 	posts: BooruPost[];
 	currentPost: BooruPost | null;
-	votes: { [image_id: string]: number };
-	voteState: PostVoteState;
+	votes: StoredAsyncValue<PostVotesMap>;
 	uploadProgress: number;
 	uploadState: PostUploadState;
 }
 
-const setSearchState: CaseReducer<PostState, PayloadAction<PostSearchState>> = (state, action) => {
+const setSearchState: CaseReducer<PostState, PayloadAction<PostSearchState>> = (
+	state,
+	action
+) => {
 	state.searchState = action.payload;
 };
 
-const setSearchStateAction = (newState: PostSearchState): PayloadAction<PostSearchState> => ({
+const setSearchStateAction = (
+	newState: PostSearchState
+): PayloadAction<PostSearchState> => ({
 	type: "post/setSearchState",
 	payload: newState
 });
 
-const setVoteState: CaseReducer<PostState, PayloadAction<PostVoteState>> = (state, action) => {
-	state.voteState = action.payload;
-};
-
-const setVoteStateAction = (newState: PostVoteState): PayloadAction<PostVoteState> => ({
-	type: "post/setVoteState",
-	payload: newState
-});
-
-const setUploadState: CaseReducer<PostState, PayloadAction<PostUploadState>> = (state, action) => {
+const setUploadState: CaseReducer<PostState, PayloadAction<PostUploadState>> = (
+	state,
+	action
+) => {
 	state.uploadState = action.payload;
 };
 
-const setUploadStateAction = (newState: PostUploadState): PayloadAction<PostUploadState> => ({
+const setUploadStateAction = (
+	newState: PostUploadState
+): PayloadAction<PostUploadState> => ({
 	type: "post/setUploadState",
 	payload: newState
 });
 
-const setUploadProgress: CaseReducer<PostState, PayloadAction<number>> = (state, action) => {
+const setUploadProgress: CaseReducer<PostState, PayloadAction<number>> = (
+	state,
+	action
+) => {
 	state.uploadProgress = action.payload;
 };
 
@@ -73,212 +89,289 @@ const setUploadProgressAction = (newState: number): PayloadAction<number> => ({
 	payload: newState
 });
 
+const updatePostInState = (state: PostState, post: BooruPost) => {
+	// TODO: move cursor to a more redux-y form so we don't have to do this
+	// updating a post should be a new action
+	state.cursor?.storeOrUpdatePost(post);
+	if (state.posts.some(p => p.id === post.id)) {
+		state.posts = state.posts.filter(p => p.id !== post.id).concat([post]);
+	}
+	if (state.currentPost?.id === post.id) {
+		state.currentPost = post;
+	}
+};
+
 // creates a cursor for the given request
-export const postList = createAsyncThunk("post/list", async (request: PostListRequest, thunkApi) => {
-	try {
-		thunkApi.dispatch(setSearchStateAction("loading"));
+export const postList = createAsyncThunk(
+	"post/list",
+	async (request: PostListRequest, thunkApi) => {
+		try {
+			thunkApi.dispatch(setSearchStateAction("loading"));
 
-		const state: PostState = (thunkApi.getState() as any).post;
-		let cursor = state.cursor;
-		if (state.cursor != null && state.cursor.currentQuery == request.query) {
-			state.cursor.setOffset(request.offset);
+			const state: PostState = (thunkApi.getState() as any).post;
+			let cursor = state.cursor;
+			if (
+				state.cursor != null &&
+				state.cursor.currentQuery == request.query
+			) {
+				state.cursor.setOffset(request.offset);
+			} else {
+				cursor = new PostSearchCursor(
+					request.query,
+					LocalSettings.pageSize.value || 0,
+					request.offset
+				);
+			}
+
+			const posts = await cursor?.getPostsAtCursor();
+
+			return {
+				cursor,
+				posts
+			};
+		} catch (error: any) {
+			logger.error("error fetching posts", error);
+			thunkApi.dispatch(notify("List posts failed - " + error, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+	}
+);
+
+export const postListRefresh = createAsyncThunk(
+	"post/list_refresh",
+	async (request: null, thunkApi) => {
+		try {
+			thunkApi.dispatch(setSearchStateAction("loading"));
+			const state: PostState = (thunkApi.getState() as any).post;
+			if (state.cursor == null) {
+				return thunkApi.rejectWithValue({});
+			}
+
+			state.cursor.reload();
+			const posts = await state.cursor.getPostsAtCursor();
+			return { posts };
+		} catch (error: any) {
+			logger.error("error fetching posts", error);
+			thunkApi.dispatch(notify("List posts failed - " + error, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+	}
+);
+
+export const postViewById = createAsyncThunk(
+	"post/view_by_id",
+	async (request: PostGetRequest, thunkApi) => {
+		try {
+			thunkApi.dispatch(setSearchStateAction("loading"));
+			const state: PostState = (thunkApi.getState() as any).post;
+			if (state.cursor == null) {
+				return thunkApi.rejectWithValue({});
+			}
+
+			state.cursor.setCurrentPostById(request.postId);
+			return { post: await state.cursor.getPostAtCursor() };
+		} catch (error: any) {
+			logger.error("error fetching post", error);
+			thunkApi.dispatch(
+				notify("View by id lookup failed - " + error, "error")
+			);
+			return thunkApi.rejectWithValue({});
+		}
+	}
+);
+
+export const postDirectLink = createAsyncThunk(
+	"post/direct_link",
+	async (request: PostDirectLinkRequest, thunkApi) => {
+		try {
+			thunkApi.dispatch(setSearchStateAction("loading"));
+			const cursor = new PostSearchCursor(
+				request.query,
+				LocalSettings.pageSize.value || 0,
+				request.offset || 0
+			);
+
+			await cursor.getPostsAtCursor();
+
+			let post = cursor.getPostById(request.postId);
+
+			if (!cursor.hasPost(request.postId)) {
+				let response = await PostService.getPostById(request.postId);
+				if (response.type == "error") {
+					logger.error("error fetching post", response.message);
+					thunkApi.dispatch(
+						notify(
+							"Direct link lookup failed - " + response.message,
+							"error"
+						)
+					);
+					return thunkApi.rejectWithValue({});
+				}
+
+				post = new BooruPost(response.result);
+
+				await cursor.storeOrUpdatePost(post);
+			}
+
+			await cursor.setCurrentPostById(request.postId);
+
+			const posts = await cursor.getPostsAtCursor();
+
+			return {
+				posts,
+				post,
+				cursor
+			};
+		} catch (error: any) {
+			logger.error("error fetching post", error);
+			thunkApi.dispatch(
+				notify("Direct link lookup failed - " + error, "error")
+			);
+			return thunkApi.rejectWithValue({});
+		}
+	}
+);
+
+export const postSetTags = createAsyncThunk(
+	"post/set_tags",
+	async (request: PostSetTagsRequest, thunkApi) => {
+		try {
+			const state: PostState = (thunkApi.getState() as any).post;
+			if (state.cursor == null) {
+				return thunkApi.rejectWithValue({});
+			}
+
+			let result = await PostService.setPostTags(
+				request.post,
+				request.tags
+			);
+			if (result.type == "error") {
+				logger.error("error setting tags", result.message);
+				thunkApi.dispatch(
+					notify("Failed to set tags: " + result.message, "error")
+				);
+				return thunkApi.rejectWithValue({});
+			}
+
+			thunkApi.dispatch(
+				tagUpdateEdit({
+					post: request.post,
+					prevTags: request.post.tags,
+					newTags: request.tags
+				})
+			);
+
+			return new BooruPost(result.result);
+		} catch (error: any) {
+			logger.error("error setting tags", error);
+			thunkApi.dispatch(notify("Failed to set tags: " + error, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+	}
+);
+
+export const postDownload = createAsyncThunk(
+	"post/download",
+	async (request: BooruPost, thunkApi) => {
+		return fetch(request.videoUrl, { method: "GET" })
+			.then(res => res.blob())
+			.then(blob => {
+				const a = document.createElement("a");
+				a.href = window.URL.createObjectURL(blob);
+				a.download = request.hash + "." + request.extension;
+				document.body.appendChild(a);
+				a.click();
+				window.URL.revokeObjectURL(a.href);
+				document.body.removeChild(a);
+
+				return null;
+			});
+	}
+);
+
+export const postListVotes = postVotesValue.addAsyncAction(
+	"post/list_votes",
+	(req: null) =>
+		errorFactory.wrapErrorOnly(
+			PostService.getVotes(),
+			"modules.posts.errors.listVotes"
+		)
+);
+
+export const postVote = postVotesValue.addAsyncAction<
+	VoteRequest,
+	PostState,
+	{ post: ShimmiePost; score: number }
+>(
+	"post/vote",
+	(req: VoteRequest) =>
+		errorFactory.wrapError(
+			PostService.vote(req),
+			"modules.posts.errors.vote",
+			post => {
+				let score = 0;
+				if (req.action == "up") {
+					score = 1;
+				} else if (req.action == "down") {
+					score = -1;
+				}
+
+				return Result.successPromise({ post, score });
+			}
+		),
+	(thisValue, state, payload) => {
+		thisValue[payload.post.id] = payload.score;
+
+		let currentPost = state.cursor?.getPostById(payload.post.id);
+		if (currentPost != null) {
+			currentPost.numericScore = payload.post.numeric_score;
+			updatePostInState(state, currentPost);
 		} else {
-			cursor = new PostSearchCursor(request.query, LocalSettings.pageSize.value || 0, request.offset);
+			return Result.failure(
+				UIError.create(
+					"Received vote response for non-existent post - huh?"
+				)
+			);
 		}
 
-		const posts = await cursor?.getPostsAtCursor();
-
-		return {
-			cursor,
-			posts
-		};
-	} catch (error: any) {
-		logger.error("error fetching posts", error);
-		thunkApi.dispatch(notify("List posts failed - " + error, "error"));
-		return thunkApi.rejectWithValue({});
+		return Result.success(thisValue);
 	}
-});
+);
 
-export const postListRefresh = createAsyncThunk("post/list_refresh", async (request: null, thunkApi) => {
-	try {
-		thunkApi.dispatch(setSearchStateAction("loading"));
-		const state: PostState = (thunkApi.getState() as any).post;
-		if (state.cursor == null) {
+export const postUpload = createAsyncThunk(
+	"post/upload",
+	async (req: PostUploadRequest, thunkApi) => {
+		try {
+			thunkApi.dispatch(setUploadStateAction("uploading"));
+			thunkApi.dispatch(setUploadProgressAction(0.0));
+
+			let result = await PostService.upload(req, progress =>
+				thunkApi.dispatch(setUploadProgressAction(progress))
+			);
+
+			if (result.type == "error") {
+				logger.error("error uploading post", result.message);
+				thunkApi.dispatch(
+					notify("Error uploading post: " + result.message, "error")
+				);
+				return thunkApi.rejectWithValue({});
+			}
+
+			return result.result;
+		} catch (error: any) {
+			logger.error("error uploading post", error);
+			thunkApi.dispatch(notify("Error uploading post", "error"));
 			return thunkApi.rejectWithValue({});
 		}
-
-		state.cursor.reload();
-		const posts = await state.cursor.getPostsAtCursor();
-		return { posts };
-	} catch (error: any) {
-		logger.error("error fetching posts", error);
-		thunkApi.dispatch(notify("List posts failed - " + error, "error"));
-		return thunkApi.rejectWithValue({});
 	}
-});
-
-export const postViewById = createAsyncThunk("post/view_by_id", async (request: PostGetRequest, thunkApi) => {
-	try {
-		thunkApi.dispatch(setSearchStateAction("loading"));
-		const state: PostState = (thunkApi.getState() as any).post;
-		if (state.cursor == null) {
-			return thunkApi.rejectWithValue({});
-		}
-
-		state.cursor.setCurrentPostById(request.postId);
-		return { post: await state.cursor.getPostAtCursor() };
-	} catch (error: any) {
-		logger.error("error fetching post", error);
-		thunkApi.dispatch(notify("View by id lookup failed - " + error, "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const postDirectLink = createAsyncThunk("post/direct_link", async (request: PostDirectLinkRequest, thunkApi) => {
-	try {
-		thunkApi.dispatch(setSearchStateAction("loading"));
-		const cursor = new PostSearchCursor(request.query, request.page || 1);
-
-		let response = await PostService.getPostById(request.postId);
-		if (response.type == "error") {
-			logger.error("error fetching post", response.message);
-			thunkApi.dispatch(notify("Direct link lookup failed - " + response.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-
-		const thisImage = new BooruPost(response.result);
-
-		await cursor.storeOrUpdatePost(thisImage);
-
-		await cursor.setCurrentPostById(request.postId);
-
-		const posts = await cursor.getPostsAtCursor();
-
-		return {
-			posts,
-			post: thisImage || (await PostService.getPostById(request.postId)),
-			cursor
-		};
-	} catch (error: any) {
-		logger.error("error fetching post", error);
-		thunkApi.dispatch(notify("Direct link lookup failed - " + error, "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const postSetTags = createAsyncThunk("post/set_tags", async (request: PostSetTagsRequest, thunkApi) => {
-	try {
-		const state: PostState = (thunkApi.getState() as any).post;
-		if (state.cursor == null) {
-			return thunkApi.rejectWithValue({});
-		}
-
-		let result = await PostService.setPostTags(request.post, request.tags);
-		if (result.type == "error") {
-			logger.error("error setting tags", result.message);
-			thunkApi.dispatch(notify("Failed to set tags: " + result.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-
-		thunkApi.dispatch(tagUpdateEdit({ post: request.post, prevTags: request.post.tags, newTags: request.tags }));
-
-		return new BooruPost(result.result);
-	} catch (error: any) {
-		logger.error("error setting tags", error);
-		thunkApi.dispatch(notify("Failed to set tags: " + error, "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const postDownload = createAsyncThunk("post/download", async (request: BooruPost, thunkApi) => {
-	return fetch(request.videoUrl, { method: "GET" })
-		.then(res => res.blob())
-		.then(blob => {
-			const a = document.createElement("a");
-			a.href = window.URL.createObjectURL(blob);
-			a.download = request.hash + "." + request.extension;
-			document.body.appendChild(a);
-			a.click();
-			window.URL.revokeObjectURL(a.href);
-			document.body.removeChild(a);
-
-			return null;
-		});
-});
-
-export const postListVotes = createAsyncThunk("post/list_votes", async (req: null, thunkApi) => {
-	try {
-		thunkApi.dispatch(setVoteStateAction("loading"));
-
-		let result = await PostService.getVotes();
-		if (result.type == "error") {
-			logger.error("error fetching votes", result.message);
-			thunkApi.dispatch(notify("Error fetching user votes: " + result.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-
-		return result.result;
-	} catch (error: any) {
-		logger.error("error fetching votes", error);
-		thunkApi.dispatch(notify("Error fetching user votes", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const postVote = createAsyncThunk("post/vote", async (req: VoteRequest, thunkApi) => {
-	try {
-		thunkApi.dispatch(setVoteStateAction("loading"));
-
-		let result = await PostService.vote(req);
-		if (result.type == "error") {
-			logger.error("error making vote", result.message);
-			thunkApi.dispatch(notify("Error making vote on post: " + result.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-
-		let score = 0;
-		if (req.action == "up") {
-			score = 1;
-		} else if (req.action == "down") {
-			score = -1;
-		}
-
-		return { post: result.result, score };
-	} catch (error: any) {
-		logger.error("error making vote", error);
-		thunkApi.dispatch(notify("Error making vote on post", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const postUpload = createAsyncThunk("post/upload", async (req: PostUploadRequest, thunkApi) => {
-	try {
-		thunkApi.dispatch(setUploadStateAction("uploading"));
-		thunkApi.dispatch(setUploadProgressAction(0.0));
-
-		let result = await PostService.upload(req, progress => thunkApi.dispatch(setUploadProgressAction(progress)));
-
-		if (result.type == "error") {
-			logger.error("error uploading post", result.message);
-			thunkApi.dispatch(notify("Error uploading post: " + result.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
-
-		return result.result;
-	} catch (error: any) {
-		logger.error("error uploading post", error);
-		thunkApi.dispatch(notify("Error uploading post", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
+);
 
 const initialState: PostState = {
 	cursor: null,
 	searchState: "initial",
 	posts: [],
 	currentPost: null,
-	votes: {},
-	voteState: "initial",
+	votes: postVotesValue.storedValue,
 	uploadProgress: 0.0,
 	uploadState: "initial"
 };
@@ -288,11 +381,12 @@ export const PostSlice = createSlice({
 	initialState,
 	reducers: {
 		setSearchState,
-		setVoteState,
 		setUploadState,
 		setUploadProgress
 	},
 	extraReducers: builder => {
+		postVotesValue.setupReducers(builder);
+
 		builder.addCase(postList.fulfilled, (state, action) => {
 			state.cursor = action.payload.cursor;
 			state.posts = action.payload.posts || [];
@@ -349,26 +443,6 @@ export const PostSlice = createSlice({
 		});
 		builder.addCase(postDownload.fulfilled, (state, action) => {});
 		builder.addCase(postDownload.rejected, (state, action) => {});
-
-		builder.addCase(postListVotes.fulfilled, (state, action) => {
-			state.votes = {};
-			Object.keys(action.payload).forEach(k => {
-				let score = Number(k);
-				action.payload[score].forEach(v => (state.votes[v] = score));
-			});
-			state.voteState = "ready";
-		});
-		builder.addCase(postListVotes.rejected, (state, action) => {});
-
-		builder.addCase(postVote.fulfilled, (state, action) => {
-			state.votes[action.payload.post.id] = action.payload.score;
-			state.cursor?.storeOrUpdatePost(new BooruPost(action.payload.post));
-			if (state.currentPost?.id == action.payload.post.id) {
-				state.currentPost.numericScore = action.payload.post.numeric_score;
-			}
-			state.voteState = "ready";
-		});
-		builder.addCase(postVote.rejected, (state, action) => {});
 
 		builder.addCase(postUpload.fulfilled, (state, action) => {
 			state.uploadState = "done";

@@ -1,12 +1,9 @@
 /** @format */
 
-import { BooruRequest } from "./BooruRequest";
 import { BooruPost, ShimmiePost } from "../models/BooruPost";
-import { Util } from "../util/Util";
-import { current } from "immer";
-import { SearchFilterOptions } from "./SearchFilterOptions";
-import { SparsePostArray } from "./SparsePostArray";
 import { LocalSettings } from "../util/LocalSettings";
+import { Util } from "../util/Util";
+import { SparsePostArray } from "./SparsePostArray";
 
 interface PostListResult {
 	posts: ShimmiePost[];
@@ -14,7 +11,9 @@ interface PostListResult {
 	total_results: number;
 }
 
-type PostListResponse = { type: "error"; message: string } | { type: "success"; result: PostListResult };
+type PostListResponse =
+	| { type: "error"; message: string }
+	| { type: "success"; result: PostListResult };
 
 // how many posts from the edges before we preload the next page
 const PagePostPreloadThreshold = 5;
@@ -32,7 +31,11 @@ export class PostSearchCursor {
 
 	private offset: number;
 
-	constructor(query: string | null, pageSize: number | undefined = undefined, initialOffset: number = 0) {
+	constructor(
+		query: string | null,
+		pageSize: number | undefined = undefined,
+		initialOffset: number = 0
+	) {
 		this.query = query;
 		this.currentPageSize = pageSize || LocalSettings.pageSize.value;
 		this.posts = new SparsePostArray(query || "", this.currentPageSize);
@@ -86,12 +89,16 @@ export class PostSearchCursor {
 		const pageItemsOffset = pageCountOffset * this.currentPageSize;
 		const prevPage = (pageCountOffset - 1) * this.currentPageSize;
 		const nextPage = (pageCountOffset + 1) * this.currentPageSize;
-		if (prevPage >= 0 && this.offset - pageItemsOffset < PagePostPreloadThreshold) {
+		if (
+			prevPage >= 0 &&
+			this.offset - pageItemsOffset < PagePostPreloadThreshold
+		) {
 			this.preloadOffset(prevPage);
 		}
 		if (
 			nextPage < this.posts.length &&
-			this.pageSize - (this.offset - pageItemsOffset) < PagePostPreloadThreshold
+			this.pageSize - (this.offset - pageItemsOffset) <
+				PagePostPreloadThreshold
 		) {
 			this.preloadOffset(nextPage);
 		}
@@ -131,6 +138,10 @@ export class PostSearchCursor {
 		return this.posts.hasPost(postId);
 	}
 
+	public getPostById(postId: string): BooruPost | null {
+		return this.posts.getAtId(postId);
+	}
+
 	/**
 	 * Returns the post the cursor is pointing at.
 	 */
@@ -143,7 +154,11 @@ export class PostSearchCursor {
 	 * Returns the posts on the current page the cursor is pointing at.
 	 */
 	public getPostsAtCursor(): Promise<BooruPost[]> {
-		return this.posts.getRange(this.getPageStartOffset(this.offset), this.pageSize, true);
+		return this.posts.getRange(
+			this.getPageStartOffset(this.offset),
+			this.pageSize,
+			true
+		);
 	}
 
 	/**
@@ -186,7 +201,9 @@ export class PostSearchCursor {
 		}
 
 		const thisPost = this.posts.getAtIndex(offset);
-		return thisPost == null ? this.makePostsLink() : this.makePostLink(thisPost);
+		return thisPost == null
+			? this.makePostsLink()
+			: this.makePostLink(thisPost);
 	}
 
 	/**
@@ -208,8 +225,15 @@ export class PostSearchCursor {
 	 * Reloads the current query with fresh data.
 	 */
 	public async reload() {
-		this.posts = new SparsePostArray(this.query || "", this.currentPageSize);
-		await this.posts.getRange(this.getPageStartOffset(this.offset), this.pageSize, true);
+		this.posts = new SparsePostArray(
+			this.query || "",
+			this.currentPageSize
+		);
+		await this.posts.getRange(
+			this.getPageStartOffset(this.offset),
+			this.pageSize,
+			true
+		);
 		// fix cursor if it's now pointing to an invalid position
 		if (!this.posts.hasIndex(this.offset)) {
 			this.offset = this.posts.length - 1;
