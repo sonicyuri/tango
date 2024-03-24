@@ -7,7 +7,9 @@ import fs from "fs";
 
 import { createHtmlPlugin } from "vite-plugin-html";
 
-const configFile = fs.existsSync("./config.json") ? JSON.parse(fs.readFileSync("./config.json", "utf8")) : {};
+const configFile = fs.existsSync("./config.json")
+	? JSON.parse(fs.readFileSync("./config.json", "utf8"))
+	: {};
 const endpoints = configFile.endpoints || {};
 
 const getEndpointUrl = (key: string): string => {
@@ -35,6 +37,9 @@ const getEndpointUrl = (key: string): string => {
 };
 
 export default defineConfig({
+	build: {
+		sourcemap: true
+	},
 	plugins: [
 		react(),
 		viteTsConfigPaths(),

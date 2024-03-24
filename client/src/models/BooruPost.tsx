@@ -1,6 +1,9 @@
 /** @format */
 
 import getTangoConfig from "../TangoConfig";
+import { LogFactory, Logger } from "../util/Logger";
+
+const logger: Logger = LogFactory.create("BooruPost");
 
 const TangoConfig = getTangoConfig();
 const StorageConfig = TangoConfig.storage;
@@ -25,7 +28,7 @@ interface ShimmiePost {
 	source: string | null;
 	owner_id: string;
 	numeric_score: number;
-	tags: string[];
+	tags?: string[];
 	pools: number[];
 }
 
@@ -63,6 +66,13 @@ class BooruPost {
 		this.postedAt = new Date(obj.posted * 1000);
 		this.source = obj.source;
 		this.ownerId = obj.owner_id;
+
+		if (obj.tags === undefined) {
+			throw new Error(
+				`BooruPost should never be constructed without tags!`
+			);
+		}
+
 		this.tags = obj.tags;
 		this.numericScore = obj.numeric_score || 0;
 	}

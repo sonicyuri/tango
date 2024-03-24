@@ -11,7 +11,9 @@ interface PostListResult {
 	total_results: number;
 }
 
-type PostListResponse = { type: "error"; message: string } | { type: "success"; result: PostListResult };
+type PostListResponse =
+	| { type: "error"; message: string }
+	| { type: "success"; result: PostListResult };
 
 interface ArraySegment {
 	offset: number;
@@ -50,7 +52,10 @@ export class SparsePostArray {
 	 * @param oldArray The array to copy from.
 	 * @param newBlockSize The block size of the new array.
 	 */
-	static copyResize(oldArray: SparsePostArray, newBlockSize: number): SparsePostArray {
+	static copyResize(
+		oldArray: SparsePostArray,
+		newBlockSize: number
+	): SparsePostArray {
 		const newArray = new SparsePostArray(oldArray.query, newBlockSize);
 		oldArray.segments.forEach(s => {
 			newArray.add(
@@ -127,7 +132,11 @@ export class SparsePostArray {
 	 * @param limit The maximum number of posts to return.
 	 * @param force If true, new posts will always be fetched even if they've already been loaded.
 	 */
-	public async getRange(offset: number, limit: number, force: boolean): Promise<BooruPost[]> {
+	public async getRange(
+		offset: number,
+		limit: number,
+		force: boolean
+	): Promise<BooruPost[]> {
 		// new blocks we need to load
 		let neededBlocks: { [blockSize: number]: boolean } = {};
 		// don't try to load posts we already know don't exist
@@ -144,14 +153,18 @@ export class SparsePostArray {
 				// if we don't have this index, we need to load its block
 				// a little wasteful to loop through to check for every post, but i can't think of a smarter way right now
 				if (!this.hasIndex(offset + i)) {
-					const blockIndex = Math.floor((offset + i) / this.blockSize) * this.blockSize;
+					const blockIndex =
+						Math.floor((offset + i) / this.blockSize) *
+						this.blockSize;
 					neededBlocks[blockIndex] = true;
 				}
 			}
 		}
 
 		// load any missing blocks
-		const neededBlockOffsets = Object.keys(neededBlocks).map(offset => Number(offset));
+		const neededBlockOffsets = Object.keys(neededBlocks).map(offset =>
+			Number(offset)
+		);
 		let promises = neededBlockOffsets.map(b => this.loadBlock(b));
 
 		// fetch all needed blocks
@@ -170,7 +183,10 @@ export class SparsePostArray {
 				(s.offset > offset && s.offset < offset + limit)
 			) {
 				startIndex = Math.max(0, offset - s.offset);
-				numToRead = Math.min(limit - result.length, s.items.length - startIndex);
+				numToRead = Math.min(
+					limit - result.length,
+					s.items.length - startIndex
+				);
 				for (let j = startIndex; j < startIndex + numToRead; j++) {
 					result.push(this.posts[s.items[j]]);
 				}
@@ -213,7 +229,8 @@ export class SparsePostArray {
 	 * Begins a load for the block at the given offset.
 	 */
 	public preload(offset: number) {
-		const blockOffset = Math.floor(offset / this.blockSize) * this.blockSize;
+		const blockOffset =
+			Math.floor(offset / this.blockSize) * this.blockSize;
 		this.loadBlock(blockOffset);
 	}
 
@@ -278,7 +295,10 @@ export class SparsePostArray {
 				break;
 			}
 
-			if (segment.offset <= index && segment.offset + segment.items.length > index) {
+			if (
+				segment.offset <= index &&
+				segment.offset + segment.items.length > index
+			) {
 				return true;
 			}
 		}
@@ -316,7 +336,9 @@ export class SparsePostArray {
 			})
 			.then(res => {
 				this.limit = res.total_results;
-				const thisRequestIndex = this.runningRequests.findIndex(req => req.index == requestIndex);
+				const thisRequestIndex = this.runningRequests.findIndex(
+					req => req.index == requestIndex
+				);
 				// remove this running request
 				this.runningRequests.splice(thisRequestIndex, 1);
 				const posts = res.posts.map(p => new BooruPost(p));

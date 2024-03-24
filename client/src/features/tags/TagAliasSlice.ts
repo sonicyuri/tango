@@ -1,68 +1,46 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
-import moment from "moment";
-import { notify } from "reapop";
+import { createSlice, Reducer } from "@reduxjs/toolkit";
 
-import { BooruTag, BooruTagCategory } from "../../models/BooruTag";
 import { LogFactory, Logger } from "../../util/Logger";
+import { StaticUIErrorFactory } from "../../util/UIError";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
 import { RootState } from "../Store";
-import TagAliasService from "./TagAliasService";
+import TagAliasService, { TagAliasListResponse } from "./TagAliasService";
 
 const logger: Logger = LogFactory.create("TagAliasSlice");
+const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
+	"TagAliasSlice"
+);
 
-type TagAliasLoadingState = "initial" | "loading" | "ready";
+const tagAliasesValue = new AsyncValue<TagAliasListResponse>(
+	"tag_alias",
+	"aliases",
+	{}
+);
 
 interface TagAliasState {
-	tagAliases: { [oldTag: string]: string };
-	loadingState: TagAliasLoadingState;
+	aliases: StoredAsyncValue<TagAliasListResponse>;
 }
 
-const setAliasStateReducer: CaseReducer<TagAliasState, PayloadAction<TagAliasLoadingState>> = (state, action) => {
-	state.loadingState = action.payload;
-};
-
-const setAliasState = (newState: TagAliasLoadingState): PayloadAction<TagAliasLoadingState> => ({
-	type: "tag_alias/setAliasState",
-	payload: newState
-});
-
-export const tagAliasList = createAsyncThunk("tag_alias/list", async (_: null, thunkApi) => {
-	try {
-		thunkApi.dispatch(setAliasState("loading"));
-
-		const result = await TagAliasService.getTagAliases();
-
-		if (result.type == "error") {
-			logger.error("error listing tag aliases", result.message);
-			thunkApi.dispatch(notify("failed to obtain tag aliases", "error"));
-			return thunkApi.rejectWithValue({});
-		}
-
-		return result.result;
-	} catch (error: any) {
-		logger.error("error listing tag aliases", error);
-		thunkApi.dispatch(notify("failed to obtain tag aliases", "error"));
-		return thunkApi.rejectWithValue({});
-	}
-});
+export const tagAliasList = tagAliasesValue.addAsyncAction(
+	"tag_alias/list",
+	(_: null) =>
+		errorFactory.wrapErrorOnly(
+			TagAliasService.getTagAliases(),
+			"modules.tags.errors.listAliases"
+		)
+);
 
 const initialState: TagAliasState = {
-	tagAliases: {},
-	loadingState: "initial"
+	aliases: tagAliasesValue.storedValue
 };
 
 export const TagAliasSlice = createSlice({
 	name: "tag_alias",
 	initialState,
-	reducers: {
-		setAliasState: setAliasStateReducer
-	},
+	reducers: {},
 	extraReducers: builder => {
-		builder.addCase(tagAliasList.fulfilled, (state, action) => {
-			state.tagAliases = action.payload;
-			state.loadingState = "ready";
-		});
-		builder.addCase(tagAliasList.rejected, (state, action) => {});
+		tagAliasesValue.setupReducers(builder);
 	}
 });
 
