@@ -4,6 +4,7 @@ use std::str;
 use actix_multipart::Field;
 use actix_web::http::header::DispositionType;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use chrono::Utc;
 use futures::{Future, TryStreamExt};
 use itertools::Itertools;
 
@@ -11,6 +12,7 @@ use super::query::alias_resolver::TagAliasResolver;
 use super::schema::{PostDeleteSchema, PostInfoSchema, PostVoteSchema};
 use crate::error::api_error_owned;
 use crate::modules::posts::query::model::PostQueryResult;
+use crate::modules::posts::schema::PostViewSchema;
 use crate::modules::users::middleware::get_user;
 use crate::{
     error::{api_error, api_success, ApiError, ApiErrorType},
@@ -218,6 +220,27 @@ pub async fn post_delete_handler(
     sqlx::query!("DELETE FROM images WHERE id = ?", body.post_id)
         .execute(&data.db)
         .await?;
+
+    Ok(api_success("success"))
+}
+
+#[post("/view", wrap = "AuthFactory { reject_unauthed: true }")]
+pub async fn post_view_handler(
+    req: HttpRequest,
+    data: web::Data<AppState>,
+    body: web::Json<PostViewSchema>,
+) -> Result<HttpResponse, ApiError> {
+    let user =
+        get_user(&req).ok_or(api_error(ApiErrorType::AuthorizationFailed, "Missing user"))?;
+
+    let conn_info = req.connection_info();
+    let ip = conn_info
+        .realip_remote_addr()
+        .ok_or(api_error(ApiErrorType::ServerError, "Can't get client IP?"))?;
+
+    let timestamp = Utc::now().timestamp() as i32;
+
+    let _result = sqlx::query!("INSERT INTO image_views(`image_id`, `user_id`, `timestamp`, `ipaddress`) VALUES(?, ?, ?, ?)", body.id, user.id, timestamp, ip).execute(&data.db).await?;
 
     Ok(api_success("success"))
 }
