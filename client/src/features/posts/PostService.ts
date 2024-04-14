@@ -157,6 +157,12 @@ class PostService {
 
 		return BooruRequest.runUploadQuery("/post/new", form, progressCallback);
 	}
+
+	static view(postId: string): Promise<ApiResponse<"success">> {
+		return BooruRequest.queryResultAdvanced("/post/view", "POST", {
+			"id": postId
+		});
+	}
 }
 
 export default PostService;

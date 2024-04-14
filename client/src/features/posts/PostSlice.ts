@@ -8,9 +8,14 @@ import {
 import { notify } from "reapop";
 
 import { BooruPost, ShimmiePost } from "../../models/BooruPost";
-import { PostSearchCursor } from "../PostSearchCursor";
+import { LocalSettings } from "../../util/LocalSettings";
 import { LogFactory, Logger } from "../../util/Logger";
+import { Result } from "../../util/Result";
+import { StaticUIErrorFactory, UIError } from "../../util/UIError";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
+import { PostSearchCursor } from "../PostSearchCursor";
 import { RootState } from "../Store";
+import { tagUpdateEdit } from "../tags/TagSlice";
 import PostService, {
 	PostDirectLinkRequest,
 	PostGetRequest,
@@ -20,12 +25,6 @@ import PostService, {
 	PostVotesMap,
 	VoteRequest
 } from "./PostService";
-import { tagUpdateEdit } from "../tags/TagSlice";
-import thunk from "redux-thunk";
-import { LocalSettings } from "../../util/LocalSettings";
-import { StaticUIErrorFactory, UIError } from "../../util/UIError";
-import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
-import { Result } from "../../util/Result";
 
 const logger: Logger = LogFactory.create("PostSlice");
 const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
@@ -169,6 +168,7 @@ export const postViewById = createAsyncThunk(
 			}
 
 			state.cursor.setCurrentPostById(request.postId);
+			thunkApi.dispatch(postRecordView(request.postId));
 			return { post: await state.cursor.getPostAtCursor() };
 		} catch (error: any) {
 			logger.error("error fetching post", error);
@@ -214,6 +214,7 @@ export const postDirectLink = createAsyncThunk(
 			}
 
 			await cursor.setCurrentPostById(request.postId);
+			thunkApi.dispatch(postRecordView(request.postId));
 
 			const posts = await cursor.getPostsAtCursor();
 
@@ -366,6 +367,20 @@ export const postUpload = createAsyncThunk(
 	}
 );
 
+export const postRecordView = createAsyncThunk(
+	"post/view",
+	async (postId: string, thunkApi) => {
+		const result = await PostService.view(postId);
+		return result.matchPromise(
+			success => Promise.resolve(postId),
+			err => {
+				logger.error("error recording post view", err);
+				return Promise.reject("");
+			}
+		);
+	}
+);
+
 const initialState: PostState = {
 	cursor: null,
 	searchState: "initial",
@@ -412,8 +427,9 @@ export const PostSlice = createSlice({
 			state.cursor = action.payload.cursor;
 			state.searchState = "ready";
 
-			if (action.payload.post != null) {
-				state.cursor?.storeOrUpdatePost(action.payload.post);
+			if (state.currentPost != null) {
+				state.currentPost.views++;
+				state.cursor?.storeOrUpdatePost(state.currentPost);
 			}
 		});
 		builder.addCase(postDirectLink.rejected, (state, action) => {
@@ -436,6 +452,9 @@ export const PostSlice = createSlice({
 
 		builder.addCase(postViewById.fulfilled, (state, action) => {
 			state.currentPost = action.payload.post;
+			if (state.currentPost) {
+				state.currentPost.views++;
+			}
 			state.searchState = "ready";
 		});
 		builder.addCase(postViewById.rejected, (state, action) => {
@@ -457,6 +476,9 @@ export const PostSlice = createSlice({
 			state.uploadState = "failed";
 			state.uploadProgress = 0.0;
 		});
+
+		builder.addCase(postRecordView.fulfilled, (state, action) => {});
+		builder.addCase(postRecordView.rejected, (state, action) => {});
 	}
 });
 
