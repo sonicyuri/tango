@@ -51,10 +51,37 @@
 .PostActions {
 	button {
 		flex-grow: 1;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
 	}
 
 	button.PostActionsButton--Active {
 		background: Variables.$PrimaryColor;
 		color: #ffffff;
+	}
+}
+
+.PostActions-Container
+{
+	width: 100%;
+}
+
+.PostActions-Stats {
+	display: flex;
+	margin: 0;
+	margin-top: -2px;
+	
+	div {
+		width: 50%;
+		text-align: center;
+		background: Variables.$PrimaryColor;
+		border: 1px solid darken(Variables.$PrimaryColor, 10%);
+		border-bottom-right-radius: 5px;
+
+		&:first-child {
+			border-bottom-right-radius: 0;
+			border-bottom-left-radius: 5px;
+			border-right: 0;
+		}
 	}
 }
