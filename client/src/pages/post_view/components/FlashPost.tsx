@@ -18,7 +18,7 @@ const FlashPost = (props: FlashPostProps) => {
 		const container = document.getElementById("RuffleContainer");
 		container?.appendChild(player);
 		player.load({
-			url: props.post.videoUrl,
+			url: props.post.contentUrl,
 			config: { wmode: "transparent" }
 		});
 
@@ -33,7 +33,11 @@ const FlashPost = (props: FlashPostProps) => {
 	return (
 		<>
 			<div className="FlashPost" style={{ width: "100%" }}>
-				<div className="FlashPost-container" id="RuffleContainer" style={{ width: "100%" }} />
+				<div
+					className="FlashPost-container"
+					id="RuffleContainer"
+					style={{ width: "100%" }}
+				/>
 			</div>
 		</>
 	);

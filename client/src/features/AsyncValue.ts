@@ -1,19 +1,18 @@
 /** @format */
 
 import {
-	Action,
 	ActionCreatorWithPayload,
 	ActionReducerMapBuilder,
 	AsyncThunk,
-	CaseReducer,
 	createAction,
 	createAsyncThunk
 } from "@reduxjs/toolkit";
-import { LogFactory, Logger } from "../util/Logger";
 import { AsyncThunkConfig } from "@reduxjs/toolkit/dist/createAsyncThunk";
+import { notify } from "reapop";
+import { LogFactory, Logger } from "../util/Logger";
 import { Result } from "../util/Result";
 import { UIError, UIErrorFactory, uiError } from "../util/UIError";
-import { ApiResponse, ApiResponseError } from "./ApiResponse";
+import { GlobalDispatcher } from "./GlobalDispatcher";
 
 export enum AsyncValueState {
 	Initial,
@@ -49,6 +48,8 @@ type AsyncActionType<T, ReturnType> = {
 	reducer: (self: T, state: any, val: ReturnType) => Result<T, UIError>;
 };
 
+export type AsyncValueChangeCallback<T> = (val: StoredAsyncValue<T>) => void;
+
 /**
  * A value in a Redux store that might still be loading.
  */
@@ -63,6 +64,9 @@ export class AsyncValue<T> {
 		callback: (state: T, payload: any) => Result<T, UIError>;
 	}[] = [];
 	private name: string;
+
+	private onStateChange: AsyncValueChangeCallback<T>[] = [];
+	private onValueChange: AsyncValueChangeCallback<T>[] = [];
 
 	private stateUpdateAction: ActionCreatorWithPayload<AsyncValueState>;
 
@@ -87,11 +91,16 @@ export class AsyncValue<T> {
 		);
 	}
 
+	/**
+	 * Sets up the necessary reducers for the actions added to this AsyncValue.
+	 */
 	setupReducers<StateType>(builder: ActionReducerMapBuilder<StateType>) {
 		builder.addCase(this.stateUpdateAction, (state, action) => {
 			this.setOnReduxState(state, { state: action.payload });
 		});
 
+		// configure the non-async actions
+		// these don't update the loading state the way
 		this.actions.forEach(({ name, callback }) => {
 			builder.addCase<any, { type: string; payload: any }>(
 				name,
@@ -99,16 +108,22 @@ export class AsyncValue<T> {
 					const currentStoredValue: StoredAsyncValue<T> = (
 						state as any
 					)[this.name];
-					callback(
-						currentStoredValue.value,
-						action.payload
-					).ifSuccess(newValue => {
-						this.setOnReduxState(state, { value: newValue });
-					});
+
+					callback(currentStoredValue.value, action.payload).match(
+						newValue => {
+							this.setOnReduxState(state, { value: newValue });
+						},
+						err => {
+							GlobalDispatcher.dispatch(
+								notify(err.userMessage, "error")
+							);
+						}
+					);
 				}
 			);
 		});
 
+		// add the async actions
 		this.asyncActions.forEach(action => {
 			builder.addCase(action.thunk.fulfilled, (state, { payload }) => {
 				payload.match(
@@ -122,6 +137,9 @@ export class AsyncValue<T> {
 								});
 							},
 							err => {
+								GlobalDispatcher.dispatch(
+									notify(err.userMessage, "error")
+								);
 								this.setOnReduxState(state, {
 									state: AsyncValueState.Failed
 								});
@@ -129,6 +147,9 @@ export class AsyncValue<T> {
 						);
 					},
 					err => {
+						GlobalDispatcher.dispatch(
+							notify(err.userMessage, "error")
+						);
 						this.setOnReduxState(state, {
 							state: AsyncValueState.Failed
 						});
@@ -136,6 +157,8 @@ export class AsyncValue<T> {
 				);
 			});
 
+			// in any expected case, the reducers should return results with errors, not reject
+			// if they do it's an unexpected error
 			builder.addCase(action.thunk.rejected, (state, action) => {
 				this.logger.error(
 					`Action ${action.type} rejected unexpectedly`,
@@ -146,6 +169,11 @@ export class AsyncValue<T> {
 		});
 	}
 
+	/**
+	 * Adds a synchronous Redux action that modifies this value.
+	 * @param name The name of the new action.
+	 * @param callback The callback to run when the action is performed. The result of this callback will update the AsyncValue.
+	 */
 	addAction<S>(
 		name: string,
 		callback: (state: T, payload: S) => Result<T, UIError>
@@ -158,6 +186,12 @@ export class AsyncValue<T> {
 		return (payload: S) => ({ type: name, payload });
 	}
 
+	/**
+	 * Adds an asynchronous Redux action that modifies this value.
+	 * @param name The name of the new action.
+	 * @param callback The callback to run when this action is performed. The result of this callback will update the AsyncValue.
+	 * @param customReducer If specified, this method will be run after the callback is complete and can modify the store.
+	 */
 	addAsyncAction<S, StateType, ReturnType>(
 		name: string,
 		callback: (payload: S) => Promise<Result<ReturnType, UIError>>,
@@ -195,6 +229,20 @@ export class AsyncValue<T> {
 	}
 
 	/**
+	 * Adds a callback that runs when this AsyncValue's state is changed.
+	 */
+	addStateChangeListener(callback: AsyncValueChangeCallback<T>) {
+		this.onStateChange.push(callback);
+	}
+
+	/**
+	 * Adds a callback that runs when this AsyncValue's value is changed.
+	 */
+	addValueChangeListener(callback: AsyncValueChangeCallback<T>) {
+		this.onValueChange.push(callback);
+	}
+
+	/**
 	 * Returns a copy of the given state object with this value's properties decomposed into individual fields.
 	 */
 	decomposeProperties<T extends object, StateType>(
@@ -219,7 +267,10 @@ export class AsyncValue<T> {
 		return newState as any;
 	}
 
-	private setOnReduxState(state: any, newValues: any) {
+	private setOnReduxState(
+		state: any,
+		newValues: Partial<StoredAsyncValue<T>>
+	) {
 		const currentStateObject: StoredAsyncValue<T> = (state as any)[
 			this.name
 		];
@@ -229,5 +280,12 @@ export class AsyncValue<T> {
 		);
 		newStateObject = Object.assign(newStateObject, newValues);
 		(state as any)[this.name] = newStateObject;
+
+		if (newValues.state !== undefined) {
+			this.onStateChange.forEach(cb => cb(newStateObject));
+		}
+		if (newValues.value !== undefined) {
+			this.onValueChange.forEach(cb => cb(newStateObject));
+		}
 	}
 }

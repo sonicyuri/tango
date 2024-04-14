@@ -1,43 +1,40 @@
 /** @format */
 import {
-	Backdrop,
 	Button,
 	Container,
-	FormControlLabel,
-	FormGroup,
 	Paper,
 	Stack,
-	Switch,
 	TextField,
 	Typography
 } from "@mui/material";
 import { useFormik } from "formik";
-import React, { useEffect, useState } from "react";
 import * as Yup from "yup";
 
 import LoadingSpinner from "../components/LoadingSpinner";
-import { Credentials, SignupRequest } from "../features/auth/AuthService";
-import { login, selectAuthState, signup } from "../features/auth/AuthSlice";
+import { SignupRequest } from "../features/auth/AuthSchema";
+import { selectAuthState, signup } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import i18n from "../util/Internationalization";
-import { LocalSettings } from "../util/LocalSettings";
 
-import { Link as RouterLink, Navigate, useNavigate } from "react-router-dom";
+import { Navigate, Link as RouterLink, useNavigate } from "react-router-dom";
+import { AsyncValueState } from "../features/AsyncValue";
 
 type State = SignupRequest & { password_confirm: string };
 
 const SignupPage = () => {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
-	const { isLoggedIn, user, loginState } = useAppSelector(selectAuthState);
+	const { isLoggedIn, user } = useAppSelector(selectAuthState);
 
 	const handleSignup = (credentials: State) => {
-		dispatch(signup({
-			username: credentials.username,
-			password: credentials.password,
-			email: credentials.email,
-			invite_code: credentials.invite_code
-		}))
+		dispatch(
+			signup({
+				username: credentials.username,
+				password: credentials.password,
+				email: credentials.email,
+				invite_code: credentials.invite_code
+			})
+		)
 			.unwrap()
 			.then(() => navigate("/"));
 	};
@@ -53,9 +50,19 @@ const SignupPage = () => {
 	const validationSchema = Yup.object().shape({
 		username: Yup.string().required("This field is required!"),
 		password: Yup.string().required("This field is required!"),
-		password_confirm: Yup.string().required("This field is required!").oneOf([Yup.ref("password")], "Passwords must match"),
-		email: Yup.string().nullable().email("Field must be an email").optional(),
-		invite_code: Yup.string().required("This field is required!").matches(/^[A-Za-z0-9]{4}\-[A-Za-z0-9]{4}$/, "Invite codes look like xxxx-xxxx")
+		password_confirm: Yup.string()
+			.required("This field is required!")
+			.oneOf([Yup.ref("password")], "Passwords must match"),
+		email: Yup.string()
+			.nullable()
+			.email("Field must be an email")
+			.optional(),
+		invite_code: Yup.string()
+			.required("This field is required!")
+			.matches(
+				/^[A-Za-z0-9]{4}\-[A-Za-z0-9]{4}$/,
+				"Invite codes look like xxxx-xxxx"
+			)
 	});
 
 	const formik = useFormik({
@@ -64,9 +71,7 @@ const SignupPage = () => {
 		onSubmit: handleSignup
 	});
 
-	
-	if (isLoggedIn)
-	{
+	if (isLoggedIn) {
 		return <Navigate to="/" />;
 	}
 
@@ -103,8 +108,14 @@ const SignupPage = () => {
 							label="Username"
 							value={formik.values.username}
 							onChange={formik.handleChange}
-							error={formik.touched.username && Boolean(formik.errors.username)}
-							helperText={formik.touched.username && formik.errors.username}
+							error={
+								formik.touched.username &&
+								Boolean(formik.errors.username)
+							}
+							helperText={
+								formik.touched.username &&
+								formik.errors.username
+							}
 						/>
 						<TextField
 							fullWidth
@@ -114,8 +125,14 @@ const SignupPage = () => {
 							type="password"
 							value={formik.values.password}
 							onChange={formik.handleChange}
-							error={formik.touched.password && Boolean(formik.errors.password)}
-							helperText={formik.touched.password && formik.errors.password}
+							error={
+								formik.touched.password &&
+								Boolean(formik.errors.password)
+							}
+							helperText={
+								formik.touched.password &&
+								formik.errors.password
+							}
 						/>
 						<TextField
 							fullWidth
@@ -125,8 +142,14 @@ const SignupPage = () => {
 							type="password"
 							value={formik.values.password_confirm}
 							onChange={formik.handleChange}
-							error={formik.touched.password_confirm && Boolean(formik.errors.password_confirm)}
-							helperText={formik.touched.password_confirm && formik.errors.password_confirm}
+							error={
+								formik.touched.password_confirm &&
+								Boolean(formik.errors.password_confirm)
+							}
+							helperText={
+								formik.touched.password_confirm &&
+								formik.errors.password_confirm
+							}
 						/>
 						<TextField
 							fullWidth
@@ -136,8 +159,13 @@ const SignupPage = () => {
 							type="email"
 							value={formik.values.email}
 							onChange={formik.handleChange}
-							error={formik.touched.email && Boolean(formik.errors.email)}
-							helperText={formik.touched.email && formik.errors.email}
+							error={
+								formik.touched.email &&
+								Boolean(formik.errors.email)
+							}
+							helperText={
+								formik.touched.email && formik.errors.email
+							}
 						/>
 						<TextField
 							fullWidth
@@ -146,13 +174,32 @@ const SignupPage = () => {
 							label="Invite Code"
 							value={formik.values.invite_code}
 							onChange={formik.handleChange}
-							error={formik.touched.invite_code && Boolean(formik.errors.invite_code)}
-							helperText={formik.touched.invite_code && formik.errors.invite_code}
+							error={
+								formik.touched.invite_code &&
+								Boolean(formik.errors.invite_code)
+							}
+							helperText={
+								formik.touched.invite_code &&
+								formik.errors.invite_code
+							}
 						/>
-						<Button color="primary" variant="contained" fullWidth type="submit">
-							{loginState == "loading" ? <LoadingSpinner /> : <span>Create Account</span>}
+						<Button
+							color="primary"
+							variant="contained"
+							fullWidth
+							type="submit">
+							{user.state === AsyncValueState.Loading ? (
+								<LoadingSpinner />
+							) : (
+								<span>Create Account</span>
+							)}
 						</Button>
-						<Button color="primary" variant="outlined" fullWidth component={RouterLink} to="/">
+						<Button
+							color="primary"
+							variant="outlined"
+							fullWidth
+							component={RouterLink}
+							to="/">
 							Login
 						</Button>
 					</Stack>

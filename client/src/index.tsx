@@ -10,6 +10,7 @@ import { setUpNotifications } from "reapop";
 import theme, { BodyFonts } from "./MuiTheme";
 import { LogFactory } from "./util/Logger";
 import { ThemeProvider } from "@emotion/react";
+import { GlobalDispatcher } from "./features/GlobalDispatcher";
 
 const logger = LogFactory.create("index");
 
@@ -20,6 +21,8 @@ setUpNotifications({
 		dismissAfter: 5000
 	}
 });
+
+GlobalDispatcher.setDispatchCallback(Store.dispatch);
 
 const container = document.getElementById("root");
 if (container) {

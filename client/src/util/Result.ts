@@ -65,6 +65,8 @@ export class Result<ValueType, ErrorType> {
 		} else if (this.contents.error !== undefined) {
 			onFailure(this.contents.error);
 		}
+
+		return this;
 	}
 
 	/**
@@ -106,6 +108,8 @@ export class Result<ValueType, ErrorType> {
 		if (this.contents.type == "value") {
 			func(this.contents.value);
 		}
+
+		return this;
 	}
 
 	/**
@@ -118,6 +122,8 @@ export class Result<ValueType, ErrorType> {
 		) {
 			func(this.contents.error);
 		}
+
+		return this;
 	}
 
 	/**

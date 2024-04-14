@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::web::JsonConfig;
 use actix_web::HttpResponse;
 use config::Config;
@@ -90,6 +91,8 @@ async fn main() -> Result<(), Error> {
     let storage = AppStorage::new(&config).await;
     let booru_config = BooruConfig::new(&pool.clone()).await;
 
+    let development_mode: bool = config.get_bool("development_mode").unwrap_or(true);
+
     info!("Starting server on port {}", port);
 
     HttpServer::new(move || {
@@ -105,9 +108,15 @@ async fn main() -> Result<(), Error> {
             api_error_owned(ApiErrorType::InvalidRequest, err_str).into()
         });
 
+        let cors = Cors::default()
+            .allow_any_header()
+            .allow_any_method()
+            .allow_any_origin();
+
         App::new()
             .app_data(web::Data::new(state))
             .app_data(json_config)
+            .wrap(cors)
             .configure(configure)
             .wrap(Logger::default())
     })

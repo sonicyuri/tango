@@ -15,17 +15,18 @@ import React, { useEffect, useState } from "react";
 import * as Yup from "yup";
 
 import LoadingSpinner from "../components/LoadingSpinner";
-import { Credentials } from "../features/auth/AuthService";
+import { Credentials } from "../features/auth/AuthSchema";
 import { login, selectAuthState } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import i18n from "../util/Internationalization";
 import { LocalSettings } from "../util/LocalSettings";
 
 import { Link as RouterLink } from "react-router-dom";
+import { AsyncValueState } from "../features/AsyncValue";
 
 const LoginPage = () => {
 	const dispatch = useAppDispatch();
-	const { loginState } = useAppSelector(selectAuthState);
+	const { user } = useAppSelector(selectAuthState);
 	const [causedLogin, setCausedLogin] = useState(false);
 
 	const handleLogin = (credentials: Credentials) => {
@@ -52,7 +53,7 @@ const LoginPage = () => {
 		onSubmit: handleLogin
 	});
 
-	if (loginState == "loading" && !causedLogin) {
+	if (user.state == AsyncValueState.Loading && !causedLogin) {
 		return (
 			<Backdrop open={true}>
 				<LoadingSpinner />
@@ -88,8 +89,13 @@ const LoginPage = () => {
 						label="Username"
 						value={formik.values.username}
 						onChange={formik.handleChange}
-						error={formik.touched.username && Boolean(formik.errors.username)}
-						helperText={formik.touched.username && formik.errors.username}
+						error={
+							formik.touched.username &&
+							Boolean(formik.errors.username)
+						}
+						helperText={
+							formik.touched.username && formik.errors.username
+						}
 					/>
 					<TextField
 						fullWidth
@@ -99,8 +105,13 @@ const LoginPage = () => {
 						type="password"
 						value={formik.values.password}
 						onChange={formik.handleChange}
-						error={formik.touched.password && Boolean(formik.errors.password)}
-						helperText={formik.touched.password && formik.errors.password}
+						error={
+							formik.touched.password &&
+							Boolean(formik.errors.password)
+						}
+						helperText={
+							formik.touched.password && formik.errors.password
+						}
 					/>
 					<FormGroup style={{ width: "100%" }}>
 						<FormControlLabel
@@ -115,10 +126,23 @@ const LoginPage = () => {
 							label="Remember me?"
 						/>
 					</FormGroup>
-					<Button color="primary" variant="contained" fullWidth type="submit">
-						{loginState == "loading" ? <LoadingSpinner /> : <span>Login</span>}
+					<Button
+						color="primary"
+						variant="contained"
+						fullWidth
+						type="submit">
+						{user.state == AsyncValueState.Loading ? (
+							<LoadingSpinner />
+						) : (
+							<span>Login</span>
+						)}
 					</Button>
-					<Button color="primary" variant="outlined" fullWidth component={RouterLink} to="/signup">
+					<Button
+						color="primary"
+						variant="outlined"
+						fullWidth
+						component={RouterLink}
+						to="/signup">
 						Create Account
 					</Button>
 				</Stack>
