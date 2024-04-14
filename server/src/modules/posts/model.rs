@@ -68,3 +68,13 @@ impl PostResponse {
         }
     }
 }
+
+#[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
+#[allow(non_snake_case)]
+pub struct PostViewModel {
+    pub id: i32,
+    pub image_id: i32,
+    pub user_id: i32,
+    pub timestamp: i32,
+    pub ipaddress: String,
+}

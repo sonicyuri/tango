@@ -20,6 +20,7 @@ pub fn scope() -> Scope {
         .service(new::api::post_new_handler)
         .service(query::api::post_list_handler)
         .service(api::post_delete_handler)
+        .service(api::post_view_handler)
 }
 
 pub async fn init_db(db: &MySqlPool) -> Result<(), ApiError> {
@@ -91,6 +92,19 @@ pub async fn init_db(db: &MySqlPool) -> Result<(), ApiError> {
 		CONSTRAINT `numeric_score_votes_ibfk_1` FOREIGN KEY (`image_id`) REFERENCES `images` (`id`) ON DELETE CASCADE,
 		CONSTRAINT `numeric_score_votes_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 	  )").execute(db).await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS `image_views` (
+		`id` INT(11) NOT NULL AUTO_INCREMENT,
+		`image_id` INT(11) NOT NULL,
+		`user_id` INT(11) NOT NULL,
+		`timestamp` INT(11) NOT NULL,
+		`ipaddress` VARCHAR(45) NOT NULL COLLATE 'utf8mb3_general_ci',
+		PRIMARY KEY (`id`) USING BTREE
+	)",
+    )
+    .execute(db)
+    .await?;
 
     Ok(())
 }
