@@ -48,22 +48,26 @@ impl QueryEngine {
         let mut pool_ids: HashSet<i32> = HashSet::new();
 
         if results.len() > 0 {
-            // find pools and tags for the results in bulk instead of doing two queries per
+            // find pools, tags, and views for the results in bulk instead of doing two queries per
             let mut post_tags_map: HashMap<i32, Vec<String>> = HashMap::new();
             let mut post_pools_map: HashMap<i32, Vec<i32>> = HashMap::new();
+            let mut post_views_map: HashMap<i32, i32> = HashMap::new();
             // initialize maps
             for p in &results {
                 post_tags_map.insert(p.id, Vec::new());
                 post_pools_map.insert(p.id, Vec::new());
+                post_views_map.insert(p.id, 0);
             }
 
             let post_ids_str = results.iter().map(|p| p.id.to_string()).join(",");
 
+            // find tags for all images at once
             let tag_query = format!("SELECT it.image_id, t.tag FROM image_tags AS it LEFT JOIN tags AS t ON it.tag_id = t.id WHERE it.image_id IN ({})", post_ids_str);
             let tag_results = sqlx::query_as::<_, (i32, String)>(tag_query.as_str())
                 .fetch_all(db)
                 .await?;
 
+            // decipher the results
             for (post_id, tag) in tag_results {
                 let v = post_tags_map.get_mut(&post_id);
                 if let Some(v) = v {
@@ -71,6 +75,7 @@ impl QueryEngine {
                 }
             }
 
+            // find which pools each image belongs to in bulk
             let pool_query = format!(
                 "SELECT pi.image_id, pi.pool_id FROM pool_images AS pi LEFT JOIN pools AS p ON p.id = pi.pool_id WHERE pi.image_id IN ({}) AND (p.public = 1 OR p.user_id = ?)",
                 post_ids_str
@@ -88,10 +93,21 @@ impl QueryEngine {
                 }
             }
 
+            // find each image's view count
+            let view_query = format!("SELECT image_id, COUNT(id) FROM image_views WHERE image_id IN({}) GROUP BY image_id", post_ids_str);
+            let post_results = sqlx::query_as::<_, (i32, i32)>(view_query.as_str())
+                .fetch_all(db)
+                .await?;
+
+            for (post_id, count) in post_results {
+                post_views_map.insert(post_id, count);
+            }
+
             for post in results {
                 let tags = post_tags_map.remove(&post.id).unwrap_or(Vec::new());
                 let pools = post_pools_map.remove(&post.id).unwrap_or(Vec::new());
-                safe_results.push(PostQueryResult::from_model(post, tags, pools)?);
+                let views = post_views_map.remove(&post.id).unwrap_or(0);
+                safe_results.push(PostQueryResult::from_model(post, tags, pools, views)?);
             }
         }
 
