@@ -1,131 +1,41 @@
 /** @format */
-import { ShimmieUser, User } from "../../models/BooruUser";
+import { User } from "../../models/BooruUser";
 import { LocalSettings } from "../../util/LocalSettings";
 import { LogFactory } from "../../util/Logger";
-import { Util } from "../../util/Util";
-import { BooruRequest, CredentialsInvalidError } from "../BooruRequest";
-
-const BASE_URL = "https://tango.moe/api";
-
-interface JwtToken {
-	token: string;
-	expires: string;
-}
-
-interface LoginApiResult {
-	access: JwtToken;
-	refresh: JwtToken | null;
-	user: ShimmieUser;
-}
-
-type LoginApiResponse = { type: "success"; result: LoginApiResult } | { type: "error"; message: string };
-
-interface RefreshApiResult {
-	access: JwtToken;
-	user: ShimmieUser;
-}
-
-type RefreshApiResponse = { type: "success"; result: RefreshApiResult } | { type: "error"; message: string };
-
-type InfoApiResponse =
-	| { type: "success"; result: ShimmieUser }
-	| { type: "error"; message: string }
-	| { type: "needs_auth" };
-
-export interface Credentials {
-	username: string;
-	password: string;
-	remember_me: boolean;
-}
-
-export interface SignupRequest
-{
-	username: string;
-	password: string;
-	email: string | null;
-	invite_code: string | null;
-}
-
-export type SignupResponse = { type: "success"; result: User } | { type: "error"; message: string };
-
-export type AuthResponse = { type: "success"; result: User } | { type: "error"; message: string } | { type: "reset" };
+import { ApiResponse } from "../ApiResponse";
+import { BooruRequest } from "../BooruRequest";
+import { Credentials, LoginApiResult, SignupRequest } from "./AuthSchema";
 
 const logger = LogFactory.create("AuthService");
 
 class AuthService {
-	static async login(credentials: Credentials): Promise<AuthResponse> {
+	static async login(credentials: Credentials): Promise<ApiResponse<User>> {
 		BooruRequest.init(null);
 
-		return BooruRequest.runQueryVersioned("v2", "/user/login", "POST", credentials)
-			.then(res => res.json())
-			.then(rawRes => {
-				const res = rawRes as LoginApiResponse;
-				if (res.type == "error") {
-					return { type: "error", message: res.message };
+		return BooruRequest.queryResultAdvanced<LoginApiResult>(
+			"/user/login",
+			"POST",
+			credentials
+		).then(res =>
+			res.map(val => {
+				LocalSettings.accessToken.value = val.access.token;
+				LocalSettings.accessTokenExpire.value = val.access.expires;
+				if (val.refresh) {
+					LocalSettings.refreshToken.value = val.refresh.token;
+					LocalSettings.refreshTokenExpire.value =
+						val.refresh.expires;
 				}
 
-				LocalSettings.accessToken.value = res.result.access.token;
-				LocalSettings.accessTokenExpire.value = res.result.access.expires;
-
-				if (res.result.refresh) {
-					LocalSettings.refreshToken.value = res.result.refresh.token;
-					LocalSettings.refreshTokenExpire.value = res.result.refresh.expires;
-				}
-
-				BooruRequest.init(res.result.access.token);
-				return { type: "success", result: new User(res.result.user) };
-			});
+				BooruRequest.init(val.access.token);
+				return new User(val.user);
+			})
+		);
 	}
 
-	static async loginToken(accessToken: string, refreshToken: string | null): Promise<AuthResponse> {
+	static async loginToken(accessToken: string): Promise<ApiResponse<User>> {
 		BooruRequest.init(accessToken);
 
-		return BooruRequest.runQueryVersioned("v2", "/user/info", "GET")
-			.then(res => res.json())
-			.then(rawRes => {
-				const res = rawRes as InfoApiResponse;
-				if (res.type == "error") {
-					return { type: "error", message: res.message };
-				} else if (res.type == "needs_auth") {
-					if (!refreshToken) {
-						return { type: "error", message: "token expired" };
-					}
-
-					return this.refresh(refreshToken).then(res => {
-						if (res.type == "error") {
-							logger.error("error refreshing user: ", res.message);
-							// clear it all out and try again
-							return { type: "reset" };
-						}
-
-						return res;
-					});
-				}
-
-				return { type: "success", result: new User(res.result) };
-			});
-	}
-
-	static async refresh(refreshToken: string): Promise<AuthResponse> {
-		BooruRequest.init(null);
-
-		const params = new URLSearchParams();
-		params.append("refresh_token", refreshToken);
-
-		return BooruRequest.runQueryVersioned("v2", "/user/refresh", "POST", params)
-			.then(res => res.json())
-			.then(rawRes => {
-				const res = rawRes as RefreshApiResponse;
-				if (res.type == "error") {
-					return { type: "error", message: res.message };
-				}
-
-				LocalSettings.accessToken.value = res.result.access.token;
-				LocalSettings.accessTokenExpire.value = res.result.access.expires;
-				BooruRequest.init(res.result.access.token);
-
-				return { type: "success", result: new User(res.result.user) };
-			});
+		return BooruRequest.queryResult<User>("/user/info");
 	}
 
 	static logout() {
@@ -136,9 +46,12 @@ class AuthService {
 		LocalSettings.username.clear();
 	}
 
-	static async signup(request: SignupRequest): Promise<SignupResponse>
-	{
-		return BooruRequest.runQueryVersioned("v2", "/user/signup", "POST", request).then(res => res.json()).then(r => r as SignupResponse);
+	static async signup(request: SignupRequest): Promise<ApiResponse<User>> {
+		return BooruRequest.queryResultAdvanced<User>(
+			"/user/signup",
+			"POST",
+			request
+		);
 	}
 }
 

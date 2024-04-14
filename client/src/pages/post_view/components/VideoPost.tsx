@@ -17,7 +17,11 @@ const VideoPost = (props: VideoPostProps) => {
 	const videoElem = useRef<HTMLVideoElement>(null);
 
 	if (props.post.extension != "mp4" && props.post.extension != "webm") {
-		return Util.logAndDisplayError(logger, `unsupported extension ${props.post.extension}`, props.post);
+		return Util.logAndDisplayError(
+			logger,
+			`unsupported extension ${props.post.extension}`,
+			props.post
+		);
 	}
 
 	const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {
@@ -37,15 +41,23 @@ const VideoPost = (props: VideoPostProps) => {
 	return (
 		<>
 			{Util.isTouchDevice() ? (
-				<div className="PostPage-listener" {...props.swipe} onClick={handleClick} />
+				<div
+					className="PostPage-listener"
+					{...props.swipe}
+					onClick={handleClick}
+				/>
 			) : (
 				<></>
 			)}
 			<div className="VideoPost">
 				<video loop autoPlay controls ref={videoElem}>
 					<source
-						src={props.post.videoUrl}
-						type={props.post.extension == "mp4" ? "video/mp4" : "video/webm"}
+						src={props.post.contentUrl}
+						type={
+							props.post.extension == "mp4"
+								? "video/mp4"
+								: "video/webm"
+						}
 					/>
 				</video>
 			</div>

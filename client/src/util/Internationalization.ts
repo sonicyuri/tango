@@ -11,7 +11,12 @@ i18n.init({
 					auth: {
 						errors: {
 							credentials_failed:
-								"Credentials failed! Try refreshing the page."
+								"Credentials failed! Try refreshing the page.",
+							token_login_failed:
+								"Credentials expired. Please log in again.",
+							login_failed:
+								"Login failed! Check your username and password and try again.",
+							signup_failed: "Signup failed!"
 						}
 					},
 					favorites: {

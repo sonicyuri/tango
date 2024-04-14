@@ -13,8 +13,10 @@ import moment from "moment";
 const logger = LogFactory.create("ProfilePage");
 
 const ProfilePage = () => {
-	const { user } = useAppSelector(selectAuthState);
+	const { user: userValue } = useAppSelector(selectAuthState);
 	const dispatch = useAppDispatch();
+
+	const user = userValue.value;
 
 	if (!user) {
 		dispatch(notify("Can't view profile without logging in!"));
@@ -26,7 +28,8 @@ const ProfilePage = () => {
 			<Typography variant="subtitle1">{user.username}</Typography>
 			<Typography variant="body1">Class: {user?.class}</Typography>
 			<Typography variant="body1">
-				Joined: {moment(user.joinedAt).format("dddd, MMMM Do YYYY, h:mm:ss a")}
+				Joined:{" "}
+				{moment(user.joinedAt).format("dddd, MMMM Do YYYY, h:mm:ss a")}
 			</Typography>
 		</PageContainer>
 	);

@@ -1,223 +1,81 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { notify } from "reapop";
+import { createSelector, createSlice } from "@reduxjs/toolkit";
 
 import { User } from "../../models/BooruUser";
 import { LogFactory, Logger } from "../../util/Logger";
-import { BooruRequest, CredentialsInvalidError } from "../BooruRequest";
+import { Result } from "../../util/Result";
+import { StaticUIErrorFactory } from "../../util/UIError";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
+import { GlobalDispatcher } from "../GlobalDispatcher";
+import { RootState } from "../Store";
 import { favoriteList } from "../favorites/FavoriteSlice";
 import { postListVotes } from "../posts/PostSlice";
-import { RootState } from "../Store";
 import { tagList } from "../tags/TagSlice";
 import { userConfigGet } from "../user_config/UserConfigSlice";
-import AuthService, { Credentials, SignupRequest } from "./AuthService";
+import { Credentials, SignupRequest } from "./AuthSchema";
+import AuthService from "./AuthService";
 
 const logger: Logger = LogFactory.create("AuthSlice");
-
-type LoginState = "initial" | "loading" | "failed" | "success";
-
-interface AuthState {
-	isLoggedIn: boolean;
-	user: User | null;
-	loginState: LoginState;
-}
-
-const setLoginState: CaseReducer<AuthState, PayloadAction<LoginState>> = (state, action) => {
-	state.loginState = action.payload;
-};
-
-const setLoginStateAction = (newState: LoginState): PayloadAction<LoginState> => ({
-	type: "auth/setLoginState",
-	payload: newState
-});
-
-export const login = createAsyncThunk("auth/login", async (credentials: Credentials, thunkApi) => {
-	try {
-		thunkApi.dispatch(setLoginStateAction("loading"));
-
-		const response = await AuthService.login(credentials);
-		if (response.type == "error") {
-			thunkApi.dispatch(notify("Login failed - " + response.message, "error"));
-			return thunkApi.rejectWithValue({});
-		} else if (response.type == "reset") {
-			thunkApi.dispatch(logout());
-			return thunkApi.rejectWithValue({});
-		}
-
-		thunkApi.dispatch(notify("Login successful!", "success"));
-
-		thunkApi.dispatch(userConfigGet(null));
-		thunkApi.dispatch(tagList(null));
-		thunkApi.dispatch(favoriteList(null));
-		thunkApi.dispatch(postListVotes(null));
-
-		return response.result;
-	} catch (error: any) {
-		logger.error("error logging in", error);
-		if (error instanceof CredentialsInvalidError) {
-			thunkApi.dispatch(notify("Login failed - invalid credentials", "error"));
-		} else {
-			thunkApi.dispatch(notify("Login failed - unknown error", "error"));
-		}
-
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const refresh = createAsyncThunk("auth/refresh", async (refreshToken: string, thunkApi) => {
-	try {
-		thunkApi.dispatch(setLoginStateAction("loading"));
-
-		const response = await AuthService.refresh(refreshToken);
-		if (response.type == "error") {
-			thunkApi.dispatch(notify("Refresh failed - " + response.message, "error"));
-			return thunkApi.rejectWithValue({});
-		} else if (response.type == "reset") {
-			thunkApi.dispatch(logout());
-			return thunkApi.rejectWithValue({});
-		}
-
-		thunkApi.dispatch(notify("Login successful!", "success"));
-
-		thunkApi.dispatch(userConfigGet(null));
-		thunkApi.dispatch(tagList(null));
-		thunkApi.dispatch(favoriteList(null));
-		thunkApi.dispatch(postListVotes(null));
-
-		return response.result;
-	} catch (error: any) {
-		logger.error("error refreshing", error);
-		if (error instanceof CredentialsInvalidError) {
-			thunkApi.dispatch(notify("Refresh failed - invalid credentials", "error"));
-		} else {
-			thunkApi.dispatch(notify("Refresh failed - unknown error", "error"));
-		}
-
-		return thunkApi.rejectWithValue({});
-	}
-});
-
-export const loginToken = createAsyncThunk(
-	"auth/loginToken",
-	async (params: { accessToken: string; refreshToken: string | null }, thunkApi) => {
-		try {
-			thunkApi.dispatch(setLoginStateAction("loading"));
-
-			const response = await AuthService.loginToken(params.accessToken, params.refreshToken);
-
-			if (response.type == "error") {
-				thunkApi.dispatch(notify("Login failed - " + response.message, "error"));
-				return thunkApi.rejectWithValue({});
-			} else if (response.type == "reset") {
-				thunkApi.dispatch(logout());
-				return thunkApi.rejectWithValue({});
-			}
-
-			thunkApi.dispatch(notify("Login successful!", "success"));
-
-			thunkApi.dispatch(userConfigGet(null));
-			thunkApi.dispatch(tagList(null));
-			thunkApi.dispatch(favoriteList(null));
-			thunkApi.dispatch(postListVotes(null));
-
-			return response.result;
-		} catch (error: any) {
-			logger.error("error logging in", error);
-			if (error instanceof CredentialsInvalidError) {
-				thunkApi.dispatch(notify("Login failed - invalid credentials", "error"));
-			} else {
-				thunkApi.dispatch(notify("Login failed - unknown error", "error"));
-			}
-
-			return thunkApi.rejectWithValue({});
-		}
-	}
+const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
+	"AuthSlice"
 );
 
-export const signup = createAsyncThunk("auth/signup", async (credentials: SignupRequest, thunkApi) => {
-	try {
-		thunkApi.dispatch(setLoginStateAction("loading"));
+const userValue = new AsyncValue<User | null>("auth", "user", null);
 
-		const response = await AuthService.signup(credentials);
-		if (response.type == "error") {
-			thunkApi.dispatch(notify("Signup failed - " + response.message, "error"));
-			return thunkApi.rejectWithValue({});
-		}
+interface AuthState {
+	user: StoredAsyncValue<User | null>;
+}
 
-		thunkApi.dispatch(notify("Signup successful! You may now log in", "success"));
+export const login = userValue.addAsyncAction(
+	"auth/login",
+	(request: Credentials) =>
+		errorFactory.wrapErrorOnly(
+			AuthService.login(request),
+			"modules.auth.errors.login_failed"
+		)
+);
 
-		return response.result;
-	} catch (error: any) {
-		logger.error("error signing up", error);
-		thunkApi.dispatch(notify("Signup failed - unknown error", "error"));
+export const loginToken = userValue.addAsyncAction(
+	"auth/loginToken",
+	(request: { accessToken: string }) =>
+		errorFactory.wrapErrorOnly(
+			AuthService.loginToken(request.accessToken),
+			"modules.auth.errors.token_login_failed"
+		)
+);
 
-		return thunkApi.rejectWithValue({});
-	}
-});
+export const signup = userValue.addAsyncAction(
+	"auth/signup",
+	(request: SignupRequest) =>
+		errorFactory.wrapErrorOnly(
+			AuthService.signup(request).then(u => u.map(u => null)),
+			"modules.auth.errors.signup_failed"
+		)
+);
 
-const logoutReducer: CaseReducer<AuthState, PayloadAction<void>> = (state, action) => {
+export const logout = userValue.addAction("auth/logout", (state, _: null) => {
 	AuthService.logout();
-	state.isLoggedIn = false;
-	state.loginState = "initial";
-};
-
-export const logout = (): PayloadAction<void> => ({
-	type: "auth/logout",
-	payload: undefined
+	return Result.success(null);
 });
 
 const initialState: AuthState = {
-	isLoggedIn: false,
-	user: null,
-	loginState: "initial"
+	user: userValue.storedValue
 };
 
 export const AuthSlice = createSlice({
 	name: "auth",
 	initialState,
-	reducers: {
-		logout: logoutReducer,
-		setLoginState
-	},
+	reducers: {},
 	extraReducers: builder => {
-		builder.addCase(login.fulfilled, (state, action) => {
-			state.isLoggedIn = true;
-			state.user = action.payload;
-			state.loginState = "success";
-		});
-		builder.addCase(login.rejected, (state, action) => {
-			state.isLoggedIn = false;
-			state.user = null;
-			state.loginState = "failed";
-		});
-		builder.addCase(loginToken.fulfilled, (state, action) => {
-			state.isLoggedIn = true;
-			state.user = action.payload;
-			state.loginState = "success";
-		});
-		builder.addCase(loginToken.rejected, (state, action) => {
-			state.isLoggedIn = false;
-			state.user = null;
-			state.loginState = "failed";
-		});
-		builder.addCase(refresh.fulfilled, (state, action) => {
-			state.isLoggedIn = true;
-			state.user = action.payload;
-			state.loginState = "success";
-		});
-		builder.addCase(refresh.rejected, (state, action) => {
-			state.isLoggedIn = false;
-			state.user = null;
-			state.loginState = "failed";
-		});
-		builder.addCase(signup.fulfilled, (state, action) => {
-			state.loginState = "success";
-		});
-		builder.addCase(signup.rejected, (state, action) => {
-			state.loginState = "failed";
-		});
+		userValue.setupReducers(builder);
 	}
 });
 
 export default AuthSlice.reducer;
-export const selectAuthState = (state: RootState) => state.auth;
+export const selectAuthState = createSelector(
+	[(state: RootState) => state.auth],
+	state => ({
+		user: state.user,
+		isLoggedIn: state.user.ready() && state.user.value != null
+	})
+);

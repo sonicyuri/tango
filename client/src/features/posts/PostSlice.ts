@@ -273,7 +273,7 @@ export const postSetTags = createAsyncThunk(
 export const postDownload = createAsyncThunk(
 	"post/download",
 	async (request: BooruPost, thunkApi) => {
-		return fetch(request.videoUrl, { method: "GET" })
+		return fetch(request.contentUrl, { method: "GET" })
 			.then(res => res.blob())
 			.then(blob => {
 				const a = document.createElement("a");

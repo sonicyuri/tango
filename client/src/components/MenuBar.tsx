@@ -3,9 +3,21 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import VideoSettingsIcon from "@mui/icons-material/VideoSettings";
-import { AppBar, Box, IconButton, Link as MuiLink, Menu, MenuItem, Toolbar } from "@mui/material";
+import {
+	AppBar,
+	Box,
+	IconButton,
+	Link as MuiLink,
+	Menu,
+	MenuItem,
+	Toolbar
+} from "@mui/material";
 import React, { useState } from "react";
-import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
+import {
+	Link as RouterLink,
+	useNavigate,
+	useSearchParams
+} from "react-router-dom";
 
 import { UserClass } from "../models/user_classes/UserClass";
 import { logout, selectAuthState } from "../features/auth/AuthSlice";
@@ -37,8 +49,10 @@ const MenuBar = () => {
 	const navigate = useNavigate();
 
 	const { cursor } = useAppSelector(selectPostState);
-	const { user } = useAppSelector(selectAuthState);
+	const { user: userValue } = useAppSelector(selectAuthState);
 	const [params, setParams] = useSearchParams();
+
+	const user = userValue.value;
 
 	const [showingSidebar, setShowingSidebar] = useState(false);
 
@@ -58,7 +72,7 @@ const MenuBar = () => {
 	};
 
 	const handleLogout = () => {
-		dispatch(logout());
+		dispatch(logout(null));
 	};
 
 	const handleShowFilters = (event: React.MouseEvent<HTMLElement>) => {
@@ -72,19 +86,28 @@ const MenuBar = () => {
 			</ListItemIcon>
 			<ListItemText>Profile</ListItemText>
 		</MenuItem>,
-		<MenuItem key="favorites" component={RouterLink} to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
+		<MenuItem
+			key="favorites"
+			component={RouterLink}
+			to={Util.makePostsLink("favorited_by=" + user?.username, 1)}>
 			<ListItemIcon>
 				<StarIcon fontSize="small" />
 			</ListItemIcon>
 			<ListItemText>Favorites</ListItemText>
 		</MenuItem>,
-		<MenuItem key="likes" component={RouterLink} to={Util.makePostsLink("upvoted_by=" + user?.username, 1)}>
+		<MenuItem
+			key="likes"
+			component={RouterLink}
+			to={Util.makePostsLink("upvoted_by=" + user?.username, 1)}>
 			<ListItemIcon>
 				<ThumbUpIcon fontSize="small" />
 			</ListItemIcon>
 			<ListItemText>Likes</ListItemText>
 		</MenuItem>,
-		<MenuItem key="dislikes" component={RouterLink} to={Util.makePostsLink("downvoted_by=" + user?.username, 1)}>
+		<MenuItem
+			key="dislikes"
+			component={RouterLink}
+			to={Util.makePostsLink("downvoted_by=" + user?.username, 1)}>
 			<ListItemIcon>
 				<ThumbDownIcon fontSize="small" />
 			</ListItemIcon>
@@ -140,14 +163,19 @@ const MenuBar = () => {
 	const handleRandomizeQuery = () => {
 		const previousQueryParts = (cursor?.currentQuery || "").split(" ");
 		const randomQuery = "order:random_" + Math.floor(Math.random() * 10000);
-		const filteredParts = previousQueryParts.filter(p => !p.startsWith("order:random_"));
+		const filteredParts = previousQueryParts.filter(
+			p => !p.startsWith("order:random_")
+		);
 		const query = filteredParts.concat([randomQuery]).join(" ");
 		navigate(Util.makePostsLink(query, 1));
 	};
 
 	return (
 		<>
-			<SideBar open={showingSidebar} onClose={() => setShowingSidebar(false)} />
+			<SideBar
+				open={showingSidebar}
+				onClose={() => setShowingSidebar(false)}
+			/>
 			<AppBar position="static" className="MenuBar">
 				<Toolbar>
 					<IconButton
@@ -182,7 +210,11 @@ const MenuBar = () => {
 							flexGrow: 1,
 							ml: 2
 						}}>
-						<SearchBox query={cursor?.currentQuery || params.get("q") || ""} />
+						<SearchBox
+							query={
+								cursor?.currentQuery || params.get("q") || ""
+							}
+						/>
 					</Box>
 					<IconButton
 						size="large"

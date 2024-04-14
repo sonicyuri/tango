@@ -29,32 +29,60 @@ interface ShimmiePost {
 	owner_id: string;
 	numeric_score: number;
 	tags?: string[];
+	views?: number;
 	pools: number[];
 }
 
 class BooruPost {
-	// id of the image
+	/**
+	 * This post's ID.
+	 */
 	public id: string;
-	// size in pixels, width x height
+	/**
+	 * The size in pixels, if applicable, of this post's content.
+	 */
 	public imageSize: [number, number];
-	// hash of the image
+	/**
+	 * The md5 hash of this post's content.
+	 */
 	public hash: string;
-	// size in bytes
+	/**
+	 * The size in bytes of this post's content.
+	 */
 	public fileSize: number;
-	// file extension
+	/**
+	 * The original file extension of this post's content.
+	 * @deprecated Use {@link mimeType} instead.
+	 */
 	public extension: string;
-	// mime type
+	/**
+	 * The mime type of this post's content.
+	 */
 	public mimeType: string;
-	// date posted
+	/**
+	 * The date this post was made.
+	 */
 	public postedAt: Date;
-	// the source of the image
+	/**
+	 * The source of the post.
+	 */
 	public source: string | null;
-	// the numeric score of this image
+	/**
+	 * The sum of all this post's upvotes and downvotes.
+	 */
 	public numericScore: number;
-	// the ID of the owner
+	/**
+	 * The ID of the user who made this post.
+	 */
 	public ownerId: string;
-	// all the tags added to the image
+	/**
+	 * All the tags added to the post.
+	 */
 	public tags: string[];
+	/**
+	 * The number of times this post has been viewed.
+	 */
+	public views: number;
 
 	constructor(obj: ShimmiePost) {
 		this.id = String(obj.id);
@@ -66,6 +94,7 @@ class BooruPost {
 		this.postedAt = new Date(obj.posted * 1000);
 		this.source = obj.source;
 		this.ownerId = obj.owner_id;
+		this.views = obj.views || 0;
 
 		if (obj.tags === undefined) {
 			throw new Error(
@@ -77,14 +106,23 @@ class BooruPost {
 		this.numericScore = obj.numeric_score || 0;
 	}
 
-	get videoUrl() {
+	/**
+	 * A URL pointing to this post's content.
+	 */
+	get contentUrl() {
 		return `${BaseUrl}/images/${this.hash}`;
 	}
 
+	/**
+	 * A URL pointing to this post's thumbnail.
+	 */
 	get thumbUrl() {
 		return `${BaseUrl}/thumbs/${this.hash}`;
 	}
 
+	/**
+	 * The ratio between the width and height of this post's content.
+	 */
 	get aspectRatio() {
 		return this.imageSize[0] / this.imageSize[1];
 	}

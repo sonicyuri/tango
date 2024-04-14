@@ -27,8 +27,9 @@ import { LogFactory } from "../../util/Logger";
 const logger = LogFactory.create("TagAliasPage");
 
 const TagAliasPage = () => {
-	const { user } = useAppSelector(selectAuthState);
+	const { user: userValue } = useAppSelector(selectAuthState);
 	const dispatch = useAppDispatch();
+	const user = userValue.value;
 
 	const [page, setPage] = React.useState(0);
 	const [rowsPerPage, setRowsPerPage] = React.useState(10);

@@ -15,8 +15,9 @@ import { ListAlt } from "@mui/icons-material";
 const logger = LogFactory.create("AdminPage");
 
 const AdminPage = () => {
-	const { user } = useAppSelector(selectAuthState);
+	const { user: userValue } = useAppSelector(selectAuthState);
 	const dispatch = useAppDispatch();
+	const user = userValue.value;
 
 	if (!user || !UserClass.canClass(user.class, "manage_admintools")) {
 		dispatch(notify("Missing permissions!", "error"));
