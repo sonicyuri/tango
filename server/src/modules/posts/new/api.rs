@@ -9,7 +9,6 @@ use actix_web::{post, web, HttpRequest, HttpResponse};
 use futures::{Future, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use log::error;
-use reqwest::StatusCode;
 use sqlx::mysql::MySqlQueryResult;
 use sqlx::MySqlPool;
 use tempfile::NamedTempFile;

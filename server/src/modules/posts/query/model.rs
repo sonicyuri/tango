@@ -24,6 +24,7 @@ pub struct PostQueryResult {
     pub numeric_score: i32,
     pub tags: Vec<String>,
     pub pools: Vec<i32>,
+	pub views: i32
 }
 
 impl PostQueryResult {
@@ -31,6 +32,7 @@ impl PostQueryResult {
         model: PostModel,
         tags: Vec<String>,
         pools: Vec<i32>,
+		views: i32
     ) -> Result<PostQueryResult, ApiError> {
         Ok(PostQueryResult {
             id: model.id,
@@ -46,6 +48,7 @@ impl PostQueryResult {
             numeric_score: model.numeric_score,
             tags,
             pools,
+			views
         })
     }
 
@@ -61,7 +64,9 @@ impl PostQueryResult {
 		let pool_result = sqlx::query_as::<_, (i32,)>("SELECT pool_id FROM pool_images WHERE image_id = ?").bind(model.id).fetch_all(db).await?;
 		let pools = pool_result.iter().map(|(p,)| p.to_owned()).collect_vec();
 
-		PostQueryResult::from_model(model, tags, pools)
+		let (views, ) = sqlx::query_as::<_, (i32,)>("SELECT COUNT(id) FROM image_views WHERE image_id = ?").bind(model.id).fetch_one(db).await?;
+
+		PostQueryResult::from_model(model, tags, pools, views)
 	}
 }
 
