@@ -6,23 +6,18 @@ import {
 	CardContent,
 	CardHeader
 } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoadingOverlay from "../../../components/LoadingOverlay";
 
-import LoadingSpinner from "../../../components/LoadingSpinner";
 import TagChipList from "../../../components/TagChipList";
 import TagInput from "../../../components/TagInput";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
-import {
-	postSetTags,
-	selectPostState
-} from "../../../features/posts/PostSlice";
+import { postSetTags } from "../../../features/posts/PostSlice";
 import { selectTagState, tagList } from "../../../features/tags/TagSlice";
 import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory } from "../../../util/Logger";
 import ImportButton from "./ImportButton";
-import PostActions from "./PostActions";
 
 const logger = LogFactory.create("TagsCard");
 

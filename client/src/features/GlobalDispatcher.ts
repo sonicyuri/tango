@@ -1,7 +1,5 @@
 /** @format */
 
-import { ThunkAction, ThunkDispatch } from "redux-thunk";
-
 export type GlobalDispatchType = any;
 export type GlobalDispatchCallback = (action: GlobalDispatchType) => void;
 

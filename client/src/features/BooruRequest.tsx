@@ -1,16 +1,14 @@
 /** @format */
-import base64 from "base-64";
 import getTangoConfig from "../TangoConfig";
 
+import { LocalSettings } from "../util/LocalSettings";
 import { LogFactory, Logger } from "../util/Logger";
 import { Util } from "../util/Util";
-import { PostSearchCursor } from "./PostSearchCursor";
 import {
 	ApiResponse,
 	CredentialsFailedErrorResponse,
 	RawApiResponse
 } from "./ApiResponse";
-import { LocalSettings } from "../util/LocalSettings";
 import { RefreshApiResponse } from "./auth/AuthSchema";
 
 const TangoConfig = getTangoConfig();

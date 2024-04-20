@@ -1,11 +1,17 @@
 /** @format */
-import { CaseReducer, createAsyncThunk, createSlice, PayloadAction, Reducer } from "@reduxjs/toolkit";
+import {
+	CaseReducer,
+	createAsyncThunk,
+	createSlice,
+	PayloadAction,
+	Reducer
+} from "@reduxjs/toolkit";
 import { notify } from "reapop";
 import { BooruPost } from "../../models/BooruPost";
 
 import { LogFactory, Logger } from "../../util/Logger";
 import { RootState } from "../Store";
-import ImportService, { ImportPrepareResponse, ImportPrepareResult } from "./ImportService";
+import ImportService, { ImportPrepareResult } from "./ImportService";
 
 const logger: Logger = LogFactory.create("ImportSlice");
 
@@ -23,32 +29,42 @@ export interface ImportPrepareRequest {
 	url: string;
 }
 
-const setLoadingState: CaseReducer<ImportState, PayloadAction<ImportLoadingState>> = (state, action) => {
+const setLoadingState: CaseReducer<
+	ImportState,
+	PayloadAction<ImportLoadingState>
+> = (state, action) => {
 	state.loadingState = action.payload;
 };
 
-const setLoadingStateAction = (newState: ImportLoadingState): PayloadAction<ImportLoadingState> => ({
+const setLoadingStateAction = (
+	newState: ImportLoadingState
+): PayloadAction<ImportLoadingState> => ({
 	type: "import/setLoadingState",
 	payload: newState
 });
 
-export const importPrepare = createAsyncThunk("import/prepare", async (request: ImportPrepareRequest, thunkApi) => {
-	try {
-		thunkApi.dispatch(setLoadingStateAction("loading"));
+export const importPrepare = createAsyncThunk(
+	"import/prepare",
+	async (request: ImportPrepareRequest, thunkApi) => {
+		try {
+			thunkApi.dispatch(setLoadingStateAction("loading"));
 
-		const res = await ImportService.prepare(request.url);
-		if (res.type == "error") {
-			logger.error("error preparing import", res.message);
-			thunkApi.dispatch(notify("Import error: " + res.message, "error"));
+			const res = await ImportService.prepare(request.url);
+			if (res.type == "error") {
+				logger.error("error preparing import", res.message);
+				thunkApi.dispatch(
+					notify("Import error: " + res.message, "error")
+				);
+				return thunkApi.rejectWithValue({});
+			}
+
+			return { result: res.result, url: request.url, post: request.post };
+		} catch (error: any) {
+			logger.error("error preparing import", error);
 			return thunkApi.rejectWithValue({});
 		}
-
-		return { result: res.result, url: request.url, post: request.post };
-	} catch (error: any) {
-		logger.error("error preparing import", error);
-		return thunkApi.rejectWithValue({});
 	}
-});
+);
 
 const initialState: ImportState = {
 	prepareResponse: null,

@@ -1,9 +1,7 @@
 /** @format */
 
-import { useRouteError } from "react-router-dom";
-import React from "react";
-import { LogFactory } from "../../../util/Logger";
 import { BooruPost } from "../../../models/BooruPost";
+import { LogFactory } from "../../../util/Logger";
 
 const logger = LogFactory.create("ImagePost");
 

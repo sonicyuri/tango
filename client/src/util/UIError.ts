@@ -1,7 +1,7 @@
 /** @format */
 
 import { notify } from "reapop";
-import { ApiResponse, HandleableErrorType } from "../features/ApiResponse";
+import { ApiResponse } from "../features/ApiResponse";
 import i18n from "./Internationalization";
 import { LogFactory, Logger } from "./Logger";
 import { Result } from "./Result";

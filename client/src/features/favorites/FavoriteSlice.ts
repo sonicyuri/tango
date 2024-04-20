@@ -1,24 +1,11 @@
 /** @format */
-import {
-	CaseReducer,
-	createAsyncThunk,
-	createSlice,
-	PayloadAction,
-	Reducer
-} from "@reduxjs/toolkit";
-import { notify } from "reapop";
+import { createSlice, Reducer } from "@reduxjs/toolkit";
 
 import { LogFactory, Logger } from "../../util/Logger";
+import { StaticUIErrorFactory } from "../../util/UIError";
+import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
 import { RootState } from "../Store";
 import FavoriteService from "./FavoriteService";
-import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
-import {
-	StaticUIErrorFactory,
-	UIError,
-	UIErrorFactory
-} from "../../util/UIError";
-import { ApiResponseError } from "../ApiResponse";
-import { Result } from "../../util/Result";
 
 const logger: Logger = LogFactory.create("FavoriteSlice");
 const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(

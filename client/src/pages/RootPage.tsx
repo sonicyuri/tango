@@ -1,19 +1,19 @@
 /** @format */
 import { Box, Paper } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Outlet } from "react-router";
 
 import MenuBar from "../components/MenuBar";
-import { loginToken, selectAuthState } from "../features/auth/AuthSlice";
+import { AsyncValueState } from "../features/AsyncValue";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
+import { loginToken, selectAuthState } from "../features/auth/AuthSlice";
+import { favoriteList } from "../features/favorites/FavoriteSlice";
+import { postListVotes } from "../features/posts/PostSlice";
+import { tagList } from "../features/tags/TagSlice";
+import { userConfigGet } from "../features/user_config/UserConfigSlice";
 import { LocalSettings } from "../util/LocalSettings";
 import { Util } from "../util/Util";
 import LoginPage from "./LoginPage";
-import { AsyncValueState } from "../features/AsyncValue";
-import { userConfigGet } from "../features/user_config/UserConfigSlice";
-import { tagList } from "../features/tags/TagSlice";
-import { favoriteList } from "../features/favorites/FavoriteSlice";
-import { postListVotes } from "../features/posts/PostSlice";
 
 const RootPage = () => {
 	const dispatch = useAppDispatch();
@@ -25,11 +25,19 @@ const RootPage = () => {
 		}
 
 		if (
-			LocalSettings.accessToken.value &&
-			Util.checkIfTokenValid(LocalSettings.accessTokenExpire.value ?? "")
+			(LocalSettings.accessToken.value &&
+				Util.checkIfTokenValid(
+					LocalSettings.accessTokenExpire.value ?? ""
+				)) ||
+			(LocalSettings.refreshToken.value &&
+				Util.checkIfTokenValid(
+					LocalSettings.refreshTokenExpire.value ?? ""
+				))
 		) {
 			dispatch(
-				loginToken({ accessToken: LocalSettings.accessToken.value })
+				loginToken({
+					accessToken: LocalSettings.accessToken.value ?? ""
+				})
 			);
 		}
 	}, []);

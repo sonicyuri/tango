@@ -1,11 +1,11 @@
 /** @format */
 import styled from "@emotion/styled";
+import TuneIcon from "@mui/icons-material/Tune";
 import {
 	Autocomplete,
 	autocompleteClasses,
 	Box,
 	Chip,
-	createFilterOptions,
 	FilterOptionsState,
 	IconButton,
 	Popover,
@@ -13,13 +13,11 @@ import {
 	TextField,
 	Typography
 } from "@mui/material";
-import React, { useMemo, useState } from "react";
 import { matchSorter } from "match-sorter";
-import { useNavigate } from "react-router-dom";
-import { VariableSizeList, ListChildComponentProps } from "react-window";
-import TuneIcon from "@mui/icons-material/Tune";
+import React, { useMemo, useState } from "react";
+import { ListChildComponentProps, VariableSizeList } from "react-window";
 
-import { useAppDispatch, useAppSelector } from "../features/Hooks";
+import { useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
 import { BooruTag, BooruTagCategory } from "../models/BooruTag";
 import { LogFactory } from "../util/Logger";

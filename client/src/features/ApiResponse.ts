@@ -1,8 +1,7 @@
 /** @format */
 
-import { Result, ResultContents } from "../util/Result";
 import i18n from "../util/Internationalization";
-import { LoggedError } from "../util/Logger";
+import { Result, ResultContents } from "../util/Result";
 import {
 	UIError,
 	UIErrorFactory,

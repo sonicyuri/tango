@@ -6,12 +6,7 @@ import { LogFactory, Logger } from "../../util/Logger";
 import { Result } from "../../util/Result";
 import { StaticUIErrorFactory } from "../../util/UIError";
 import { AsyncValue, StoredAsyncValue } from "../AsyncValue";
-import { GlobalDispatcher } from "../GlobalDispatcher";
 import { RootState } from "../Store";
-import { favoriteList } from "../favorites/FavoriteSlice";
-import { postListVotes } from "../posts/PostSlice";
-import { tagList } from "../tags/TagSlice";
-import { userConfigGet } from "../user_config/UserConfigSlice";
 import { Credentials, SignupRequest } from "./AuthSchema";
 import AuthService from "./AuthService";
 

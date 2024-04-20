@@ -11,7 +11,7 @@ import {
 	Typography
 } from "@mui/material";
 import { useFormik } from "formik";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import * as Yup from "yup";
 
 import LoadingSpinner from "../components/LoadingSpinner";
