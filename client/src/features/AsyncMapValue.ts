@@ -1,20 +1,17 @@
 /** @format */
 
 import {
-	Action,
 	ActionCreatorWithPayload,
 	ActionReducerMapBuilder,
 	AsyncThunk,
-	CaseReducer,
 	createAction,
 	createAsyncThunk
 } from "@reduxjs/toolkit";
-import { LogFactory, Logger } from "../util/Logger";
 import { AsyncThunkConfig } from "@reduxjs/toolkit/dist/createAsyncThunk";
+import { LogFactory, Logger } from "../util/Logger";
 import { Result } from "../util/Result";
 import { UIError, UIErrorFactory, uiError } from "../util/UIError";
-import { ApiResponse, ApiResponseError } from "./ApiResponse";
-import { AsyncValue, StoredAsyncValue } from "./AsyncValue";
+import { StoredAsyncValue } from "./AsyncValue";
 
 export enum AsyncValueState {
 	Initial,

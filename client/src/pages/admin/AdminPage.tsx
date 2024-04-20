@@ -1,16 +1,14 @@
 /** @format */
-import React from "react";
-import { Link, Navigate, useRouteError } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import PageContainer from "../../components/PageContainer";
-import { selectAuthState } from "../../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
+import { selectAuthState } from "../../features/auth/AuthSlice";
 import { UserClass } from "../../models/user_classes/UserClass";
 
-import { LogFactory } from "../../util/Logger";
-import { notify } from "reapop";
-import { Button, List } from "@mui/material";
-import OptionsList, { OptionsListItem } from "../../components/OptionsList";
 import { ListAlt } from "@mui/icons-material";
+import { notify } from "reapop";
+import OptionsList, { OptionsListItem } from "../../components/OptionsList";
+import { LogFactory } from "../../util/Logger";
 
 const logger = LogFactory.create("AdminPage");
 

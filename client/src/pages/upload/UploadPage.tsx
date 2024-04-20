@@ -1,31 +1,33 @@
 /** @format */
-import React, { useEffect, useRef, useState } from "react";
-import { Navigate, useNavigate, useRouteError } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import PageContainer from "../../components/PageContainer";
-import { selectAuthState } from "../../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
+import { selectAuthState } from "../../features/auth/AuthSlice";
 
-import { LogFactory } from "../../util/Logger";
-import { notify } from "reapop";
+import AddIcon from "@mui/icons-material/Add";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import {
 	Button,
 	FormControlLabel,
-	IconButton,
 	LinearProgress,
 	Stack,
 	Switch,
 	TextField,
 	Typography
 } from "@mui/material";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import AddIcon from "@mui/icons-material/Add";
-import FileEntry from "./components/FileEntry";
-import { DragDropContext, Draggable, DropResult, Droppable } from "react-beautiful-dnd";
+import {
+	DragDropContext,
+	Draggable,
+	DropResult,
+	Droppable
+} from "react-beautiful-dnd";
+import { notify } from "reapop";
 import TagInput from "../../components/TagInput";
-import { postUpload, selectPostState } from "../../features/posts/PostSlice";
 import { PostUploadRequest } from "../../features/posts/PostService";
-import { Util } from "../../util/Util";
-import { BooruPost } from "../../models/BooruPost";
+import { postUpload, selectPostState } from "../../features/posts/PostSlice";
+import { LogFactory } from "../../util/Logger";
+import FileEntry from "./components/FileEntry";
 
 const logger = LogFactory.create("UploadPage");
 const SupportedMimeTypes = [
@@ -39,7 +41,9 @@ const SupportedMimeTypes = [
 	".swf"
 ];
 
-export type FileObject = { type: "url"; value: string } | { type: "file"; value: File };
+export type FileObject =
+	| { type: "url"; value: string }
+	| { type: "file"; value: File };
 
 const UploadPage = () => {
 	const { user } = useAppSelector(selectAuthState);
@@ -145,7 +149,10 @@ const UploadPage = () => {
 					onClick={handleUploadUrl}>
 					<AddIcon />
 				</Button>
-				<Button variant="contained" title="Upload file from your hard drive" onClick={handleUploadFile}>
+				<Button
+					variant="contained"
+					title="Upload file from your hard drive"
+					onClick={handleUploadFile}>
 					<AttachFileIcon />
 				</Button>
 			</div>
@@ -154,11 +161,17 @@ const UploadPage = () => {
 					{provided => (
 						<div
 							className="Upload-Files"
-							style={{ visibility: files.length > 0 ? "visible" : "hidden" }}
+							style={{
+								visibility:
+									files.length > 0 ? "visible" : "hidden"
+							}}
 							ref={provided.innerRef}
 							{...provided.droppableProps}>
 							{files.map((f, i) => (
-								<Draggable key={"file-" + i} draggableId={"file-" + i} index={i}>
+								<Draggable
+									key={"file-" + i}
+									draggableId={"file-" + i}
+									index={i}>
 									{provided => (
 										<FileEntry
 											provided={provided}
@@ -180,10 +193,19 @@ const UploadPage = () => {
 			<div className="Upload-Options">
 				<Typography variant="h6">Upload Options</Typography>
 				<FormControlLabel
-					control={<Switch value={createPool} onChange={e => setCreatePool(e.currentTarget.checked)} />}
+					control={
+						<Switch
+							value={createPool}
+							onChange={e =>
+								setCreatePool(e.currentTarget.checked)
+							}
+						/>
+					}
 					label="Create pool from uploaded images"
 				/>
-				<div className="Upload-PoolOptions" style={{ display: createPool ? "block" : "none" }}>
+				<div
+					className="Upload-PoolOptions"
+					style={{ display: createPool ? "block" : "none" }}>
 					<Stack spacing={2} alignItems="left">
 						<TextField
 							label="Pool title"
@@ -200,14 +222,24 @@ const UploadPage = () => {
 						/>
 						<FormControlLabel
 							control={
-								<Switch value={poolPrivate} onChange={e => setPoolPrivate(e.currentTarget.checked)} />
+								<Switch
+									value={poolPrivate}
+									onChange={e =>
+										setPoolPrivate(e.currentTarget.checked)
+									}
+								/>
 							}
 							label="Make pool private (visible to only you)"
 						/>
 					</Stack>
 				</div>
 				<Typography>Add tags to uploaded posts</Typography>
-				<TagInput variant="edit" values={tags} onValuesChange={t => setTags(t)} onSubmit={() => {}} />
+				<TagInput
+					variant="edit"
+					values={tags}
+					onValuesChange={t => setTags(t)}
+					onSubmit={() => {}}
+				/>
 			</div>
 			<div className="Upload-Buttons">
 				<Button variant="contained" onClick={handleSubmit}>
@@ -220,11 +252,18 @@ const UploadPage = () => {
 	const progressBody = (
 		<div className="Upload-Progress">
 			<Typography>Uploading {files.length} files</Typography>
-			<LinearProgress variant="determinate" value={uploadProgress * 100.0} />
+			<LinearProgress
+				variant="determinate"
+				value={uploadProgress * 100.0}
+			/>
 		</div>
 	);
 
-	return <PageContainer title="Upload">{uploadState == "uploading" ? progressBody : uploadBody}</PageContainer>;
+	return (
+		<PageContainer title="Upload">
+			{uploadState == "uploading" ? progressBody : uploadBody}
+		</PageContainer>
+	);
 };
 
 export default UploadPage;

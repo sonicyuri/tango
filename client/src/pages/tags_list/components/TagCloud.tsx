@@ -7,8 +7,8 @@ import { selectTagState } from "../../../features/tags/TagSlice";
 import { BooruTag } from "../../../models/BooruTag";
 import { Util } from "../../../util/Util";
 
-import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
+import "tippy.js/dist/tippy.css";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 
 interface TagCloudProps {

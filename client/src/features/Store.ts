@@ -3,13 +3,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { reducer as notificationsReducer } from "reapop";
 import authReducer from "./auth/AuthSlice";
-import postReducer from "./posts/PostSlice";
-import tagReducer from "./tags/TagSlice";
-import tagAliasReducer from "./tags/TagAliasSlice";
 import favoriteReducer from "./favorites/FavoriteSlice";
 import importReducer from "./import/ImportSlice";
-import userConfigReducer from "./user_config/UserConfigSlice";
 import inviteReducer from "./invites/InviteSlice";
+import postReducer from "./posts/PostSlice";
+import tagAliasReducer from "./tags/TagAliasSlice";
+import tagReducer from "./tags/TagSlice";
+import userConfigReducer from "./user_config/UserConfigSlice";
 
 export const Store = configureStore({
 	reducer: {

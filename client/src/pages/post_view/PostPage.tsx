@@ -11,9 +11,9 @@ import {
 	Typography,
 	useMediaQuery
 } from "@mui/material";
-import { useTheme } from "@mui/system";
 import Grid from "@mui/material/Unstable_Grid2";
-import React, { useEffect, useState } from "react";
+import { useTheme } from "@mui/system";
+import { useEffect, useState } from "react";
 import {
 	Link as RouterLink,
 	useNavigate,
@@ -22,29 +22,27 @@ import {
 } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 
-import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
+import {
+	favoriteSet,
+	selectFavoriteState
+} from "../../features/favorites/FavoriteSlice";
 import {
 	postDirectLink,
 	postViewById,
 	postVote,
 	selectPostState
 } from "../../features/posts/PostSlice";
+import { BooruPost } from "../../models/BooruPost";
 import i18n from "../../util/Internationalization";
 import { LogFactory, Logger } from "../../util/Logger";
 import { Util } from "../../util/Util";
 import DetailsCard from "./components/DetailsCard";
 import FlashPost from "./components/FlashPost";
 import ImagePost from "./components/ImagePost";
+import PostActions from "./components/PostActions";
 import TagsCard from "./components/TagsCard";
 import VideoPost from "./components/VideoPost";
-import { BooruPost } from "../../models/BooruPost";
-import PostActions from "./components/PostActions";
-import {
-	favoriteSet,
-	selectFavoriteState
-} from "../../features/favorites/FavoriteSlice";
-import { VoteRequest } from "../../features/posts/PostService";
 
 const logger: Logger = LogFactory.create("PostPage");
 

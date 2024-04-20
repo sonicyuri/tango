@@ -49,16 +49,26 @@ class SettingWithDefault<Type> extends Setting<Type> {
 }
 
 class LocalSettings {
-	public static username: Setting<string> = new Setting<string>("auth:username");
-	public static accessToken: Setting<string> = new Setting<string>("token:access");
-	public static accessTokenExpire: Setting<string> = new Setting<string>("token:access:expire");
-	public static refreshToken: Setting<string> = new Setting<string>("token:refresh");
-	public static refreshTokenExpire: Setting<string> = new Setting<string>("token:refresh:expire");
-	public static searchFilterOptions: Setting<SearchFilterOptions> = new Setting<SearchFilterOptions>(
-		"settings:search_filter"
+	public static username: Setting<string> = new Setting<string>(
+		"auth:username"
 	);
+	public static accessToken: Setting<string> = new Setting<string>(
+		"token:access"
+	);
+	public static accessTokenExpire: Setting<string> = new Setting<string>(
+		"token:access:expire"
+	);
+	public static refreshToken: Setting<string> = new Setting<string>(
+		"token:refresh"
+	);
+	public static refreshTokenExpire: Setting<string> = new Setting<string>(
+		"token:refresh:expire"
+	);
+	public static searchFilterOptions: Setting<SearchFilterOptions> =
+		new Setting<SearchFilterOptions>("settings:search_filter");
 	// todo: set default based on server setting
-	public static pageSize: SettingWithDefault<number> = new SettingWithDefault<number>("setting:page_size", 48);
+	public static pageSize: SettingWithDefault<number> =
+		new SettingWithDefault<number>("setting:page_size", 48);
 }
 
-export { Setting, LocalSettings };
+export { LocalSettings, Setting };

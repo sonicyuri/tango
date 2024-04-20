@@ -1,27 +1,25 @@
 /** @format */
 
-import { Button, ButtonGroup } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
-import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import DownloadIcon from "@mui/icons-material/Download";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
-import StarBorderIcon from "@mui/icons-material/StarBorder";
-import StarIcon from "@mui/icons-material/Star";
-import DownloadIcon from "@mui/icons-material/Download";
-import FileCopyIcon from "@mui/icons-material/FileCopy";
-import { BooruPost } from "../../../models/BooruPost";
+import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
+import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import { Button, ButtonGroup } from "@mui/material";
+import LoadingSpinner from "../../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
+import {
+	favoriteSet,
+	selectFavoriteState
+} from "../../../features/favorites/FavoriteSlice";
 import {
 	postDownload,
 	postVote,
 	selectPostState
 } from "../../../features/posts/PostSlice";
-import {
-	favoriteSet,
-	selectFavoriteState
-} from "../../../features/favorites/FavoriteSlice";
-import LoadingSpinner from "../../../components/LoadingSpinner";
+import { BooruPost } from "../../../models/BooruPost";
 
 interface PostActionsProps {
 	post: BooruPost;

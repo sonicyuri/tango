@@ -1,27 +1,27 @@
 /** @format */
 //import { DataGrid, GridColDef, GridRowsProp } from "@mui/x-data-grid";
-import { TablePagination } from "@mui/material";
 import {
 	Table,
 	TableBody,
 	TableCell,
 	TableContainer,
 	TableHead,
+	TablePagination,
 	TableRow
 } from "@mui/material";
 import React, { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { notify } from "reapop";
 
-import { UserClass } from "../../models/user_classes/UserClass";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import PageContainer from "../../components/PageContainer";
-import { selectAuthState } from "../../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
+import { selectAuthState } from "../../features/auth/AuthSlice";
 import {
 	selectTagAliasState,
 	tagAliasList
 } from "../../features/tags/TagAliasSlice";
+import { UserClass } from "../../models/user_classes/UserClass";
 import { LogFactory } from "../../util/Logger";
 
 const logger = LogFactory.create("TagAliasPage");

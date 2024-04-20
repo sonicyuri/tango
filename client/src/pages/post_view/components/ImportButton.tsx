@@ -2,12 +2,13 @@
 
 import { Button, Popover, TextField } from "@mui/material";
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
 import LoadingOverlay from "../../../components/LoadingOverlay";
-import LoadingSpinner from "../../../components/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
-import { importPrepare, selectImportState } from "../../../features/import/ImportSlice";
+import {
+	importPrepare,
+	selectImportState
+} from "../../../features/import/ImportSlice";
 import { BooruPost } from "../../../models/BooruPost";
 
 interface ImportButtonProps {

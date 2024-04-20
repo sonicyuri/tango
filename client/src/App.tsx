@@ -1,5 +1,4 @@
 /** @format */
-import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import NotificationsSystem, { atalhoTheme, dismissNotification } from "reapop";
 

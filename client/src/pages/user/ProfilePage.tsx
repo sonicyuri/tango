@@ -1,14 +1,13 @@
 /** @format */
-import React from "react";
-import { Navigate, useRouteError } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import PageContainer from "../../components/PageContainer";
-import { selectAuthState } from "../../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
+import { selectAuthState } from "../../features/auth/AuthSlice";
 
-import { LogFactory } from "../../util/Logger";
-import { notify } from "reapop";
 import { Typography } from "@mui/material";
 import moment from "moment";
+import { notify } from "reapop";
+import { LogFactory } from "../../util/Logger";
 
 const logger = LogFactory.create("ProfilePage");
 

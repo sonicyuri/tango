@@ -12,7 +12,10 @@ export class SearchFilterOptions {
 	public static get instance(): SearchFilterOptions {
 		return (SearchFilterOptions._instance =
 			SearchFilterOptions._instance ||
-			Object.assign(new SearchFilterOptions(), LocalSettings.searchFilterOptions.value));
+			Object.assign(
+				new SearchFilterOptions(),
+				LocalSettings.searchFilterOptions.value
+			));
 	}
 
 	public get showVideo(): boolean {
@@ -52,7 +55,11 @@ export class SearchFilterOptions {
 	}
 
 	public getMap(): { images: boolean; videos: boolean; vr: boolean } {
-		return { images: this.showImages, videos: this.showVideo, vr: this.showVr };
+		return {
+			images: this.showImages,
+			videos: this.showVideo,
+			vr: this.showVr
+		};
 	}
 
 	private saveValues() {

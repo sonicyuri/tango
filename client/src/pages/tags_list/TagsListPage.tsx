@@ -3,12 +3,12 @@ import { FormControlLabel, FormGroup, Switch, Tab, Tabs } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import LoadingSpinner from "../../components/LoadingSpinner";
 import PageContainer from "../../components/PageContainer";
 import TagChipList from "../../components/TagChipList";
 import { useAppDispatch, useAppSelector } from "../../features/Hooks";
 import { selectTagState } from "../../features/tags/TagSlice";
 import TagCloud from "./components/TagCloud";
-import LoadingSpinner from "../../components/LoadingSpinner";
 
 interface TagsListProps {
 	tab: "list" | "cloud" | "none";

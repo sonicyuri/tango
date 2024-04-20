@@ -1,8 +1,8 @@
 /** @format */
 import { Alert, useMediaQuery } from "@mui/material";
-import { Theme, Breakpoint, useTheme } from "@mui/system";
+import { Breakpoint, Theme, useTheme } from "@mui/system";
 import { filesize } from "filesize";
-import moment, { ISO_8601 } from "moment";
+import moment from "moment";
 import React from "react";
 import i18n from "./Internationalization";
 
@@ -17,14 +17,20 @@ export enum LoadingState {
 type AddableObject = { [k: string]: number };
 
 export class Util {
-	static chooseBreakpoint<T>(defaultVal: T, obj: { [k in Breakpoint]?: T }): T {
+	static chooseBreakpoint<T>(
+		defaultVal: T,
+		obj: { [k in Breakpoint]?: T }
+	): T {
 		const theme: Theme = useTheme();
 
 		const keys: Breakpoint[] = ["xl", "lg", "md", "sm", "xs"];
 		for (const k in keys) {
 			const bp = k as Breakpoint;
 
-			if (obj[bp] !== undefined && useMediaQuery(theme.breakpoints.up(bp))) {
+			if (
+				obj[bp] !== undefined &&
+				useMediaQuery(theme.breakpoints.up(bp))
+			) {
 				return obj[bp] || defaultVal;
 			}
 		}
@@ -40,7 +46,11 @@ export class Util {
 		return String(filesize(bytes, { output: "string" }));
 	}
 
-	static logAndDisplayError(logger: Logger, message: string, ...extraContents: any[]) {
+	static logAndDisplayError(
+		logger: Logger,
+		message: string,
+		...extraContents: any[]
+	) {
 		logger.error(message, ...extraContents);
 		return <Alert severity="error">{message}</Alert>;
 	}
@@ -50,7 +60,9 @@ export class Util {
 	 * @param parts The keys and values of the query string, with an optional "enabled" parameter to if it should be included.
 	 * @returns The formatted query string, like ?k1=v1&k2=v2&k3=v3
 	 */
-	static formatQueryString(parts: { key: string; value: string; enabled?: boolean }[]): string {
+	static formatQueryString(
+		parts: { key: string; value: string; enabled?: boolean }[]
+	): string {
 		const formatted = parts
 			.filter(p => p.enabled || p.enabled === undefined)
 			.map(p => `${p.key}=${encodeURIComponent(p.value)}`)
@@ -76,7 +88,9 @@ export class Util {
 		return `/posts${page != 1 ? "/" + page : ""}${queryString}`;
 	}
 
-	static samePageLinkNavigation(event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+	static samePageLinkNavigation(
+		event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+	) {
 		return !(
 			event.defaultPrevented ||
 			event.button !== 0 || // ignore everything but left-click
@@ -107,7 +121,10 @@ export class Util {
 		return tag.indexOf(":") != -1 ? tag.split(":")[1] : tag;
 	}
 
-	static arrayToObject<T, U, V>(array: T[], func: (val: T) => [string, U]): { [k: string]: U } {
+	static arrayToObject<T, U, V>(
+		array: T[],
+		func: (val: T) => [string, U]
+	): { [k: string]: U } {
 		const obj: { [k: string]: U } = {};
 		array.forEach(v => {
 			const t = func(v);
@@ -120,7 +137,9 @@ export class Util {
 	static addObjects(...objects: AddableObject[]): AddableObject {
 		const accum: AddableObject = {};
 		objects.forEach(obj => {
-			Object.keys(obj).forEach(k => (accum[k] = (accum[k] || 0) + obj[k]));
+			Object.keys(obj).forEach(
+				k => (accum[k] = (accum[k] || 0) + obj[k])
+			);
 		});
 
 		return accum;

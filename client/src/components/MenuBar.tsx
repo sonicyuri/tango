@@ -7,9 +7,9 @@ import {
 	AppBar,
 	Box,
 	IconButton,
-	Link as MuiLink,
 	Menu,
 	MenuItem,
+	Link as MuiLink,
 	Toolbar
 } from "@mui/material";
 import React, { useState } from "react";
@@ -19,11 +19,11 @@ import {
 	useSearchParams
 } from "react-router-dom";
 
-import { UserClass } from "../models/user_classes/UserClass";
-import { logout, selectAuthState } from "../features/auth/AuthSlice";
 import { useAppDispatch, useAppSelector } from "../features/Hooks";
-import { selectPostState } from "../features/posts/PostSlice";
 import { SearchFilterOptions } from "../features/SearchFilterOptions";
+import { logout, selectAuthState } from "../features/auth/AuthSlice";
+import { selectPostState } from "../features/posts/PostSlice";
+import { UserClass } from "../models/user_classes/UserClass";
 import i18n from "../util/Internationalization";
 import { LogFactory } from "../util/Logger";
 import { Util } from "../util/Util";
@@ -31,16 +31,16 @@ import SearchBox from "./SearchBox";
 import { SearchFilters } from "./SearchFilters";
 import SideBar from "./SideBar";
 
-import ListItemText from "@mui/material/ListItemText";
 import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
 
-import PersonIcon from "@mui/icons-material/Person";
-import StarIcon from "@mui/icons-material/Star";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import ThumbDownIcon from "@mui/icons-material/ThumbDown";
-import SettingsIcon from "@mui/icons-material/Settings";
-import LogoutIcon from "@mui/icons-material/Logout";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import LogoutIcon from "@mui/icons-material/Logout";
+import PersonIcon from "@mui/icons-material/Person";
+import SettingsIcon from "@mui/icons-material/Settings";
+import StarIcon from "@mui/icons-material/Star";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 
 const logger = LogFactory.create("MenuBar");
 

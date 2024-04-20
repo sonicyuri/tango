@@ -1,21 +1,12 @@
 /** @format */
 import {
-	Button,
 	Card,
 	CardContent,
 	CardHeader,
-	Link as MuiLink,
 	Stack,
 	Typography
 } from "@mui/material";
 
-import LoadingSpinner from "../../../components/LoadingSpinner";
-import {
-	favoriteSet,
-	selectFavoriteState
-} from "../../../features/favorites/FavoriteSlice";
-import { useAppDispatch, useAppSelector } from "../../../features/Hooks";
-import { postDownload } from "../../../features/posts/PostSlice";
 import { BooruPost } from "../../../models/BooruPost";
 import { LogFactory, Logger } from "../../../util/Logger";
 import { Util } from "../../../util/Util";
