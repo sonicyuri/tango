@@ -56,7 +56,7 @@ const InviteList = () => {
 					</TableRow>
 				</TableHead>
 				<TableBody>
-					{invites.ready() ? (
+					{!invites.ready() ? (
 						<LoadingSpinner />
 					) : (
 						invites.value.map(invite => {
@@ -105,7 +105,7 @@ const InviteList = () => {
 								color="primary"
 								variant="contained"
 								onClick={handleGenerateInvite}>
-								{invites.ready() ? (
+								{!invites.ready() ? (
 									<LoadingSpinner />
 								) : (
 									<span>Generate Invite</span>
