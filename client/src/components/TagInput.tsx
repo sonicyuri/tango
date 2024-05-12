@@ -1,30 +1,26 @@
 /** @format */
 import styled from "@emotion/styled";
-import TuneIcon from "@mui/icons-material/Tune";
 import {
 	Autocomplete,
-	autocompleteClasses,
 	Box,
 	Chip,
+	createFilterOptions,
 	FilterOptionsState,
-	IconButton,
-	Popover,
-	Popper,
 	TextField,
 	Typography
 } from "@mui/material";
+import React from "react";
 import { matchSorter } from "match-sorter";
-import React, { useMemo, useState } from "react";
-import { ListChildComponentProps, VariableSizeList } from "react-window";
+import { useNavigate } from "react-router-dom";
 
-import { useAppSelector } from "../features/Hooks";
+import { useAppDispatch, useAppSelector } from "../features/Hooks";
 import { selectTagState } from "../features/tags/TagSlice";
-import { BooruTag, BooruTagCategory } from "../models/BooruTag";
+import { BooruTag } from "../models/BooruTag";
 import { LogFactory } from "../util/Logger";
 import { Util } from "../util/Util";
 
 const logger = LogFactory.create("TagInput");
-const enableOptions = false;
+const DefaultMaxValuesToDisplay = 20;
 
 const UnpaddedFilledInput = styled(TextField)({
 	"& .MuiFilledInput-root": {
@@ -32,131 +28,35 @@ const UnpaddedFilledInput = styled(TextField)({
 	}
 });
 
-const LISTBOX_PADDING = 8;
-
-function renderRow(
-	categories: BooruTagCategory[],
-	tagFrequencies: { [tag: string]: number }
-) {
-	return (props: ListChildComponentProps) => {
-		const { data, index, style } = props;
-		const dataSet = data[index];
-		const tag = dataSet[1];
-		const category = useMemo(
-			() => BooruTag.getCategory(tag, categories),
-			[tag]
-		);
-		const formattedTag = useMemo(() => Util.formatTag(tag), [tag]);
-
-		const inlineStyle = {
-			...style,
-			top: (style.top as number) + LISTBOX_PADDING
-		};
-
-		return (
-			<Box component="li" {...dataSet[0]} style={inlineStyle}>
-				<Typography variant="subtitle1" color={category?.color}>
-					{formattedTag}&nbsp;
-				</Typography>
-				<Typography variant="body2">{tagFrequencies[tag]}</Typography>
-			</Box>
-		);
-	};
-}
-
-const OuterElementContext = React.createContext({});
-
-const OuterElementType = React.forwardRef<HTMLDivElement>((props, ref) => {
-	const outerProps = React.useContext(OuterElementContext);
-	return <div ref={ref} {...props} {...outerProps} />;
-});
-
-function useResetCache(data: any) {
-	const ref = React.useRef<VariableSizeList>(null);
-	React.useEffect(() => {
-		if (ref.current != null) {
-			ref.current.resetAfterIndex(0, true);
-		}
-	}, [data]);
-	return ref;
-}
-
-const ListboxComponent = React.forwardRef<
-	HTMLDivElement,
-	React.HTMLAttributes<HTMLElement>
->(function ListBoxComponent(props, ref) {
-	const { children, ...other } = props;
-	const { categories, tagFrequencies } = useAppSelector(selectTagState);
-
-	const itemData: React.ReactElement[] = [];
-	(children as React.ReactElement[]).forEach(
-		(item: React.ReactElement & { children?: React.ReactElement[] }) => {
-			itemData.push(item);
-			itemData.push(...(item.children || []));
-		}
-	);
-
-	const itemSize = 36;
-	const height = itemData.length * itemSize;
-
-	const gridRef = useResetCache(itemData.length);
-
-	return (
-		<div ref={ref}>
-			<OuterElementContext.Provider value={other}>
-				<VariableSizeList
-					itemData={itemData}
-					height={height + 2 * LISTBOX_PADDING}
-					width="100%"
-					ref={gridRef}
-					outerElementType={OuterElementType}
-					innerElementType="ul"
-					itemSize={(index: number) => itemSize}
-					overscanCount={100}
-					itemCount={itemData.length}>
-					{renderRow(categories.value, tagFrequencies.value)}
-				</VariableSizeList>
-			</OuterElementContext.Provider>
-		</div>
-	);
-});
-
-const StyledPopper = styled(Popper)({
-	[`& .${autocompleteClasses.listbox}`]: {
-		boxSizing: "border-box",
-		"& ul": {
-			padding: 0,
-			margin: 0
-		}
-	}
-});
-
 export interface TagInputProps {
 	values: string[];
 	variant?: "search" | "edit";
+	maxValuesToDisplay?: number;
 
 	onValuesChange: (tags: string[]) => void;
 	onSubmit: () => void;
 }
 
 const TagInput = (props: TagInputProps) => {
-	const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+	const dispatch = useAppDispatch();
+	const navigate = useNavigate();
 
-	const { tags, categories, tagFrequencies } = useAppSelector(selectTagState);
+	const maxValues = props.maxValuesToDisplay ?? DefaultMaxValuesToDisplay;
+
+	const {
+		tags: tagsAsync,
+		categories,
+		tagFrequencies: tagFrequenciesAsync
+	} = useAppSelector(selectTagState);
+	const tags = tagsAsync.value;
+	const tagFrequencies = tagFrequenciesAsync.value;
+	const tagsCopy = tags
+		.slice()
+		.map(t => new BooruTag(t.tag, tagFrequencies[t.tag] || 0))
+		.sort((a, b) => b.frequency - a.frequency);
 
 	const existingTags: { [tag: string]: boolean } = {};
 	props.values.forEach(t => (existingTags[t] = true));
-
-	const options = useMemo(
-		() =>
-			tags.value
-				.slice()
-				.map(t => new BooruTag(t.tag, tagFrequencies.value[t.tag] || 0)) // why is this here?
-				.sort((a, b) => b.frequency - a.frequency)
-				.filter(t => !existingTags[t.tag])
-				.map(t => t.tag),
-		[tags]
-	);
 
 	const filterOptions = (
 		options: string[],
@@ -164,81 +64,59 @@ const TagInput = (props: TagInputProps) => {
 	): string[] => {
 		const sanitizeInput = inputValue.trim().replace(/\s+/g, "_");
 
-		return inputValue.trim().length == 0
-			? options
-			: matchSorter(options, inputValue.replace(/\s+/g, "_"), {
-					threshold: matchSorter.rankings.CONTAINS,
-					sorter: items =>
-						items.sort((a, b) => {
-							let tagAFreq = tagFrequencies.value[a.item] || 0;
-							let tagBFreq = tagFrequencies.value[b.item] || 0;
+		const arr =
+			inputValue.trim().length == 0
+				? options
+				: matchSorter(options, inputValue.replace(/\s+/g, "_"), {
+						threshold: matchSorter.rankings.CONTAINS,
+						sorter: items =>
+							items.sort((a, b) => {
+								let tagAFreq = tagFrequencies[a.item] || 0;
+								let tagBFreq = tagFrequencies[b.item] || 0;
 
-							const max = Math.max(tagAFreq, tagBFreq);
-							tagAFreq /= max;
-							tagBFreq /= max;
+								const max = Math.max(tagAFreq, tagBFreq);
+								tagAFreq /= max;
+								tagBFreq /= max;
 
-							const factor = Math.max(2, Math.log2(max));
+								const factor = Math.max(2, Math.log2(max));
 
-							if (a.item == sanitizeInput) {
-								return -1;
-							} else if (
-								a.item.startsWith(sanitizeInput) ||
-								Util.stripTagCategory(a.item).startsWith(
-									sanitizeInput
-								)
-							) {
-								tagAFreq *= factor;
-							} else {
-								tagAFreq *=
-									a.item.indexOf(sanitizeInput) != -1
-										? 1
-										: 0.5;
-							}
+								if (a.item == sanitizeInput) {
+									return -1;
+								} else if (
+									a.item.startsWith(sanitizeInput) ||
+									Util.stripTagCategory(a.item).startsWith(
+										sanitizeInput
+									)
+								) {
+									tagAFreq *= factor;
+								} else {
+									tagAFreq *=
+										a.item.indexOf(sanitizeInput) != -1
+											? 1
+											: 0.5;
+								}
 
-							if (b.item == sanitizeInput) {
-								return 1;
-							} else if (
-								b.item.startsWith(sanitizeInput) ||
-								Util.stripTagCategory(b.item).startsWith(
-									sanitizeInput
-								)
-							) {
-								tagBFreq *= factor;
-							} else {
-								tagBFreq *=
-									b.item.indexOf(sanitizeInput) != -1
-										? 1
-										: 0.5;
-							}
+								if (b.item == sanitizeInput) {
+									return 1;
+								} else if (
+									b.item.startsWith(sanitizeInput) ||
+									Util.stripTagCategory(b.item).startsWith(
+										sanitizeInput
+									)
+								) {
+									tagBFreq *= factor;
+								} else {
+									tagBFreq *=
+										b.item.indexOf(sanitizeInput) != -1
+											? 1
+											: 0.5;
+								}
 
-							return tagBFreq - tagAFreq;
-						})
-				});
+								return tagBFreq - tagAFreq;
+							})
+					});
+		return arr.length > maxValues ? arr.slice(0, maxValues) : arr;
 	};
-
-	const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-		setAnchorEl(event.currentTarget);
-	};
-
-	const handleClose = () => {
-		setAnchorEl(null);
-	};
-
-	const open = Boolean(anchorEl);
-
-	const optionsMenu = (
-		<>
-			<Popover
-				open={open}
-				anchorEl={anchorEl}
-				onClose={handleClose}
-				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-				transformOrigin={{
-					vertical: "top",
-					horizontal: "left"
-				}}></Popover>
-		</>
-	);
 
 	const variant = props.variant ?? "search";
 
@@ -251,7 +129,9 @@ const TagInput = (props: TagInputProps) => {
 			<Autocomplete
 				multiple
 				filterOptions={filterOptions}
-				options={options}
+				options={tagsCopy
+					.filter(t => !existingTags[t.tag])
+					.map(t => t.tag)}
 				value={props.values}
 				onChange={(_: any, values: readonly string[]) =>
 					props.onValuesChange(
@@ -276,63 +156,33 @@ const TagInput = (props: TagInputProps) => {
 					));
 				}}
 				renderInput={params => (
-					<>
-						<UnpaddedFilledInput
-							{...params}
-							variant={
-								variant == "search" ? "filled" : "outlined"
-							}
-							placeholder={
-								variant == "search" ? "Search" : "Select tags"
-							}
-						/>
-
-						<div
-							style={{
-								position: "absolute",
-								top: 0,
-								left: 0,
-								width: "100%",
-								height: "100%",
-								pointerEvents: "none"
-							}}></div>
-						{variant == "search" && enableOptions ? (
-							<IconButton
-								onClick={handleClick}
-								className="TagInput-SettingsButton">
-								<TuneIcon />
-							</IconButton>
-						) : (
-							<></>
-						)}
-					</>
+					<UnpaddedFilledInput
+						{...params}
+						variant={variant == "search" ? "filled" : "outlined"}
+						placeholder="Search"
+					/>
 				)}
-				renderOption={(props, option, state) => {
-					//[props, option, state.index] as React.ReactNode
-
-					const tag = option;
+				renderOption={(props, option) => {
 					const category = BooruTag.getCategory(
-						tag,
+						option,
 						categories.value
 					);
-					const formattedTag = Util.formatTag(tag);
 
 					return (
 						<Box component="li" {...props}>
 							<Typography
 								variant="subtitle1"
 								color={category?.color}>
-								{formattedTag}&nbsp;
+								{Util.formatTag(option)}&nbsp;
 							</Typography>
 							<Typography variant="body2">
-								{tagFrequencies.value[tag]}
+								{tagFrequencies[option]}
 							</Typography>
 						</Box>
 					);
 				}}
 				onSubmit={props.onSubmit}
 			/>
-			{optionsMenu}
 		</div>
 	);
 };
