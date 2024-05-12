@@ -1,5 +1,5 @@
 /** @format */
-import { User } from "../../models/BooruUser";
+import { ShimmieUser, User } from "../../models/BooruUser";
 import { LocalSettings } from "../../util/LocalSettings";
 import { LogFactory } from "../../util/Logger";
 import { ApiResponse } from "../ApiResponse";
@@ -35,7 +35,9 @@ class AuthService {
 	static async loginToken(accessToken: string): Promise<ApiResponse<User>> {
 		BooruRequest.init(accessToken);
 
-		return BooruRequest.queryResult<User>("/user/info");
+		return (await BooruRequest.queryResult<ShimmieUser>("/user/info")).map(
+			u => new User(u)
+		);
 	}
 
 	static logout() {
