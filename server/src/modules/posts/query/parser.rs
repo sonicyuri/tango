@@ -5,7 +5,7 @@ use itertools::Itertools;
 use once_cell::sync::Lazy;
 use parse_size::parse_size;
 use regex::Regex;
-use serde::{Deserialize, Serialize	};
+use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
 
@@ -15,16 +15,18 @@ static IMAGE_CONDITION_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^([a-z_]+?)(\=|\>|\<|\<\=|\>\=|\:)([a-z0-9_]+?)(_([a-z0-9_]+?))?$").unwrap()
 });
 
-fn default_as_true() -> bool { return true; }
+fn default_as_true() -> bool {
+    return true;
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ContentFilter {
-	#[serde(default = "default_as_true")]
-	pub images: bool,
-	#[serde(default = "default_as_true")]
-	pub videos: bool,
-	#[serde(default = "default_as_true")]
-	pub vr: bool
+    #[serde(default = "default_as_true")]
+    pub images: bool,
+    #[serde(default = "default_as_true")]
+    pub videos: bool,
+    #[serde(default = "default_as_true")]
+    pub vr: bool,
 }
 
 pub struct ImageQuery {
@@ -32,7 +34,7 @@ pub struct ImageQuery {
     pub img_conditions: Vec<(QueryObject, bool)>,
     pub offset: i32,
     pub limit: i32,
-	pub order: String
+    pub order: String,
 }
 
 impl ImageQuery {
@@ -40,7 +42,7 @@ impl ImageQuery {
         name: &str,
         op: &str,
         value: &str,
-        param: Option<&str>,
+        _param: Option<&str>,
     ) -> Option<QueryObject> {
         let op = match op {
             ":" => "=",
@@ -84,7 +86,7 @@ impl ImageQuery {
 					Ok(size) => {
 						Some(QueryObject::new_with_param(format!("images.filesize {} ?", op).as_str(), size))
 					},
-					Err(err) => None
+					Err(_err) => None
 				}
 			},
 			"posted" => Some(QueryObject::new_with_param(format!("images.posted {} ?", op).as_str(), value)),
@@ -161,7 +163,6 @@ impl ImageQuery {
 			"downvoted_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv WHERE nsv.score = -1 AND nsv.image_id = images.id AND nsv.owner_id = ?) > 0", value)), false => None },
 			"favorited_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf LEFT JOIN users AS u ON uf.user_id = u.id WHERE uf.image_id = images.id AND u.name = ?) > 0", value)), false => None },
 			"favorited_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf WHERE uf.image_id = images.id AND uf.user_id = ?) > 0", value)), false => None },
-			
 			"views" => Some(QueryObject::new_with_param(format!("(SELECT COUNT(*) as c FROM image_views WHERE image_id = images.id) {} ?", op).as_str(), value)),
 			"viewed_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM image_views AS iv LEFT JOIN users AS u ON iv.user_id = u.id WHERE iv.image_id = images.id AND u.name = ?) > 0", value)), false => None},
 			"viewed_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM image_views WHERE image_id = images.id AND user_id = ?) > 0", value)), false => None},
@@ -177,7 +178,7 @@ impl ImageQuery {
         };
 
         if column == "random" {
-			let param = param.parse::<i32>().unwrap_or(0);
+            let param = param.parse::<i32>().unwrap_or(0);
             return format!("RAND({})", param);
         }
 
@@ -193,26 +194,31 @@ impl ImageQuery {
         return format!("images.{} {}", column, dir);
     }
 
-    pub fn new(tags: Vec<String>, offset: i32, limit: i32, filter: ContentFilter) -> Result<ImageQuery, ApiError> {
-		let mut tags = tags;
-		let mut filter_tags : Vec<String> = Vec::new();
+    pub fn new(
+        tags: Vec<String>,
+        offset: i32,
+        limit: i32,
+        filter: ContentFilter,
+    ) -> Result<ImageQuery, ApiError> {
+        let mut tags = tags;
+        let mut filter_tags: Vec<String> = Vec::new();
 
-        if !filter.videos
-        {
-           	filter_tags.push(match filter.vr && !filter.images { true => "vr".to_owned(), false => "content:image_and_vr".to_owned() });
+        if !filter.videos {
+            filter_tags.push(match filter.vr && !filter.images {
+                true => "vr".to_owned(),
+                false => "content:image_and_vr".to_owned(),
+            });
         }
 
-        if !filter.images
-        {
+        if !filter.images {
             filter_tags.push("-content:image".to_owned())
         }
 
-        if !filter.vr
-        {
+        if !filter.vr {
             filter_tags.push("-vr".to_owned());
         }
 
-		tags.append(&mut filter_tags);
+        tags.append(&mut filter_tags);
 
         let mut tags_map: BTreeMap<String, bool> = BTreeMap::new();
         tags.iter().filter(|t| t.len() > 0).for_each(|tag| {
@@ -233,11 +239,8 @@ impl ImageQuery {
                 Some(captures) => {
                     if captures.len() >= 5 {
                         if &captures[1] == "order" {
-                            order = ImageQuery::parse_order(
-                                &captures[3],
-                               &captures[5],
-                            );
-							tags_to_remove.push(tag.clone());
+                            order = ImageQuery::parse_order(&captures[3], &captures[5]);
+                            tags_to_remove.push(tag.clone());
                         } else {
                             let query = ImageQuery::parse_image_condition(
                                 &captures[1],
@@ -245,10 +248,10 @@ impl ImageQuery {
                                 &captures[3],
                                 captures.get(5).and_then(|o| Some(o.as_str())),
                             );
-							if let Some(query) = query {
-								img_conditions.push((query, *positive));
-								tags_to_remove.push(tag.clone());
-							}
+                            if let Some(query) = query {
+                                img_conditions.push((query, *positive));
+                                tags_to_remove.push(tag.clone());
+                            }
                         }
                     } else if captures.len() >= 3 {
                         let query = ImageQuery::parse_image_condition(
@@ -258,30 +261,30 @@ impl ImageQuery {
                             None,
                         );
 
-						if let Some(query) = query {
-							img_conditions.push((query, *positive));
-							tags_to_remove.push(tag.clone());
-						}
+                        if let Some(query) = query {
+                            img_conditions.push((query, *positive));
+                            tags_to_remove.push(tag.clone());
+                        }
                     }
-                },
+                }
                 None => {}
-			}
+            }
         }
 
-		// remove found image conditions from the map
-		for tag in tags_to_remove {
-			tags_map.remove_entry(&tag);
-		}
+        // remove found image conditions from the map
+        for tag in tags_to_remove {
+            tags_map.remove_entry(&tag);
+        }
 
         let tag_conditions: Vec<(String, bool)> =
             tags_map.iter().map(|(k, v)| (k.clone(), *v)).collect();
 
         Ok(ImageQuery {
             tag_conditions,
-			img_conditions,
+            img_conditions,
             offset,
             limit,
-			order
+            order,
         })
     }
 }

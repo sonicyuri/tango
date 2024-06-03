@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use crate::modules::users::middleware::{get_user, AuthFactory};
-use actix_web::{get, web, HttpRequest, HttpResponse};
+use crate::modules::users::middleware::AuthFactory;
+use actix_web::{get, web, HttpResponse};
 
 use crate::{
     error::{api_success, ApiError},

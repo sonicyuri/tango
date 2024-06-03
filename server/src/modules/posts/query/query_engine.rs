@@ -1,16 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
-use actix_web::web::Query;
 use itertools::Itertools;
-use num::clamp;
-use num::traits::clamp_min;
-use sqlx::query::QueryAs;
-use sqlx::{pool, MySql, MySqlPool};
+
+use sqlx::MySqlPool;
 
 use super::model::{PostQueryResult, QueryResult};
 use crate::error::{api_error, ApiError, ApiErrorType};
 use crate::modules::pools::model::{PoolModel, PoolResponse};
-use crate::modules::posts::model::PostResponse;
 
 use super::super::model::PostModel;
 
@@ -116,7 +112,7 @@ impl QueryEngine {
         // fetch information for all the pools we referenced to include them in the results
         if pool_ids.len() > 0 {
             // we look up pools in bulk so we need to store the different parts separately
-            let mut pools_map: HashMap<i32, PoolModel> = HashMap::new();
+            let _pools_map: HashMap<i32, PoolModel> = HashMap::new();
 
             let pool_ids_str = pool_ids.iter().map(|id| id.to_string()).join(",");
             let pool_info_query = format!("SELECT * FROM pools WHERE id IN ({})", pool_ids_str);
@@ -212,7 +208,7 @@ impl QueryEngine {
         {
             // optimization for single-tag queries
 
-            let (tag, positive) = &tag_conditions[0];
+            let (tag, _positive) = &tag_conditions[0];
             let tag_ids = QueryEngine::resolve_tag_to_ids(db, (*tag).clone()).await?;
 
             if tag_ids.len() == 0 {

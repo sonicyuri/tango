@@ -1,19 +1,15 @@
 use std::collections::HashMap;
-use std::rc::Rc;
-use std::str;
 
-use actix_multipart::Field;
-use actix_web::http::header::DispositionType;
-use actix_web::{get, post, web, HttpRequest, HttpResponse};
-use futures::{Future, TryStreamExt};
+use actix_web::{post, web, HttpRequest, HttpResponse};
+use futures::TryStreamExt;
 use itertools::Itertools;
 use sqlx::MySqlPool;
 
 use super::query::alias_resolver::TagAliasResolver;
-use super::schema::{PostEditSchema, PostVoteSchema};
-use crate::error::api_error_owned;
+use super::schema::PostEditSchema;
+
 use crate::modules::users::middleware::get_user;
-use crate::modules::users::model::UserModel;
+
 use crate::{
     error::{api_error, api_success, ApiError, ApiErrorType},
     modules::{
@@ -85,7 +81,7 @@ pub async fn set_post_tags(
         let insert_query_str: String = format!(
             "INSERT INTO tags (`tag`, `count`) VALUES {}",
             itertools::Itertools::intersperse(
-                missing_tags.iter().map(|t| { "(?, 0)".to_owned() }),
+                missing_tags.iter().map(|_t| { "(?, 0)".to_owned() }),
                 ", ".to_owned()
             )
             .collect::<String>()
@@ -137,7 +133,7 @@ pub async fn set_post_tags(
         // subtract old tags
         previous_tags
             .iter()
-            .for_each(|(tag, count)| match tag_counts.get_mut(tag) {
+            .for_each(|(tag, _count)| match tag_counts.get_mut(tag) {
                 Some(count) => {
                     *count = *count - 1;
                 }
@@ -176,7 +172,7 @@ pub async fn set_post_tags(
 
         let mut tag_freq_query = sqlx::query(tag_user_freq_query_str.as_str());
 
-        for (_, (tag, count)) in tag_counts.iter().enumerate() {
+        for (_, (tag, _count)) in tag_counts.iter().enumerate() {
             tag_freq_query = tag_freq_query.bind(user_id);
             tag_freq_query = tag_freq_query.bind(tag);
         }

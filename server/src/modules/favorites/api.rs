@@ -1,5 +1,5 @@
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
-use log::error;
+
 use sqlx::MySqlPool;
 
 use crate::error::{api_error, api_success, ApiError, ApiErrorType};

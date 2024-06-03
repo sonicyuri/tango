@@ -1,15 +1,11 @@
-use actix_multipart::Field;
-use futures::{StreamExt, TryStreamExt};
+use futures::StreamExt;
 use log::error;
 use sqlx::MySqlPool;
 use tempfile::NamedTempFile;
 
-use super::schema::{PostNewSchema, PostsNewSchema};
+use super::schema::PostNewSchema;
 use crate::{booru_config::BooruConfig, util::create_client};
-use std::{
-    io::{Read, Write},
-    str,
-};
+use std::io::Write;
 
 use super::media::{get_content_info, UploadInfo};
 
@@ -29,7 +25,7 @@ async fn check_upload_unique(db: &MySqlPool, hash: String) -> Result<bool, Strin
                     Err("Database error".to_owned())
                 }
             },
-            |v| Ok(false),
+            |_v| Ok(false),
         )
 }
 

@@ -1,12 +1,10 @@
-use std::collections::BTreeMap;
-
 use super::alias_resolver::TagAliasResolver;
 use crate::error::{api_error, ApiErrorType};
 use crate::modules::users::middleware::{get_user, AuthFactory};
-use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use actix_web::{get, web, HttpRequest, HttpResponse};
 use itertools::Itertools;
 
-use super::model::{PostListSchema, QueryResult};
+use super::model::PostListSchema;
 use super::parser::ContentFilter;
 use super::parser::ImageQuery;
 use super::query_engine::QueryEngine;

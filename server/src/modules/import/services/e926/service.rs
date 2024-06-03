@@ -6,7 +6,7 @@ use regex::Regex;
 use crate::error::{api_error, ApiError, ApiErrorType};
 use crate::util::create_client;
 
-use super::super::service::{self, ImportService, ImportServicePrepareResult};
+use super::super::service::{ImportService, ImportServicePrepareResult};
 use super::types::E926PostResponse;
 
 static POST_REGEX: Lazy<Regex> =
@@ -69,7 +69,7 @@ impl ImportService for E926ImportService {
             cat_tags.iter().for_each(|t| {
                 let tag_str = match prefix.as_str() {
                     "general" => t.to_owned(),
-                    p => format!("{}:{}", prefix, t),
+                    _p => format!("{}:{}", prefix, t),
                 };
 
                 tags.push(tag_str);

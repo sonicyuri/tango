@@ -1,14 +1,9 @@
 use std::collections::HashMap;
-use std::str;
 
-use actix_multipart::Field;
-use actix_web::http::header::DispositionType;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use chrono::Utc;
-use futures::{Future, TryStreamExt};
-use itertools::Itertools;
+use futures::TryStreamExt;
 
-use super::query::alias_resolver::TagAliasResolver;
 use super::schema::{PostDeleteSchema, PostInfoSchema, PostVoteSchema};
 use crate::error::api_error_owned;
 use crate::modules::posts::query::model::PostQueryResult;
@@ -17,10 +12,7 @@ use crate::modules::users::middleware::get_user;
 use crate::{
     error::{api_error, api_success, ApiError, ApiErrorType},
     modules::{
-        posts::{
-            model::{PostModel, PostResponse},
-            util::fetch_tags,
-        },
+        posts::model::{PostModel, PostResponse},
         users::middleware::AuthFactory,
     },
     AppState,
