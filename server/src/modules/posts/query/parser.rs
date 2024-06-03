@@ -9,7 +9,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
 
-use super::query_object::QueryObject;
+use super::{
+    image_conditions::{Operator, Operators, IMAGE_CONDITIONS_MAP},
+    query_object::QueryObject,
+};
 
 static IMAGE_CONDITION_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^([a-z_]+?)(\=|\>|\<|\<\=|\>\=|\:)([a-z0-9_]+?)(_([a-z0-9_]+?))?$").unwrap()
@@ -45,129 +48,22 @@ impl ImageQuery {
         _param: Option<&str>,
     ) -> Option<QueryObject> {
         let op = match op {
-            ":" => "=",
-            v => v,
+            ">" => Operator::GreaterThan,
+            ">=" => Operator::GreaterThanEq,
+            "<" => Operator::LessThan,
+            "<=" => Operator::LessThanEq,
+            _ => Operator::Equals,
         };
 
-        match name {
-            "id" => Some(QueryObject::new_with_param(
-                format!("images.id {} ?", op).as_str(),
-                value,
-            )),
-            "width" => Some(QueryObject::new_with_param(
-                format!("images.width {} ?", op).as_str(),
-                value,
-            )),
-            "height" => Some(QueryObject::new_with_param(
-                format!("images.height {} ?", op).as_str(),
-                value,
-            )),
-			"ratio" => {
-				let parts: Vec<i32> = value.split(":").filter_map(|f| f.parse().ok()).collect_vec();
-				match parts.len() {
-					2 => {
-						let aspect_ratio = (parts[0] as f32) / (parts[1] as f32);
-						Some(QueryObject::new_with_param(format!("ROUND(images.width / images.height, 2) {} ROUND(?, 2)", op).as_str(), aspect_ratio))
-					},
-					_ => None
-				}
-			},
-			"size" => {
-				let parts: Vec<i32> = value.split("x").filter_map(|f| f.parse().ok()).collect_vec();
-				match parts.len() {
-					2 => {
-						Some(QueryObject::new_with_query(format!("images.width {} {} AND images.height {} {}", op, parts[0], op, parts[1]).as_str()))
-					},
-					_ => None
-				}
-			},
-			"filesize" => {
-				match parse_size(value) {
-					Ok(size) => {
-						Some(QueryObject::new_with_param(format!("images.filesize {} ?", op).as_str(), size))
-					},
-					Err(_err) => None
-				}
-			},
-			"posted" => Some(QueryObject::new_with_param(format!("images.posted {} ?", op).as_str(), value)),
-			"length" => {
-				let time_ms: u32 = match value.parse().ok() {
-					Some(time) => time,
-					None => {
-						let time = 
-							NaiveTime::parse_from_str(value, "%hh%mm%ss")
-							.or(NaiveTime::parse_from_str(value, "%mm%ss"))
-							.or(NaiveTime::parse_from_str(value, "%ss"));
-						match time {
-							Ok(nt) => {
-								nt.num_seconds_from_midnight()
-							},
-							Err(_) => 0
-						}
-					}
-				};
-
-				Some(QueryObject::new_with_param(format!("images.length {} ?", op).as_str(), time_ms))
-			},
-            "score" => Some(QueryObject::new_with_param(
-                format!("images.numeric_score {} ?", op).as_str(),
-                value,
-            )),
-            "source" => match op == "=" {
-                true => match value {
-                    "any" => Some(QueryObject::new_with_query("images.source IS NOT NULL")),
-                    "none" => Some(QueryObject::new_with_query("images.source IS NULL")),
-                    v => Some(QueryObject::new_with_param("images.source", v)),
-                },
-                false => None,
-            },
-            "hash" => match op == "=" {
-                true => Some(QueryObject::new_with_param("images.hash = ?", value)),
-                false => None,
-            },
-            "filename" => match op == "=" {
-                true => Some(QueryObject::new_with_param("images.filename = ?", value)),
-                false => None,
-            },
-            "mime" => match op == "=" {
-                true => Some(QueryObject::new_with_param("images.mime = ?", value)),
-                false => None,
-            },
-            "ext" => match op == "=" {
-                true => Some(QueryObject::new_with_param("images.ext = ?", value)),
-                false => None,
-            },
-            "content" => match op == "=" {
-                true => match value {
-                    "audio" => Some(QueryObject::new_with_query(
-                        "images.audio = 1 OR images.video = 1",
-                    )),
-                    "video" => Some(QueryObject::new_with_query("images.video = 1")),
-                    "image" => Some(QueryObject::new_with_query("images.image = 1")),
-					"vr" => Some(QueryObject::new_with_query("images.id IN (SELECT image_id FROM image_tags AS it LEFT JOIN tags AS t ON it.tag_id = t.id WHERE t.tag = 'vr')")),
-					// hack since there's no other way to get this combination using other queries
-					"image_and_vr" => Some(QueryObject::new_with_query("(images.image = 1 OR images.id IN (SELECT image_id FROM image_tags AS it LEFT JOIN tags AS t ON it.tag_id = t.id WHERE t.tag = 'vr'))")),
-                    _ => None,
-                },
-                false => None,
-            },
-			"tags" => Some(QueryObject::new_with_param(format!("(SELECT COUNT(*) AS c FROM image_tags WHERE image_id = images.id) {} ?", op).as_str(), value)),
-			"comments" => Some(QueryObject::new_with_param(format!("(SELECT COUNT(*) AS c FROM comments WHERE image_id = images.id) {} ?", op).as_str(), value)),
-			"commented_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM comments AS c LEFT JOIN users AS u ON c.owner_id = u.id WHERE c.image_id = images.id AND u.name = ?) > 0", value)), false => None },
-			"commented_by_userno" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM comments AS c WHERE c.image_id = images.id AND c.owner_id = ?) > 0", value)), false => None },
-			"poster" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM users AS u WHERE u.id = images.owner_id AND u.name = ?) > 0", value)), false => None },
-			"poster_id" => match op == "=" { true => Some(QueryObject::new_with_param("images.owner_id = ?", value)), false => None },
-			"upvoted_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv LEFT JOIN users AS u ON nsv.user_id = u.id WHERE nsv.score = 1 AND nsv.image_id = images.id AND u.name = ?) > 0", value)), false => None },
-			"upvoted_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv WHERE nsv.score = 1 AND nsv.image_id = images.id AND nsv.owner_id = ?) > 0", value)), false => None },
-			"downvoted_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv LEFT JOIN users AS u ON nsv.user_id = u.id WHERE nsv.score = -1 AND nsv.image_id = images.id AND u.name = ?) > 0", value)), false => None },
-			"downvoted_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv WHERE nsv.score = -1 AND nsv.image_id = images.id AND nsv.owner_id = ?) > 0", value)), false => None },
-			"favorited_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf LEFT JOIN users AS u ON uf.user_id = u.id WHERE uf.image_id = images.id AND u.name = ?) > 0", value)), false => None },
-			"favorited_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf WHERE uf.image_id = images.id AND uf.user_id = ?) > 0", value)), false => None },
-			"views" => Some(QueryObject::new_with_param(format!("(SELECT COUNT(*) as c FROM image_views WHERE image_id = images.id) {} ?", op).as_str(), value)),
-			"viewed_by" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM image_views AS iv LEFT JOIN users AS u ON iv.user_id = u.id WHERE iv.image_id = images.id AND u.name = ?) > 0", value)), false => None},
-			"viewed_by_id" => match op == "=" { true => Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM image_views WHERE image_id = images.id AND user_id = ?) > 0", value)), false => None},
-			_ => None,
+        let condition = IMAGE_CONDITIONS_MAP.get(name)?;
+        // operators don't match
+        if !condition.operators.contains(op) {
+            return None;
         }
+
+        let operators: Operators = op.into();
+
+        return (condition.to_query)(&operators.to_str(), value);
     }
 
     fn parse_order(column: &str, param: &str) -> String {

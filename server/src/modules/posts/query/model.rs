@@ -29,8 +29,7 @@ impl PostQueryResult {
     pub fn from_model(
         model: PostModel,
         tags: Vec<String>,
-        pools: Vec<i32>,
-        views: i32,
+        pools: Vec<i32>
     ) -> Result<PostQueryResult, ApiError> {
         Ok(PostQueryResult {
             id: model.id,
@@ -46,7 +45,7 @@ impl PostQueryResult {
             numeric_score: model.numeric_score,
             tags,
             pools,
-            views,
+            views: model.views
         })
     }
 
@@ -69,13 +68,7 @@ impl PostQueryResult {
                 .await?;
         let pools = pool_result.iter().map(|(p,)| p.to_owned()).collect_vec();
 
-        let (views,) =
-            sqlx::query_as::<_, (i32,)>("SELECT COUNT(id) FROM image_views WHERE image_id = ?")
-                .bind(model.id)
-                .fetch_one(db)
-                .await?;
-
-        PostQueryResult::from_model(model, tags, pools, views)
+        PostQueryResult::from_model(model, tags, pools)
     }
 }
 
