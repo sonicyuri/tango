@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use image::{
     codecs::png::PngEncoder, imageops::FilterType, load_from_memory, ImageEncoder, ImageError,
-    ImageOutputFormat,
+    ImageFormat,
 };
 
 pub async fn get_image_resized(data: Vec<u8>, max_size: u32) -> Result<Vec<u8>, ImageError> {
@@ -24,6 +24,6 @@ pub async fn get_image_resized(data: Vec<u8>, max_size: u32) -> Result<Vec<u8>, 
 
     let image = image.resize_exact(width, height, FilterType::Gaussian);
     let mut bytes: Vec<u8> = Vec::new();
-    image.write_to(&mut Cursor::new(&mut bytes), ImageOutputFormat::Png)?;
+    image.write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png)?;
     Ok(bytes)
 }
