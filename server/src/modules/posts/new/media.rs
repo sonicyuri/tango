@@ -1,9 +1,9 @@
-use async_process::{self, Command, ExitStatus, Stdio};
-use futures::AsyncWriteExt;
+use async_process::{self, Command, Stdio};
+
 use log::error;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::io::{Read, Write};
+
+use std::io::Read;
 use tempfile::NamedTempFile;
 
 use crate::booru_config::{BooruConfig, ThumbnailFit};
@@ -148,7 +148,7 @@ pub async fn get_content_info(content: &NamedTempFile) -> Result<UploadInfo, Str
         .duration
         .unwrap_or("0".to_owned())
         .parse::<f64>()
-        .map_err(|e| "Invalid content duration")? as i32;
+        .map_err(|_e| "Invalid content duration")? as i32;
 
     let width = info
         .streams

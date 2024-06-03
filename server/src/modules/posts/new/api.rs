@@ -1,40 +1,31 @@
 use std::collections::HashMap;
-use std::io::{Read, Write};
-use std::str;
-use std::sync::Arc;
 
-use actix_multipart::Field;
-use actix_web::http::header::DispositionType;
+use std::str;
+
 use actix_web::{post, web, HttpRequest, HttpResponse};
-use futures::{Future, StreamExt, TryStreamExt};
+use futures::{StreamExt, TryStreamExt};
 use itertools::Itertools;
 use log::error;
 use sqlx::mysql::MySqlQueryResult;
-use sqlx::MySqlPool;
+
 use tempfile::NamedTempFile;
 
-use super::media::{create_thumbnail, get_content_info, UploadInfo};
-use super::schema::{PoolResponse, PostNewSchema, PostsNewPoolSchema, PostsNewSchema};
-use crate::booru_config::BooruConfig;
+use super::media::UploadInfo;
+use super::schema::{PoolResponse, PostNewSchema, PostsNewSchema};
+
 use crate::error::{api_error_owned, ApiKeyedError};
 use crate::modules::posts::new::schema::{PoolModel, PostNewResponse};
 use crate::modules::posts::new::upload::{upload_and_create_post, OwnerContext};
-use crate::modules::posts::query::alias_resolver::TagAliasResolver;
+
 use crate::modules::users::middleware::get_user;
-use crate::storage::AppStorage;
+
 use crate::{
     error::{api_error, api_success, ApiError, ApiErrorType},
-    modules::{
-        posts::{
-            model::{PostModel, PostResponse},
-            util::fetch_tags,
-        },
-        users::middleware::AuthFactory,
-    },
+    modules::{posts::model::PostResponse, users::middleware::AuthFactory},
     AppState,
 };
 
-use super::process::{process_file_upload, process_upload, process_url_upload};
+use super::process::process_upload;
 
 pub fn get_data_field(bytes: &Vec<u8>) -> Result<PostsNewSchema, ApiError> {
     let data_str = str::from_utf8(&bytes).map_err(|e| {

@@ -37,7 +37,7 @@ impl AppStorage {
         let endpoint_url =
             std::env::var("AWS_ENDPOINT").expect("Missing S3 endpoint url in environment");
 
-        let region = std::env::var("AWS_REGION").expect("Missing S3 region name in environment");
+        let _region = std::env::var("AWS_REGION").expect("Missing S3 region name in environment");
 
         let bucket = config
             .get_string("s3_bucket")

@@ -87,7 +87,7 @@ async fn main() -> Result<(), Error> {
     let storage = AppStorage::new(&config).await;
     let booru_config = BooruConfig::new(&pool.clone()).await;
 
-    let development_mode: bool = config.get_bool("development_mode").unwrap_or(true);
+    let _development_mode: bool = config.get_bool("development_mode").unwrap_or(true);
 
     info!("Starting server on port {}", port);
 
@@ -99,7 +99,7 @@ async fn main() -> Result<(), Error> {
             storage: Arc::new(storage.clone()),
         };
 
-        let json_config = JsonConfig::default().error_handler(|err, req| {
+        let json_config = JsonConfig::default().error_handler(|err, _req| {
             let err_str = err.to_string();
             api_error_owned(ApiErrorType::InvalidRequest, err_str).into()
         });

@@ -82,7 +82,7 @@ impl ImportResolver for FluffleImportResolver {
             })?;
 
         match &response.code {
-            Some(code) => {
+            Some(_code) => {
                 warn!("Fluffle API response: {:?}", response);
                 let errors = response.errors.unwrap_or(HashMap::new());
                 Err(api_error_owned(

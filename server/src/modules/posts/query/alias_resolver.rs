@@ -1,9 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
-use log::error;
 use sqlx::MySqlPool;
 
-use crate::error::{api_error, ApiError, ApiErrorType};
+use crate::error::ApiError;
 
 pub struct TagAliasResolver {
     aliases: HashMap<String, String>,

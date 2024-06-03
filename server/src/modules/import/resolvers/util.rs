@@ -1,9 +1,6 @@
 use std::io::Cursor;
 
-use image::{
-    codecs::png::PngEncoder, imageops::FilterType, load_from_memory, ImageEncoder, ImageError,
-    ImageFormat,
-};
+use image::{imageops::FilterType, load_from_memory, ImageError, ImageFormat};
 
 pub async fn get_image_resized(data: Vec<u8>, max_size: u32) -> Result<Vec<u8>, ImageError> {
     let image = load_from_memory(&data)?;

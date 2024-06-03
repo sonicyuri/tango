@@ -1,5 +1,3 @@
-use actix_web::web::Query;
-
 pub struct QueryObject {
     pub query: Vec<String>,
     pub parameters: Vec<String>,

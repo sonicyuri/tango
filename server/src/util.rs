@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use actix_web::{http::StatusCode, HttpResponse};
-use derive_more::{Display, Error};
 use log::error;
 use serde::Serialize;
 use serde_json::json;

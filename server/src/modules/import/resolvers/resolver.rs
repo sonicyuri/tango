@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use log::error;
@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::{api_error, ApiError, ApiErrorType},
-    modules::posts::{self, model::PostModel},
-    storage::{self, AppStorage},
+    modules::posts::model::PostModel,
+    storage::AppStorage,
 };
 
 #[derive(Serialize, Deserialize)]

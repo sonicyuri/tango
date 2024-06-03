@@ -1,11 +1,7 @@
 use std::fmt;
 
 use actix_web::{dev::ServiceRequest, http::header::HeaderValue, HttpRequest};
-use base64::{
-    alphabet,
-    engine::{self, general_purpose},
-    Engine as _,
-};
+use base64::{engine::general_purpose, Engine as _};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, TokenData, Validation};
 use log::error;
@@ -62,7 +58,7 @@ pub fn create_auth_token(
         });
 
     let expiration_str = expiration.to_rfc3339();
-    let user_id = user.id.to_string();
+    let _user_id = user.id.to_string();
 
     let claims = AuthTokenClaims {
         kind: match kind {
@@ -93,7 +89,7 @@ pub fn validate_auth_header(
 
     let token_pair: Vec<&str> = authorization_header
         .to_str()
-        .map_err(|e| "Invalid Authorization header")?
+        .map_err(|_e| "Invalid Authorization header")?
         .split_whitespace()
         .collect();
 

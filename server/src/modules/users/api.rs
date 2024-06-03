@@ -79,7 +79,7 @@ async fn user_refresh_handler(
     data: web::Data<AppState>,
 ) -> Result<HttpResponse, ApiError> {
     let user_id = validate_auth_token(body.refresh_token.as_str(), AuthTokenKind::Refresh)
-        .map_err(|e| {
+        .map_err(|_e| {
             api_error(
                 ApiErrorType::OperationFailed,
                 "Failed to validate refresh token",

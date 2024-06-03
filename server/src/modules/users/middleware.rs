@@ -1,17 +1,15 @@
-use actix_web::dev::{forward_ready, Payload, Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::{web, FromRequest, HttpMessage, HttpRequest, HttpResponse};
+use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
+use actix_web::{web, FromRequest, HttpMessage, HttpRequest};
 use futures::future::LocalBoxFuture;
 use log::error;
-use std::future::{ready, Future, Ready};
-use std::pin::Pin;
+use std::future::{ready, Ready};
+
 use std::rc::Rc;
-use uuid::Uuid;
 
 use super::model::UserModel;
 use crate::error::{api_error, ApiError, ApiErrorType};
 use crate::AppState;
 
-use super::model::UserModelResponse;
 use super::util::validate_auth_header;
 
 pub struct AuthFactory {
@@ -48,7 +46,7 @@ impl<S> AuthMiddleware<S> {
         let state = req
             .extract::<web::Data<AppState>>()
             .await
-            .map_err(|e| api_error(ApiErrorType::ServerError, "Failed to fetch database"))?;
+            .map_err(|_e| api_error(ApiErrorType::ServerError, "Failed to fetch database"))?;
 
         let pool = &state.db;
 
