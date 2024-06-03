@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::str;
 
 use actix_multipart::Field;
@@ -12,6 +13,7 @@ use super::query::alias_resolver::TagAliasResolver;
 use super::schema::{PostEditSchema, PostVoteSchema};
 use crate::error::api_error_owned;
 use crate::modules::users::middleware::get_user;
+use crate::modules::users::model::UserModel;
 use crate::{
     error::{api_error, api_success, ApiError, ApiErrorType},
     modules::{
@@ -26,6 +28,7 @@ use crate::{
 
 pub async fn set_post_tags(
     db: &MySqlPool,
+    user_id: i32,
     post_id: String,
     tags: Vec<String>,
 ) -> Result<PostResponse, ApiError> {
@@ -166,6 +169,19 @@ pub async fn set_post_tags(
         }
 
         tag_update_query.execute(db).await?;
+
+        let tag_user_freq_query_str = format!(
+			"INSERT INTO tag_user_frequencies(`user_id`, `tag`, `num`) VALUES {} ON DUPLICATE KEY UPDATE num = num + 1", 
+			tag_counts.iter().map(|(_, _)| { "(?, ?, 1)"}).join(","));
+
+        let mut tag_freq_query = sqlx::query(tag_user_freq_query_str.as_str());
+
+        for (_, (tag, count)) in tag_counts.iter().enumerate() {
+            tag_freq_query = tag_freq_query.bind(user_id);
+            tag_freq_query = tag_freq_query.bind(tag);
+        }
+
+        tag_freq_query.execute(db).await?;
     }
 
     let response = PostResponse::from_model(previous_post, Some(final_tags));
@@ -175,11 +191,14 @@ pub async fn set_post_tags(
 
 #[post("/edit", wrap = "AuthFactory { reject_unauthed: true }")]
 pub async fn post_edit_handler(
+    req: HttpRequest,
     data: web::Data<AppState>,
     body: web::Json<PostEditSchema>,
 ) -> Result<HttpResponse, ApiError> {
+    let user = get_user(&req).ok_or(api_error(ApiErrorType::InvalidRequest, "missing user"))?;
     let transaction = data.db.begin().await?;
-    let response = set_post_tags(&data.db, body.post_id.clone(), body.tags.clone()).await?;
+    let response =
+        set_post_tags(&data.db, user.id, body.post_id.clone(), body.tags.clone()).await?;
     transaction.commit().await?;
 
     Ok(api_success(response))

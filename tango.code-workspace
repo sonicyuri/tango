@@ -22,6 +22,9 @@
 		"rust-analyzer.linkedProjects": [
 			"${workspaceFolder}/server/Cargo.toml"
 		],
-		"rust-analyzer.showUnlinkedFileNotification": false
+		"rust-analyzer.showUnlinkedFileNotification": false,
+		"[sql]": {
+			"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+		}
 	}
 }
