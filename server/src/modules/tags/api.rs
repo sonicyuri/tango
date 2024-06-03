@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::modules::users::middleware::AuthFactory;
+use crate::modules::{
+    posts::query::image_conditions::IMAGE_CONDITIONS, users::middleware::AuthFactory,
+};
 use actix_web::{get, web, HttpResponse};
 
 use crate::{
@@ -28,5 +30,6 @@ pub async fn tags_list_handler(data: web::Data<AppState>) -> Result<HttpResponse
     Ok(api_success(TagListResponse {
         categories: category_query,
         tags: tag_map,
+        conditions: IMAGE_CONDITIONS.clone(),
     }))
 }

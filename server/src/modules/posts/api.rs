@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use chrono::Utc;
-use futures::TryStreamExt;
 
 use super::schema::{PostDeleteSchema, PostInfoSchema, PostVoteSchema};
 use crate::error::api_error_owned;

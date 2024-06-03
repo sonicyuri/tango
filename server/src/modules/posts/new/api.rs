@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::str;
 
 use actix_web::{post, web, HttpRequest, HttpResponse};
-use futures::{StreamExt, TryStreamExt};
+use futures::TryStreamExt;
 use itertools::Itertools;
 use log::error;
 use sqlx::mysql::MySqlQueryResult;

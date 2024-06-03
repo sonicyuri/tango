@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use actix_web::{post, web, HttpRequest, HttpResponse};
-use futures::TryStreamExt;
 use itertools::Itertools;
 use sqlx::MySqlPool;
 
