@@ -44,15 +44,13 @@ impl QueryEngine {
         let mut pool_ids: HashSet<i32> = HashSet::new();
 
         if results.len() > 0 {
-            // find pools, tags, and views for the results in bulk instead of doing two queries per
+            // find pools and tags for the results in bulk instead of doing two queries per
             let mut post_tags_map: HashMap<i32, Vec<String>> = HashMap::new();
             let mut post_pools_map: HashMap<i32, Vec<i32>> = HashMap::new();
-            let mut post_views_map: HashMap<i32, i32> = HashMap::new();
             // initialize maps
             for p in &results {
                 post_tags_map.insert(p.id, Vec::new());
                 post_pools_map.insert(p.id, Vec::new());
-                post_views_map.insert(p.id, 0);
             }
 
             let post_ids_str = results.iter().map(|p| p.id.to_string()).join(",");
@@ -89,21 +87,10 @@ impl QueryEngine {
                 }
             }
 
-            // find each image's view count
-            let view_query = format!("SELECT image_id, COUNT(id) FROM image_views WHERE image_id IN({}) GROUP BY image_id", post_ids_str);
-            let post_results = sqlx::query_as::<_, (i32, i32)>(view_query.as_str())
-                .fetch_all(db)
-                .await?;
-
-            for (post_id, count) in post_results {
-                post_views_map.insert(post_id, count);
-            }
-
             for post in results {
                 let tags = post_tags_map.remove(&post.id).unwrap_or(Vec::new());
                 let pools = post_pools_map.remove(&post.id).unwrap_or(Vec::new());
-                let views = post_views_map.remove(&post.id).unwrap_or(0);
-                safe_results.push(PostQueryResult::from_model(post, tags, pools, views)?);
+                safe_results.push(PostQueryResult::from_model(post, tags, pools)?);
             }
         }
 
