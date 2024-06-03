@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
-use actix_web::middleware::Condition;
 use bitmask::bitmask;
 use chrono::{NaiveTime, Timelike};
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use parse_size::parse_size;
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 
 use super::query_object::QueryObject;
 
 bitmask! {
+    #[derive(Serialize, Deserialize, Debug)]
     pub mask Operators: u8 where flags Operator {
         Equals        = 1 << 0,
         LessThan      = 1 << 1,
@@ -34,9 +34,32 @@ impl Operators {
 
         return "=";
     }
+
+    pub fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = s.serialize_seq(None)?;
+        if self.contains(Operator::LessThan) {
+            seq.serialize_element("lt")?;
+        }
+        if self.contains(Operator::LessThanEq) {
+            seq.serialize_element("lteq")?;
+        }
+        if self.contains(Operator::GreaterThan) {
+            seq.serialize_element("gt")?;
+        }
+        if self.contains(Operator::GreaterThanEq) {
+            seq.serialize_element("gteq")?;
+        }
+        if self.contains(Operator::Equals) {
+            seq.serialize_element("eq")?;
+        }
+        seq.end()
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ConditionValue {
     /// Value is expected to equal the placeholder exactly
     Exact,
@@ -52,6 +75,7 @@ pub enum ConditionValue {
     Duration,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ConditionUsagePart {
     pub placeholder: &'static str,
     pub example: Option<&'static str>,
@@ -60,31 +84,18 @@ pub struct ConditionUsagePart {
 
 pub type QueryCallback = fn(&str, &str) -> Option<QueryObject>;
 
+#[derive(Debug, Serialize, Clone)]
 pub struct ImageCondition {
     pub name: &'static str,
     pub help: &'static str,
+    #[serde(serialize_with = "Operators::serialize")]
     pub operators: Operators,
     pub usage: Vec<ConditionUsagePart>,
+    #[serde(skip)]
     pub to_query: QueryCallback,
 }
 
 impl ImageCondition {
-    pub fn new(
-        name: &'static str,
-        help: &'static str,
-        operators: Operator,
-        usage: Vec<ConditionUsagePart>,
-        to_query: QueryCallback,
-    ) -> ImageCondition {
-        ImageCondition {
-            name,
-            help,
-            operators: operators.into(),
-            usage,
-            to_query,
-        }
-    }
-
     pub fn new_all(
         name: &'static str,
         help: &'static str,
@@ -335,7 +346,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("any"),
             },
-            |op, value| match value {
+            |_op, value| match value {
                 "any" => Some(QueryObject::new_with_query("images.source IS NOT NULL")),
                 "none" => Some(QueryObject::new_with_query("images.source IS NULL")),
                 v => Some(QueryObject::new_with_param("images.source", v)),
@@ -349,7 +360,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("53f64c3a5e090018df4417ce11e50fd59122e725"),
             },
-            |op, value| Some(QueryObject::new_with_param("images.hash = ?", value)),
+            |_op, value| Some(QueryObject::new_with_param("images.hash = ?", value)),
         ),
         ImageCondition::new_equals_single(
             "filename",
@@ -359,7 +370,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("anime.jpg"),
             },
-            |op, value| Some(QueryObject::new_with_param("images.filename = ?", value)),
+            |_op, value| Some(QueryObject::new_with_param("images.filename = ?", value)),
         ),
         ImageCondition::new_equals_single(
             "mime",
@@ -369,7 +380,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("image/png"),
             },
-            |op, value| Some(QueryObject::new_with_param("images.mime = ?", value)),
+            |_op, value| Some(QueryObject::new_with_param("images.mime = ?", value)),
         ),
         ImageCondition::new_equals_single(
             "ext",
@@ -379,7 +390,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("png"),
             },
-            |op, value| Some(QueryObject::new_with_param("images.ext = ?", value)),
+            |_op, value| Some(QueryObject::new_with_param("images.ext = ?", value)),
         ),
         ImageCondition::new_equals_single(
             "content",
@@ -389,7 +400,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("video"),
             },
-            |op, value| {
+            |_op, value| {
                 match value {
                 "audio" => Some(QueryObject::new_with_query(
                     "images.audio = 1 OR images.video = 1",
@@ -449,7 +460,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("admin"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM comments AS c LEFT JOIN users AS u ON c.owner_id = u.id WHERE c.image_id = images.id AND u.name = ?) > 0", value))
             },
         ),
@@ -461,7 +472,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Integer,
                 example: Some("1"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM comments AS c WHERE c.image_id = images.id AND c.owner_id = ?) > 0", value))
             },
         ),
@@ -473,7 +484,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("admin"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM users AS u WHERE u.id = images.owner_id AND u.name = ?) > 0", value))
             },
         ),
@@ -485,7 +496,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Integer,
                 example: Some("1"),
             },
-            |op, value| Some(QueryObject::new_with_param("images.owner_id = ?", value)),
+            |_op, value| Some(QueryObject::new_with_param("images.owner_id = ?", value)),
         ),
         ImageCondition::new_equals_single(
             "upvoted_by",
@@ -495,7 +506,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("admin"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv LEFT JOIN users AS u ON nsv.user_id = u.id WHERE nsv.score = 1 AND nsv.image_id = images.id AND u.name = ?) > 0", value))
             },
         ),
@@ -507,7 +518,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Integer,
                 example: Some("1"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv WHERE nsv.score = 1 AND nsv.image_id = images.id AND nsv.owner_id = ?) > 0", value))
             },
         ),
@@ -519,7 +530,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("admin"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv LEFT JOIN users AS u ON nsv.user_id = u.id WHERE nsv.score = -1 AND nsv.image_id = images.id AND u.name = ?) > 0", value))
             },
         ),
@@ -531,7 +542,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Integer,
                 example: Some("1"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM numeric_score_votes AS nsv WHERE nsv.score = -1 AND nsv.image_id = images.id AND nsv.owner_id = ?) > 0", value))
             },
         ),
@@ -543,7 +554,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("admin"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf LEFT JOIN users AS u ON uf.user_id = u.id WHERE uf.image_id = images.id AND u.name = ?) > 0", value))
             },
         ),
@@ -555,7 +566,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Integer,
                 example: Some("1"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM user_favorites AS uf WHERE uf.image_id = images.id AND uf.user_id = ?) > 0", value))
             },
         ),
@@ -567,7 +578,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Text,
                 example: Some("admin"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM image_views AS iv LEFT JOIN users AS u ON iv.user_id = u.id WHERE iv.image_id = images.id AND u.name = ?) > 0", value))
             },
         ),
@@ -579,7 +590,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 value_type: ConditionValue::Integer,
                 example: Some("1"),
             },
-            |op, value| {
+            |_op, value| {
                 Some(QueryObject::new_with_param("(SELECT COUNT(*) FROM image_views WHERE image_id = images.id AND user_id = ?) > 0", value))
             },
         ),

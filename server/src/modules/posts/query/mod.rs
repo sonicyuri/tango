@@ -1,6 +1,6 @@
 pub mod alias_resolver;
 pub mod api;
-mod image_conditions;
+pub mod image_conditions;
 pub mod model;
 mod parser;
 mod query_engine;

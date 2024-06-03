@@ -4,7 +4,7 @@ mod api;
 mod edit;
 pub mod model;
 mod new;
-mod query;
+pub mod query;
 mod schema;
 mod util;
 
