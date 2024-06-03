@@ -31,6 +31,7 @@ pub struct PostModel {
     pub numeric_score: i32,
     pub parent_id: Option<i32>,
     pub has_children: i8,
+    pub views: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -48,6 +49,7 @@ pub struct PostResponse {
     pub numeric_score: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<String>>,
+    pub views: i32,
 }
 
 impl PostResponse {
@@ -65,6 +67,7 @@ impl PostResponse {
             owner_id: model.owner_id,
             numeric_score: model.numeric_score,
             tags: tags,
+            views: model.views,
         }
     }
 }

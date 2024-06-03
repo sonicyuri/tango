@@ -150,7 +150,7 @@ async fn upload_and_create_with_thumb(
 	})?;
 
     let post_id = response.last_insert_id().to_string();
-    let post_result = set_post_tags(db, post_id.clone(), tags).await;
+    let post_result = set_post_tags(db, owner.owner_id, post_id.clone(), tags).await;
 
     match post_result {
         Err(e) => {

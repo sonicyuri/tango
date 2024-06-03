@@ -240,7 +240,22 @@ pub async fn post_view_handler(
 
     let timestamp = Utc::now().timestamp() as i32;
 
-    let _result = sqlx::query!("INSERT INTO image_views(`image_id`, `user_id`, `timestamp`, `ipaddress`) VALUES(?, ?, ?, ?)", body.id, user.id, timestamp, ip).execute(&data.db).await?;
+    let _result = sqlx::query!(
+		"INSERT INTO image_views(`image_id`, `user_id`, `timestamp`, `ipaddress`) VALUES(?, ?, ?, ?)", body.id, user.id, timestamp, ip).execute(&data.db).await?;
+
+    // update view count cached on post column
+    sqlx::query!(
+        "UPDATE images AS i 
+		INNER JOIN (
+			SELECT COUNT(id) AS view_count, image_id
+			FROM image_views
+			GROUP BY image_id
+		) iv ON iv.image_id = i.id 
+		SET i.views = iv.view_count WHERE i.id = ?",
+        body.id
+    )
+    .execute(&data.db)
+    .await?;
 
     Ok(api_success("success"))
 }
