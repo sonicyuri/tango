@@ -6,10 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
 
-use super::{
-    image_conditions::{Operator, Operators, IMAGE_CONDITIONS_MAP},
-    query_object::QueryObject,
-};
+use super::image_conditions::{Operator, Operators, IMAGE_CONDITIONS_MAP};
+
+use crate::util::database::query_object::QueryObject;
 
 static IMAGE_CONDITION_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^([a-z_]+?)(\=|\>|\<|\<\=|\>\=|\:)([a-z0-9_]+?)(_([a-z0-9_]+?))?$").unwrap()

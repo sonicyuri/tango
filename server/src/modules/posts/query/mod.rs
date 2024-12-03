@@ -4,4 +4,3 @@ pub mod image_conditions;
 pub mod model;
 mod parser;
 mod query_engine;
-mod query_object;

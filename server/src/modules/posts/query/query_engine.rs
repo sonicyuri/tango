@@ -11,7 +11,8 @@ use crate::modules::pools::model::{PoolModel, PoolResponse};
 use super::super::model::PostModel;
 
 use super::parser::ImageQuery;
-use super::query_object::QueryObject;
+
+use crate::util::database::query_object::QueryObject;
 
 pub struct QueryEngine {}
 

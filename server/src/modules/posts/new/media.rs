@@ -8,6 +8,7 @@ use tempfile::NamedTempFile;
 
 use crate::booru_config::{BooruConfig, ThumbnailFit};
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum UploadFileType {
     Unsupported,
     Image,
@@ -15,10 +16,11 @@ pub enum UploadFileType {
     Flash,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UploadInfo {
     pub file_type: UploadFileType,
     pub mime: String,
-    pub length: Option<i32>,
+    pub length: Option<u32>,
     pub width: u32,
     pub height: u32,
     pub filesize: u64,
@@ -58,8 +60,8 @@ struct FfprobeFormatInfo {
 
 #[derive(Serialize, Deserialize)]
 struct FfprobeStreamInfo {
-    width: u32,
-    height: u32,
+    width: Option<u32>,
+    height: Option<u32>,
     codec_type: String,
     codec_name: String,
 }
@@ -148,18 +150,16 @@ pub async fn get_content_info(content: &NamedTempFile) -> Result<UploadInfo, Str
         .duration
         .unwrap_or("0".to_owned())
         .parse::<f64>()
-        .map_err(|_e| "Invalid content duration")? as i32;
+        .map_err(|_e| "Invalid content duration")? as u32;
 
-    let width = info
+    let stream = info
         .streams
-        .first()
-        .and(Some(info.streams.first().unwrap().width))
-        .unwrap_or(0);
-    let height = info
-        .streams
-        .first()
-        .and(Some(info.streams.first().unwrap().height))
-        .unwrap_or(0);
+        .iter()
+        .filter(|s| s.codec_type == "video")
+        .next();
+
+    let width = stream.and_then(|s| s.width).unwrap_or(0);
+    let height = stream.and_then(|s| s.height).unwrap_or(0);
 
     Ok(UploadInfo {
         file_type,

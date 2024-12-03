@@ -25,6 +25,7 @@
 		"rust-analyzer.showUnlinkedFileNotification": false,
 		"[sql]": {
 			"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
-		}
+		},
+		"rust-analyzer.check.overrideCommand": ["cargo", "clippy", "--message-format=json-diagnostic-rendered-ansi"]
 	}
 }

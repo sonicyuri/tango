@@ -6,6 +6,7 @@ mod invites;
 pub mod middleware;
 pub mod model;
 mod schema;
+pub mod user;
 pub mod util;
 
 pub fn scope() -> Scope {

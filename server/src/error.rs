@@ -2,13 +2,19 @@ use std::collections::HashMap;
 
 use super::util::{error_response, success_response};
 use actix_web::{http::StatusCode, HttpResponse};
-use derive_more::{Display, Error};
+use derive_more::Display;
 use log::error;
 use s3::error::S3Error;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
+use thiserror::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Display, Clone, Error)]
+pub enum Error {
+    InvalidOperation(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ApiErrorType {
     Forbidden,
     AuthorizationFailed,
@@ -17,11 +23,20 @@ pub enum ApiErrorType {
     OperationFailed,
 }
 
-#[derive(Debug, Display, Error, Clone)]
+#[derive(Debug, Display, Error, Clone, Serialize, Deserialize)]
 #[display(fmt = "API error: {}", message)]
 pub struct ApiError {
     pub message: String,
     pub error_type: ApiErrorType,
+}
+
+impl ApiError {
+    pub fn new(error_type: ApiErrorType, message: String) -> ApiError {
+        ApiError {
+            error_type,
+            message,
+        }
+    }
 }
 
 impl From<S3Error> for ApiError {
@@ -104,4 +119,10 @@ pub fn api_error_owned(error_type: ApiErrorType, message: String) -> ApiError {
 
 pub fn api_success(value: impl Serialize) -> HttpResponse {
     HttpResponse::Ok().json(success_response(value))
+}
+
+/// An error that occurs outside of a request (like from initialization)
+#[derive(Debug, Error, Display)]
+pub enum AppError {
+    Message(String),
 }

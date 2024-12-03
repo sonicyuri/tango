@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{self};
 
-#[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Hash, sqlx::FromRow, Clone)]
 #[allow(non_snake_case)]
 pub struct PostModel {
     pub id: i32,
@@ -78,4 +78,14 @@ pub struct PostViewModel {
     pub user_id: i32,
     pub timestamp: i32,
     pub ipaddress: String,
+}
+
+/// A post that's yet to be inserted into the database.
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct PendingPost {
+    pub resolution: (u32, u32),
+    pub hash: String,
+    pub filesize: i32,
+    pub mime: String,
+    pub source: Option<String>,
 }

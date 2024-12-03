@@ -25,7 +25,12 @@ import {
 import { notify } from "reapop";
 import TagInput from "../../components/TagInput";
 import { PostUploadRequest } from "../../features/posts/PostService";
-import { postUpload, selectPostState } from "../../features/posts/PostSlice";
+import {
+	postDirectLink,
+	postList,
+	postUpload,
+	selectPostState
+} from "../../features/posts/PostSlice";
 import { LogFactory } from "../../util/Logger";
 import FileEntry from "./components/FileEntry";
 
@@ -97,9 +102,22 @@ const UploadPage = () => {
 
 		dispatch(postUpload(req))
 			.unwrap()
+			.then(v =>
+				dispatch(postList({ offset: 0, query: "" }))
+					.unwrap()
+					.then(() => v)
+			)
 			.then(v => {
-				navigate("/posts/view/" + v.posts[Object.keys(v.posts)[0]].id);
-			});
+				let id = v.posts[Object.keys(v.posts)[0]].id.toString();
+				return dispatch(
+					postDirectLink({
+						postId: id,
+						query: null,
+						offset: null
+					})
+				).then(() => id);
+			})
+			.then(v => navigate("/posts/view/" + v));
 	};
 
 	const onFileChange = () => {
@@ -253,7 +271,9 @@ const UploadPage = () => {
 		<div className="Upload-Progress">
 			<Typography>Uploading {files.length} files</Typography>
 			<LinearProgress
-				variant="determinate"
+				variant={
+					uploadProgress >= 100.0 ? "indeterminate" : "determinate"
+				}
 				value={uploadProgress * 100.0}
 			/>
 		</div>

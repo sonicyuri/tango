@@ -1,6 +1,15 @@
+use std::fs;
+use std::hash::{DefaultHasher, Hash, Hasher};
+use std::ops::Deref;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
+use once_cell::unsync::Lazy;
 use s3::creds::Credentials;
 use s3::error::S3Error;
 use s3::{Bucket, Region};
+use serde::{Deserialize, Serialize};
+use tokio::sync::Mutex;
 
 #[derive(Clone)]
 pub struct AppStorage {
@@ -79,5 +88,87 @@ impl AppStorage {
     async fn put_file(&self, path: String, data: &[u8]) -> Result<(), S3Error> {
         self.bucket.put_object(path, data).await?;
         Ok(())
+    }
+}
+
+type DataManagerPtr = Arc<Mutex<DataManagerInner>>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TempFile(u64, PathBuf);
+
+impl TempFile {
+    /// Deletes this temporary file.
+    pub fn close(&self, data_manager: DataManagerPtr) {}
+}
+
+impl Deref for TempFile {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        self.1.as_path()
+    }
+}
+
+/// Manages temp files and other things in the data/ directory.
+pub struct DataManagerInner {
+    db: sled::Db,
+    dir: PathBuf,
+    temp_dir: PathBuf,
+}
+
+#[derive(Clone)]
+pub struct DataManager(DataManagerPtr);
+
+impl DataManager {
+    pub fn new() -> Self {
+        let dir: PathBuf = PathBuf::from("data");
+        fs::create_dir(&dir).unwrap();
+        let sled = sled::open(dir.clone().join("cache")).unwrap();
+        let temp_dir = dir.clone().join("temp");
+
+        let unknown_files = fs::read_dir(&temp_dir).unwrap().filter(|d| {
+            sled.get(d.as_ref().unwrap().file_name().as_encoded_bytes())
+                .unwrap()
+                .is_none()
+        });
+
+        for f in unknown_files {
+            fs::remove_file(temp_dir.clone().join(f.unwrap().file_name())).unwrap();
+        }
+
+        DataManager(Arc::new(Mutex::new(DataManagerInner {
+            dir,
+            db: sled,
+            temp_dir,
+        })))
+    }
+
+    /// Creates and records a new temp file.
+    /// The file will not be deleted until you call [TempFile::close()].
+    pub async fn temp_file(&self) -> anyhow::Result<TempFile> {
+        let dm = self.0.lock().await;
+        let dir = dm.temp_dir.clone();
+
+        let mut gen = srfng::Generator::new();
+        let filename: String;
+        loop {
+            let new_file = gen.generate();
+            if !dir.clone().join(&new_file).is_file() {
+                filename = new_file;
+                break;
+            }
+        }
+
+        let mut s = DefaultHasher::default();
+        filename.hash(&mut s);
+        let id = s.finish();
+        let path = dir.join(&filename);
+        let temp = TempFile(id, path);
+
+        // record temp file in the database
+        dm.db
+            .insert(id.to_le_bytes(), serde_json::to_string(&temp)?.as_bytes())?;
+
+        Ok(temp)
     }
 }

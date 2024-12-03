@@ -4,7 +4,7 @@ use sqlx::MySqlPool;
 use tempfile::NamedTempFile;
 
 use super::schema::PostNewSchema;
-use crate::{booru_config::BooruConfig, util::create_client};
+use crate::{booru_config::BooruConfig, util::http::create_client};
 use std::io::Write;
 
 use super::media::{get_content_info, UploadInfo};

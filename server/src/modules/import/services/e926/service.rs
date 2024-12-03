@@ -4,7 +4,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 use crate::error::{api_error, ApiError, ApiErrorType};
-use crate::util::create_client;
+use crate::util::http::create_client;
 
 use super::super::service::{ImportService, ImportServicePrepareResult};
 use super::types::E926PostResponse;

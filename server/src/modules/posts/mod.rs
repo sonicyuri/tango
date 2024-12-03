@@ -3,7 +3,7 @@ use actix_web::{web, Scope};
 mod api;
 mod edit;
 pub mod model;
-mod new;
+pub mod new;
 pub mod query;
 mod schema;
 mod util;

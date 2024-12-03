@@ -165,4 +165,6 @@ class PostService {
 	}
 }
 
+(window as any)["PostService"] = PostService;
+
 export default PostService;

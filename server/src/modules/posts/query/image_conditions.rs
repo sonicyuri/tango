@@ -7,7 +7,7 @@ use once_cell::sync::Lazy;
 use parse_size::parse_size;
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 
-use super::query_object::QueryObject;
+use crate::util::database::query_object::QueryObject;
 
 bitmask! {
     #[derive(Serialize, Deserialize, Debug)]
@@ -280,6 +280,7 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
                 Err(_err) => None,
             },
         ),
+        // TODO: this should accept a YYYY-MM-DD value instead
         ImageCondition::new_all_single(
             "posted",
             "filter by upload date",
