@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use itertools::Itertools;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -74,6 +75,16 @@ impl ImageQuery {
             return format!("RAND({})", param);
         }
 
+        if column == "pool" {
+            return format!(
+                "(SELECT image_order FROM pool_images WHERE image_id = images.id) {}",
+                match param {
+                    "desc" => "DESC",
+                    _ => "ASC",
+                }
+            );
+        }
+
         let dir = match param {
             "asc" => "ASC",
             _ => "DESC",
@@ -127,39 +138,40 @@ impl ImageQuery {
 
         for (tag, positive) in &tags_map {
             let lower = tag.to_lowercase();
-            match IMAGE_CONDITION_REGEX.captures(lower.as_str()) {
-                Some(captures) => {
-                    if captures.len() >= 5 {
-                        if &captures[1] == "order" {
-                            order = ImageQuery::parse_order(&captures[3], &captures[5]);
-                            tags_to_remove.push(tag.clone());
-                        } else {
-                            let query = ImageQuery::parse_image_condition(
-                                &captures[1],
-                                &captures[2],
-                                &captures[3],
-                                captures.get(5).and_then(|o| Some(o.as_str())),
-                            );
-                            if let Some(query) = query {
-                                img_conditions.push((query, *positive));
-                                tags_to_remove.push(tag.clone());
-                            }
-                        }
-                    } else if captures.len() >= 3 {
-                        let query = ImageQuery::parse_image_condition(
-                            &captures[1],
-                            &captures[2],
-                            &captures[3],
-                            None,
+            if let Some(captures) = IMAGE_CONDITION_REGEX.captures(lower.as_str()) {
+                let groups = captures.iter().collect_vec();
+                if groups.len() >= 6 {
+                    if groups[1].map(|o| o.as_str()).unwrap_or("") == "order" {
+                        order = ImageQuery::parse_order(
+                            groups[3].map(|o| o.as_str()).unwrap_or(""),
+                            groups[5].map(|o| o.as_str()).unwrap_or(""),
                         );
-
+                        tags_to_remove.push(tag.clone());
+                    } else {
+                        let query = ImageQuery::parse_image_condition(
+                            groups[1].map(|o| o.as_str()).unwrap_or(""),
+                            groups[2].map(|o| o.as_str()).unwrap_or(""),
+                            groups[3].map(|o| o.as_str()).unwrap_or(""),
+                            groups[5].map(|o| o.as_str()),
+                        );
                         if let Some(query) = query {
                             img_conditions.push((query, *positive));
                             tags_to_remove.push(tag.clone());
                         }
                     }
+                } else if groups.len() >= 3 {
+                    let query = ImageQuery::parse_image_condition(
+                        groups[1].map(|o| o.as_str()).unwrap_or(""),
+                        groups[2].map(|o| o.as_str()).unwrap_or(""),
+                        groups[3].map(|o| o.as_str()).unwrap_or(""),
+                        None,
+                    );
+
+                    if let Some(query) = query {
+                        img_conditions.push((query, *positive));
+                        tags_to_remove.push(tag.clone());
+                    }
                 }
-                None => {}
             }
         }
 

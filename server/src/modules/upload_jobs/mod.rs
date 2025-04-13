@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use apalis::{prelude::*, sqlite::SqliteStorage, utils::TokioExecutor};
+use apalis::prelude::*;
 use job::{UploadJob, UploadJobContents, UploadJobResult, UploadJobResultContents};
 use keyv::Keyv;
 use serde::{Deserialize, Serialize};
@@ -65,22 +65,21 @@ impl UploadJobSupervisor {
         todo!()
     }
 
-    pub async fn start(&self) -> Result<SqliteStorage<UploadJob>> {
-        let sqlite = SqlitePool::connect("sqlite://data/jobs.db").await?;
-        let storage = SqliteStorage::new(sqlite);
+    /*pub async fn start(&self) -> Result<SqliteStorage<UploadJob>> {
+            let sqlite = SqlitePool::connect("sqlite://data/jobs.db").await?;
+            let storage = SqliteStorage::new(sqlite);
 
-        let monitor = Monitor::<TokioExecutor>::new().register_with_count(4, {
-            let storage = storage.clone();
-            let context = self.0.clone();
-            WorkerBuilder::new(&format!("upload-job"))
-                .data(context)
-                .with_storage(storage.clone())
-                .build_fn(Self::job_loop)
-        });
+            /*let monitor = Monitor::new().register_with_count(4, {
+                let storage = storage.clone();
+                let context = self.0.clone();
+                WorkerBuilder::new(&format!("upload-job")).data(context)
+                //.with_storage(storage.clone())
+                //.build_fn(Self::job_loop)
+            });*/
 
-        Ok(storage)
-    }
-
+            Ok(storage)
+        }
+    */
     async fn job_loop(
         job: UploadJob,
         data: Data<JobContext>,

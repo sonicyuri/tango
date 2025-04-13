@@ -25,6 +25,8 @@ import PostService, {
 	PostVotesMap,
 	VoteRequest
 } from "./PostService";
+import { BooruPool } from "../../models/BooruPool";
+import PoolService, { PoolListRequest } from "./PoolService";
 
 const logger: Logger = LogFactory.create("PostSlice");
 const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
@@ -33,6 +35,7 @@ const errorFactory: StaticUIErrorFactory = new StaticUIErrorFactory(
 
 type PostSearchState = "initial" | "loading" | "ready" | "failed";
 type PostUploadState = "initial" | "uploading" | "done" | "failed";
+type PoolListState = "initial" | "loading" | "ready" | "failed";
 
 const postVotesValue = new AsyncValue<PostVotesMap>("post", "votes", {});
 
@@ -46,6 +49,11 @@ interface PostState {
 	votes: StoredAsyncValue<PostVotesMap>;
 	uploadProgress: number;
 	uploadState: PostUploadState;
+
+	pools: BooruPool[];
+	poolCount: number;
+	currentPool: BooruPool | null;
+	poolState: PoolListState;
 }
 
 const setSearchState: CaseReducer<PostState, PayloadAction<PostSearchState>> = (
@@ -73,6 +81,20 @@ const setUploadStateAction = (
 	newState: PostUploadState
 ): PayloadAction<PostUploadState> => ({
 	type: "post/setUploadState",
+	payload: newState
+});
+
+const setPoolState: CaseReducer<PostState, PayloadAction<PoolListState>> = (
+	state,
+	action
+) => {
+	state.poolState = action.payload;
+};
+
+const setPoolStateAction = (
+	newState: PoolListState
+): PayloadAction<PoolListState> => ({
+	type: "post/setPoolState",
 	payload: newState
 });
 
@@ -381,6 +403,56 @@ export const postRecordView = createAsyncThunk(
 	}
 );
 
+// pool list
+// we're putting this stuff in the post slice because it needs to access the cursor and i cba to think of a better solution
+export const poolList = createAsyncThunk(
+	"post/list_pools",
+	async (request: PoolListRequest, thunkApi) => {
+		try {
+			thunkApi.dispatch(setPoolStateAction("loading"));
+
+			return (await PoolService.getPools(request)).matchPromise(
+				response => Promise.resolve(response),
+				err => {
+					logger.error("error fetching pools", err);
+					thunkApi.dispatch(
+						notify("List pools failed - " + err, "error")
+					);
+					return Promise.reject("");
+				}
+			);
+		} catch (error: any) {
+			logger.error("error fetching pools", error);
+			thunkApi.dispatch(notify("List pools failed - " + error, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+	}
+);
+
+export const poolInfo = createAsyncThunk(
+	"post/info_pools",
+	async (poolId: string, thunkApi) => {
+		try {
+			thunkApi.dispatch(setPoolStateAction("loading"));
+
+			return (await PoolService.getPool(poolId)).matchPromise(
+				response => Promise.resolve(response),
+				err => {
+					logger.error("error fetching pool", err);
+					thunkApi.dispatch(
+						notify("Get pool failed - " + err, "error")
+					);
+					return Promise.reject("");
+				}
+			);
+		} catch (error: any) {
+			logger.error("error fetching pool", error);
+			thunkApi.dispatch(notify("Get pool failed - " + error, "error"));
+			return thunkApi.rejectWithValue({});
+		}
+	}
+);
+
 const initialState: PostState = {
 	cursor: null,
 	searchState: "initial",
@@ -388,7 +460,12 @@ const initialState: PostState = {
 	currentPost: null,
 	votes: postVotesValue.storedValue,
 	uploadProgress: 0.0,
-	uploadState: "initial"
+	uploadState: "initial",
+
+	pools: [],
+	poolCount: 0,
+	currentPool: null,
+	poolState: "initial"
 };
 
 export const PostSlice = createSlice({
@@ -479,6 +556,26 @@ export const PostSlice = createSlice({
 
 		builder.addCase(postRecordView.fulfilled, (state, action) => {});
 		builder.addCase(postRecordView.rejected, (state, action) => {});
+
+		builder.addCase(poolList.fulfilled, (state, action) => {
+			state.poolState = "ready";
+			state.poolCount = action.payload.count;
+			state.pools = action.payload.pools;
+		});
+		builder.addCase(poolList.rejected, (state, action) => {
+			state.poolState = "failed";
+		});
+
+		builder.addCase(poolInfo.fulfilled, (state, action) => {
+			state.poolState = "ready";
+			state.currentPool = action.payload;
+			action.payload.posts.forEach(p => {
+				state.cursor?.storeOrUpdatePost(p);
+			});
+		});
+		builder.addCase(poolInfo.rejected, (state, action) => {
+			state.poolState = "failed";
+		});
 	}
 });
 

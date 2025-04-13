@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::modules::posts::model::PostResponse;
+use crate::modules::posts::query::model::PostQueryResult;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow, Clone)]
 pub struct PoolModel {
@@ -12,6 +12,7 @@ pub struct PoolModel {
     pub description: Option<String>,
     pub date: DateTime<Utc>,
     pub posts: i32,
+    pub cover: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -22,6 +23,18 @@ pub struct PoolResponse {
     pub title: String,
     pub description: Option<String>,
     pub date: DateTime<Utc>,
+    pub cover: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub posts: Option<Vec<PostResponse>>,
+    pub posts: Option<Vec<PostQueryResult>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PoolListResponse {
+    pub pools: Vec<PoolModel>,
+    pub count: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PoolPostIdsResponse {
+    pub post_ids: Vec<i32>,
 }

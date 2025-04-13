@@ -89,8 +89,8 @@ impl QueryEngine {
             }
 
             for post in results {
-                let tags = post_tags_map.remove(&post.id).unwrap_or(Vec::new());
-                let pools = post_pools_map.remove(&post.id).unwrap_or(Vec::new());
+                let tags = post_tags_map.remove(&post.id).unwrap_or_default();
+                let pools = post_pools_map.remove(&post.id).unwrap_or_default();
                 safe_results.push(PostQueryResult::from_model(post, tags, pools)?);
             }
         }
@@ -103,7 +103,9 @@ impl QueryEngine {
             let _pools_map: HashMap<i32, PoolModel> = HashMap::new();
 
             let pool_ids_str = pool_ids.iter().map(|id| id.to_string()).join(",");
-            let pool_info_query = format!("SELECT * FROM pools WHERE id IN ({})", pool_ids_str);
+            let pool_info_query = format!("SELECT *, (SELECT images.hash FROM images INNER JOIN pool_images ON pool_images.image_id = images.id 
+			WHERE pool_images.pool_id = pools.id ORDER BY pool_images.image_order ASC LIMIT 1) 
+			AS cover FROM pools WHERE id IN ({})", pool_ids_str);
 
             let pool_info_results = sqlx::query_as::<_, PoolModel>(pool_info_query.as_str())
                 .fetch_all(db)
@@ -118,6 +120,7 @@ impl QueryEngine {
                     description: pool_info.description,
                     date: pool_info.date,
                     posts: None,
+                    cover: pool_info.cover,
                 });
             }
         }

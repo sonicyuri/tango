@@ -54,11 +54,11 @@ impl AppState {
         let storage = AppStorage::new(&config).await;
         let booru_config = BooruConfig::new(&pool.clone()).await;
 
-        return Ok(AppState {
+        Ok(AppState {
             db: pool,
             config,
             storage: Arc::new(storage),
             booru_config,
-        });
+        })
     }
 }

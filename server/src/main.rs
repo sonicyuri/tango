@@ -30,7 +30,8 @@ fn configure(conf: &mut web::ServiceConfig) {
         .service(modules::tags::scope())
         .service(modules::import::scope())
         .service(modules::posts::scope())
-        .service(modules::system::scope());
+        .service(modules::system::scope())
+        .service(modules::pools::scope());
 
     conf.service(scope)
         .default_service(web::route().to(not_found));

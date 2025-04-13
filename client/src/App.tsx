@@ -15,6 +15,7 @@ import TagsListPage from "./pages/tags_list/TagsListPage";
 import UploadPage from "./pages/upload/UploadPage";
 import ProfilePage from "./pages/user/ProfilePage";
 import SettingsPage from "./pages/user/SettingsPage";
+import PoolListPage from "./pages/pools/PoolListPage";
 
 const App = () => {
 	const dispatch = useAppDispatch();
@@ -66,6 +67,10 @@ const App = () => {
 				{
 					path: "/tags",
 					element: <TagsListPage tab={"none"} />
+				},
+				{
+					path: "/pools",
+					element: <PoolListPage />
 				},
 				{
 					path: "/posts/view/:postId",

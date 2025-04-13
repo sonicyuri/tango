@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use apalis::prelude::Job;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -66,9 +65,9 @@ impl UploadJob {
     }
 }
 
-impl Job for UploadJob {
+/*impl Job for UploadJob {
     const NAME: &'static str = "upload_job";
-}
+}*/
 
 #[derive(Debug)]
 pub enum UploadJobResultContents {

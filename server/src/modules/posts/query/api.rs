@@ -25,7 +25,7 @@ pub async fn post_list_handler(
 
     let alias_resolver = TagAliasResolver::new(&data.db).await?;
 
-    let limit = body.limit.unwrap_or(30).min(100).max(1);
+    let limit = body.limit.unwrap_or(30).clamp(1, 100);
     let offset = body.offset.unwrap_or(0).max(0);
     let query = body
         .query
@@ -38,7 +38,7 @@ pub async fn post_list_handler(
     let filter = body
         .filter
         .as_ref()
-        .and_then(|s| {
+        .map(|s| {
             let mut filter = ContentFilter {
                 images: false,
                 videos: false,
@@ -53,7 +53,7 @@ pub async fn post_list_handler(
                 };
             }
 
-            Some(filter)
+            filter
         })
         .unwrap_or(ContentFilter {
             images: true,

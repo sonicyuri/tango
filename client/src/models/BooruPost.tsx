@@ -117,7 +117,7 @@ class BooruPost {
 	 * A URL pointing to this post's thumbnail.
 	 */
 	get thumbUrl() {
-		return `${BaseUrl}/thumbs/${this.hash}`;
+		return BooruPost.getThumbUrl(this.hash);
 	}
 
 	/**
@@ -133,6 +133,13 @@ class BooruPost {
 			//width: (this.imageSize[0] > this.imageSize[1] ? "auto" : "100%"),
 			//height: (this.imageSize[0] > this.imageSize[1] ? "90vh" : "auto")
 		};
+	}
+
+	/**
+	 * A URL pointing to a post's thumbnail.
+	 */
+	static getThumbUrl(hash: string) {
+		return `${BaseUrl}/thumbs/${hash}`;
 	}
 }
 

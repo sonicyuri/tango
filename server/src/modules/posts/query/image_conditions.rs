@@ -32,7 +32,7 @@ impl Operators {
             return ">=";
         }
 
-        return "=";
+        "="
     }
 
     pub fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
@@ -606,6 +606,21 @@ pub static IMAGE_CONDITIONS: Lazy<Vec<ImageCondition>> = Lazy::new(|| {
             |op, value| {
                 Some(QueryObject::new_with_param(
                     format!("images.views {} ?", op).as_str(),
+                    value,
+                ))
+            },
+        ),
+        ImageCondition::new_equals_single(
+            "pool",
+            "filter for posts in a given pool",
+            ConditionUsagePart {
+                placeholder: "{pool ID}",
+                value_type: ConditionValue::Integer,
+                example: Some("1"),
+            },
+            |_op, value| {
+                Some(QueryObject::new_with_param(
+                    "images.id IN (SELECT image_id FROM pool_images WHERE pool_images.pool_id = ?)",
                     value,
                 ))
             },
